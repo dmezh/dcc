@@ -4,12 +4,12 @@
 #include "lexer.h"
 
 void printtok(int token) {
+    printf("(filename)\t%d\t", context.lineno);
     if (token < 257) {
         putchar(token);
         putchar('\n');
         return;
     }
-    printf("(filename)\t%d\t", context.lineno);
     switch(token)
     {
             case NUMBER:

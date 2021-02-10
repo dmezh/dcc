@@ -12,6 +12,7 @@ FLOAT   ((0x){HEXSET}+(\.)({HEXSET}+)?)|([0-9]+(\.)([0-9]+)?)
 INT     ((0x){HEXSET}+|[0-9]+)
 STRING  \"(?:[^"\\]|\\.)*\"
 CHAR    \'(?:[^'\\]|\\.)*\'
+PUNCT   [\[\]\(\)\{\}\.\&\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
 
 %%
 
@@ -122,10 +123,9 @@ CHAR    \'(?:[^'\\]|\\.)*\'
                                     return CHARLIT;
                                 }
 
-\n                              {context.lineno++;}
-\+                              {return '+';}
--                               {return '-';}
-.                               {fprintf(stderr,"Error: unknown token %s\n",yytext);}
+{PUNCT}                         { return yytext[0]; }
+\n                              { context.lineno++; }
+.                               { fprintf(stderr,"Error: unknown token %s\n",yytext);   }
 %%
 
 void uint_parse() {
