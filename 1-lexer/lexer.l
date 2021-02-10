@@ -52,7 +52,7 @@ CHAR    \'(?:[^'\\]|\\.)*\'
 "while"			{ return WHILE;     }
 "_Bool"			{ return _BOOL;     }
 "_Complex"		{ return _COMPLEX;  }
-"_Imaginary"	{ return _IMAGINARY;}
+"_Imaginary"    { return _IMAGINARY;}
 
 {FLOAT}                         {   
                                     fprintf(stderr, "gotcha\n");
