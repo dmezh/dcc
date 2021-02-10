@@ -27,6 +27,9 @@ void printtok(int token) {
             case CHARLIT:
                 printf("CHARLIT\t%c\n", yylval.textlit.str[0]);
                 return;
+            case IDENT:
+                printf("IDENT\t%s\n", yylval.textlit.str);
+                return;
             default:
                 printf("%s\n", token ? tokens_str[token - 256] : tokens_str[0]);
     }

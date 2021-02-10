@@ -154,6 +154,10 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
                                 }
 
 {PUNCT}                         { return yytext[0]; }
+[A-Za-z][A-Za-z0-9]*            {
+                                    yylval.textlit.str = strdup(yytext);
+                                    return IDENT;
+                                }
 \n                              { context.lineno++; }
 .                               { fprintf(stderr,"Error: unknown token %s\n",yytext);   }
 %%
