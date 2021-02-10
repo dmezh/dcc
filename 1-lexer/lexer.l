@@ -4,6 +4,7 @@
 %{
 #include "lexer.h"
 YYSTYPE yylval;
+struct context context = {"<stdin>", 0};
 %}
 
 HEXSET  [0-9A-Fa-f]
@@ -62,58 +63,58 @@ CHAR    \'(?:[^'\\]|\\.)*\'
 {INT}                           {   
                                     uint_parse();
                                     yylval.number.integer = (int)yylval.number.integer;
-                                    yylval.aux_type = s_INT;
-                                    yylval.is_signed = 1;
+                                    yylval.number.aux_type = s_INT;
+                                    yylval.number.is_signed = 1;
                                     return NUMBER;
                                 }
 {INT}[Ll]                       {
                                     uint_parse();
                                     yylval.number.integer = (long)yylval.number.integer;
-                                    yylval.aux_type = s_LONG;
-                                    yylval.is_signed = 1;
+                                    yylval.number.aux_type = s_LONG;
+                                    yylval.number.is_signed = 1;
                                     return NUMBER;
                                 }
 {INT}(LL|ll)                    {
                                     uint_parse();
                                     yylval.number.integer = (long long)yylval.number.integer;
-                                    yylval.aux_type = s_LONGLONG;
-                                    yylval.is_signed = 1;
+                                    yylval.number.aux_type = s_LONGLONG;
+                                    yylval.number.is_signed = 1;
                                     return NUMBER;
                                 }
 {INT}[Uu]                       {
                                     uint_parse();
                                     yylval.number.integer = (unsigned int)yylval.number.integer;
-                                    yylval.aux_type = s_INT;
-                                    yylval.is_signed = 0;
+                                    yylval.number.aux_type = s_INT;
+                                    yylval.number.is_signed = 0;
                                     return NUMBER;
                                 }
 {INT}([Uu][Ll]|[Ll][Uu])        {   
                                     uint_parse();
                                     yylval.number.integer = (unsigned long)yylval.number.integer;
-                                    yylval.aux_type = s_LONG;
-                                    yylval.is_signed = 0;
+                                    yylval.number.aux_type = s_LONG;
+                                    yylval.number.is_signed = 0;
                                     return NUMBER;
                                 }
 {INT}([Uu](LL|ll)|(LL|ll)[Uu])  {   
                                     uint_parse();
                                     yylval.number.integer = (unsigned long long)yylval.number.integer;
-                                    yylval.aux_type = s_LONGLONG;
-                                    yylval.is_signed = 0;
+                                    yylval.number.aux_type = s_LONGLONG;
+                                    yylval.number.is_signed = 0;
                                     return NUMBER;
                                 }
 
 {STRING}                        {
                                     /* thanks to https://stackoverflow.com/questions/249791/regex-for-quoted-string-with-escaping-quotes */
-                                    yylval.str_lit = (char*)calloc(strlen(yytext+1), sizeof(char)); /* can't be longer than this */
-                                    yylval.str_len = 0;
+                                    yylval.textlit.str = (char*)calloc(strlen(yytext+1), sizeof(char)); /* can't be longer than this */
+                                    yylval.textlit.len = 0;
                                     for (int i = 1; i<strlen(yytext)-1; i++) { /* skipping the first and last (") */
                                         i = char_parse(i);
                                     }
                                     return STRING;
                                 }
 {CHAR}                          {
-                                    yylval.str_lit = (char*)calloc(1, sizeof(char));
-                                    yylval.str_len = 0;
+                                    yylval.textlit.str = (char*)calloc(1, sizeof(char));
+                                    yylval.textlit.len = 0;
                                     int chars_read = char_parse(1);
                                     if (strlen(yytext) - 2 != chars_read) { // minus the single quotes
                                         fprintf(stderr, "warning: character constant too long for its type\n");
@@ -121,7 +122,7 @@ CHAR    \'(?:[^'\\]|\\.)*\'
                                     return CHARLIT;
                                 }
 
-\n                              {yylval.lineno++;}
+\n                              {context.lineno++;}
 \+                              {return '+';}
 -                               {return '-';}
 .                               {fprintf(stderr,"Error: unknown token %s\n",yytext);}
@@ -144,23 +145,23 @@ int char_parse(int i)
     if (yytext[i] == '\\') {
         switch (yytext[++i])
         {
-            case '\'': yylval.str_lit[yylval.str_len++] = '\''; break;
-            case '\"': yylval.str_lit[yylval.str_len++] = '\"'; break;
-            case '\?': yylval.str_lit[yylval.str_len++] = '\?'; break;
-            case '\\': yylval.str_lit[yylval.str_len++] = '\\'; break;
-            case 'a':  yylval.str_lit[yylval.str_len++] = '\a'; break;
-            case 'b':  yylval.str_lit[yylval.str_len++] = '\b'; break;
-            case 'f':  yylval.str_lit[yylval.str_len++] = '\f'; break;
-            case 'n':  yylval.str_lit[yylval.str_len++] = '\n'; break;
-            case 'r':  yylval.str_lit[yylval.str_len++] = '\r'; break;
-            case 't':  yylval.str_lit[yylval.str_len++] = '\t'; break;
-            case 'v':  yylval.str_lit[yylval.str_len++] = '\v'; break;
+            case '\'': yylval.textlit.str[yylval.textlit.len++] = '\''; break;
+            case '\"': yylval.textlit.str[yylval.textlit.len++] = '\"'; break;
+            case '\?': yylval.textlit.str[yylval.textlit.len++] = '\?'; break;
+            case '\\': yylval.textlit.str[yylval.textlit.len++] = '\\'; break;
+            case 'a':  yylval.textlit.str[yylval.textlit.len++] = '\a'; break;
+            case 'b':  yylval.textlit.str[yylval.textlit.len++] = '\b'; break;
+            case 'f':  yylval.textlit.str[yylval.textlit.len++] = '\f'; break;
+            case 'n':  yylval.textlit.str[yylval.textlit.len++] = '\n'; break;
+            case 'r':  yylval.textlit.str[yylval.textlit.len++] = '\r'; break;
+            case 't':  yylval.textlit.str[yylval.textlit.len++] = '\t'; break;
+            case 'v':  yylval.textlit.str[yylval.textlit.len++] = '\v'; break;
             case 'x':
                 ; // empty
                 char* newyytext;
                 newchar = strtol(yytext+(++i), &newyytext, 16);
                 if (newchar > 0xFF) fprintf(stderr, "warning: hex escape sequence out of range\n");
-                yylval.str_lit[yylval.str_len++] = (char)newchar;
+                yylval.textlit.str[yylval.textlit.len++] = (char)newchar;
                 i = newyytext - yytext - 1;
                 break;
             default: // we'll give octal a try
@@ -169,14 +170,14 @@ int char_parse(int i)
                 chars_read = sscanf(yytext+i, "%3o[0-7]", &newchar);
                 i = i + chars_read + 1;
                 if (newchar > 0xFF) fprintf(stderr, "warning: octal escape sequence out of range\n");
-                yylval.str_lit[yylval.str_len++] = (char)newchar;
+                yylval.textlit.str[yylval.textlit.len++] = (char)newchar;
                 if (chars_read) break;
 
                 fprintf(stderr, "Error: Unrecognized escape sequence\n");
                 exit(5);       
         }   
     } else {
-        yylval.str_lit[yylval.str_len++] = yytext[i];
+        yylval.textlit.str[yylval.textlit.len++] = yytext[i];
     }
     return i;
 }

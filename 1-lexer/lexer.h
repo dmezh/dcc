@@ -26,19 +26,29 @@ typedef union {
 } YYSTYPE;
 */
 
-typedef struct YYSTYPE {
-    char* filename;
-    int lineno;
-    char* str_lit; // needs to be freed by parser!
-    int str_len;
-    union {
-        unsigned long long integer;
-        long double real;
-    } number;
+struct number {
+    unsigned long long integer;
+    long double real;
     int aux_type;
     int is_signed;
+};
+
+struct textlit {
+    char* str; // needs to be freed by parser!
+    int len;
+};
+
+struct context {
+    char* filename;
+    int lineno;
+};
+
+typedef struct YYSTYPE {
+    struct number number;
+    struct textlit textlit;
 } YYSTYPE;
 
 extern YYSTYPE yylval;
+extern struct context context;
 
 #endif
