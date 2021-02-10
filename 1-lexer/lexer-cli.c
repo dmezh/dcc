@@ -4,7 +4,7 @@
 #include "lexer.h"
 
 void printtok(int token) {
-    printf("%s\t%d\t", context.filename ? context.filename : "<stdin>", context.lineno);
+    printf("%s\t%d\t", FRIENDLYFN, context.lineno);
     if (token < 257) {
         putchar(token);
         putchar('\n');

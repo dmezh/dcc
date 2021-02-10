@@ -4,9 +4,11 @@
 #include "tokens-manual.h"
 
 #define HAK_MODE 0
+#define FRIENDLYFN context.filename ? context.filename : "<stdin>"
 
 void uint_parse();
 int char_parse(int i); // i is position in yytext[] to parse
+void print_context(int warn);
 
 enum int_types {
     s_UNSPEC,

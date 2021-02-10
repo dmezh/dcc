@@ -178,7 +178,7 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
                                     return IDENT;
                                 }
 \n                              { context.lineno++; }
-.                               { fprintf(stderr,"Error: unknown token %s\n",yytext);   }
+.                               { print_context(0); fprintf(stderr,"unknown token %s\n",yytext);   }
 %%
 
 void uint_parse() {
@@ -189,6 +189,10 @@ void uint_parse() {
     } else {
         yylval.number.integer=(unsigned long long)strtoull(yytext, NULL, 10);
     }
+}
+
+void print_context(int warn) {
+    fprintf(stderr, "%s - in %s at line %d: ", (warn ? "warning" : "Error"), FRIENDLYFN, context.lineno);
 }
 
 /* parse one char from yytext and write it to yylval */
@@ -211,9 +215,13 @@ int char_parse(int i)
             case 'v':  yylval.textlit.str[yylval.textlit.len++] = '\v'; break;
             case 'x':
                 ; // empty
-                char* newyytext;
+                char* newyytext = 0;
                 newchar = strtol(yytext+(++i), &newyytext, 16);
-                if (newchar > 0xFF) fprintf(stderr, "warning: hex escape sequence out of range\n");
+                if (newyytext == yytext+i) goto badseq;
+                if (newchar > 0xFF) {
+                    print_context(1);
+                    fprintf(stderr, "hex escape sequence out of range\n");
+                }
                 yylval.textlit.str[yylval.textlit.len++] = (char)newchar;
                 i = newyytext - yytext - 1;
                 break;
@@ -221,12 +229,17 @@ int char_parse(int i)
                 ; // empty
                 int chars_read = 0;
                 sscanf(yytext+i, "%3o%n", &newchar, &chars_read);
+                if (!chars_read) goto badseq;
                 i = i + chars_read - 1;
-                if (newchar > 0xFF) fprintf(stderr, "warning: octal escape sequence out of range\n");
+                if (newchar > 0xFF) {
+                    print_context(1);
+                    fprintf(stderr, "octal escape sequence out of range\n");
+                }
                 yylval.textlit.str[yylval.textlit.len++] = (char)newchar;
-                if (chars_read) break;
-
-                fprintf(stderr, "Error: Unrecognized escape sequence\n");
+                break;
+badseq:
+                print_context(0);
+                fprintf(stderr, "unrecognized escape sequence\n");
                 exit(5);       
         }   
     } else {
