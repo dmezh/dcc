@@ -38,6 +38,7 @@ void printtok(int token) {
 
 int main() {
     int t;
+    yylval.textlit.str = NULL; // ugly hack; fix pending yylval's fate
     while (t=yylex())
         printtok(t);
     printf("EOF\n");

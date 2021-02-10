@@ -194,7 +194,7 @@ void uint_parse() {
 /* parse one char from yytext and write it to yylval */
 int char_parse(int i)
 {
-    unsigned long long newchar; // helps us detect+warn about extremely long out-of-range hex escapes
+    unsigned long long newchar = 0; // helps us detect+warn about extremely long out-of-range hex escapes
     if (yytext[i] == '\\') {
         switch (yytext[++i])
         {
@@ -220,8 +220,8 @@ int char_parse(int i)
             default: // we'll give octal a try
                 ; // empty
                 int chars_read = 0;
-                chars_read = sscanf(yytext+i, "%3o[0-7]", &newchar);
-                i = i + chars_read + 1;
+                sscanf(yytext+i, "%3o%n", &newchar, &chars_read);
+                i = i + chars_read - 1;
                 if (newchar > 0xFF) fprintf(stderr, "warning: octal escape sequence out of range\n");
                 yylval.textlit.str[yylval.textlit.len++] = (char)newchar;
                 if (chars_read) break;
