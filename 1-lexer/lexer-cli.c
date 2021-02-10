@@ -4,7 +4,7 @@
 #include "lexer.h"
 
 void printtok(int token) {
-    printf("(filename)\t%d\t", context.lineno);
+    printf("%s\t%d\t", context.filename ? context.filename : "<stdin>", context.lineno);
     if (token < 257) {
         putchar(token);
         putchar('\n');
@@ -28,7 +28,7 @@ void printtok(int token) {
                 printf("CHARLIT\t%c\n", yylval.textlit.str[0]);
                 return;
             case IDENT:
-                printf("IDENT\t%s\n", yylval.textlit.str);
+                printf("IDENT\t%s\n", yylval.ident);
                 return;
             default:
                 printf("%s\n", token ? tokens_str[token - 256] : tokens_str[0]);

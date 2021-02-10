@@ -1,10 +1,12 @@
 /* tidy lexer */
 
 %option noyywrap
+%x FILENAME
+%x ENDL
 %{
 #include "lexer.h"
 YYSTYPE yylval;
-struct context context = {"<stdin>", 0};
+struct context context = {NULL, 0};
 %}
 
 HEXSET  [0-9A-Fa-f]
@@ -17,6 +19,20 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
 %%
 
 [ \t]+          /* ignore whitespace */
+
+#[ ][0-9]+[ ]           {
+                            context.lineno = atoi(yytext+2);
+                            BEGIN(FILENAME);
+                        }
+<FILENAME>{STRING}      {
+                            if (context.filename) free(context.filename);
+                            context.filename = strdup(yytext+1); // skip quote
+                            context.filename[strlen(yytext)-2] = '\0'; // delete quote
+                            BEGIN(ENDL);
+                        }
+<ENDL>.*\n              {
+                            BEGIN(INITIAL);
+                        }
 
 "auto"          { return AUTO;      }
 "break"         { return BREAK;     }
@@ -136,6 +152,7 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
 
 {STRING}                        {
                                     /* thanks to https://stackoverflow.com/questions/249791/regex-for-quoted-string-with-escaping-quotes */
+                                    if (yylval.textlit.str) free(yylval.textlit.str);
                                     yylval.textlit.str = (char*)calloc(strlen(yytext+1), sizeof(char)); /* can't be longer than this */
                                     yylval.textlit.len = 0;
                                     for (int i = 1; i<strlen(yytext)-1; i++) { /* skipping the first and last (") */
@@ -144,6 +161,7 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
                                     return STRING;
                                 }
 {CHAR}                          {
+                                    if (yylval.textlit.str) free(yylval.textlit.str);
                                     yylval.textlit.str = (char*)calloc(1, sizeof(char));
                                     yylval.textlit.len = 0;
                                     int chars_read = char_parse(1);
@@ -154,8 +172,9 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
                                 }
 
 {PUNCT}                         { return yytext[0]; }
-[A-Za-z][A-Za-z0-9]*            {
-                                    yylval.textlit.str = strdup(yytext);
+[A-Za-z][A-Za-z0-9_]*           {
+                                    if (yylval.ident) free(yylval.ident);
+                                    yylval.ident = strdup(yytext);
                                     return IDENT;
                                 }
 \n                              { context.lineno++; }

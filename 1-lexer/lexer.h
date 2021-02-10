@@ -34,7 +34,7 @@ struct number {
 };
 
 struct textlit {
-    char* str; // needs to be freed by parser!
+    char* str;
     int len;
 };
 
@@ -46,6 +46,7 @@ struct context {
 typedef struct YYSTYPE {
     struct number number;
     struct textlit textlit;
+    char* ident;
 } YYSTYPE;
 
 extern YYSTYPE yylval;
