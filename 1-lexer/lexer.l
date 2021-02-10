@@ -56,6 +56,36 @@ PUNCT   [\[\]\(\)\{\}\.\&\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
 "_Complex"		{ return _COMPLEX;  }
 "_Imaginary"    { return _IMAGINARY;}
 
+    /* in the order they appear in ISO 6.4.6 */
+->              { return INDSEL;    }
+\+\+            { return PLUSPLUS;  }
+--              { return MINUSMINUS;}
+\<\<            { return SHL;       }
+>>              { return SHR;       }
+\<=             { return LTEQ;      }
+>=              { return GTEQ;      }
+==              { return EQEQ;      }
+!=              { return NOTEQ;     }
+&&              { return LOGAND;    }
+\|\|            { return LOGOR;     }
+\.\.\.          { return ELLIPSIS;  }
+\*=             { return TIMESEQ;   }
+\/=             { return DIVEQ;     }
+%=              { return MODEQ;     }
+\+=             { return PLUSEQ;    }
+-=              { return MINUSEQ;   }
+\<\<=           { return SHLEQ;     }
+>>=             { return SHREQ;     }
+&=              { return ANDEQ;     }
+\^=             { return XOREQ;     }
+\|=             { return OREQ;      }
+
+    /* digraphs */
+\<:             { return '[';       }
+\:>             { return ']';       }
+\<%             { return '{';       }
+\%>             { return '}';       }
+
 {FLOAT}                         {   
                                     fprintf(stderr, "gotcha\n");
                                     return NUMBER;
