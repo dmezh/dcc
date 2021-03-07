@@ -13,7 +13,9 @@ struct context context = {NULL, 1};
 HEXSET  [0-9A-Fa-f]
 HEXEXP  ([Pp][+-]?[0-9]+)
 FLTEXP  ([Ee][+-]?[0-9]+)
-FLOAT   ((0x){HEXSET}+(\.){HEXSET}*{HEXEXP})|((0x){HEXSET}*(\.){HEXSET}+{HEXEXP})|((0x){HEXSET}+{HEXEXP})|([0-9]+(\.)[0-9]*{FLTEXP}?)|([0-9]*(\.)[0-9]+{FLTEXP}?)|([0-9]+{FLTEXP})
+/* terrorism, but still readable: each of the | conditions are the different valid formats for a real constant: */
+/* hex+.hex*(hexexponent) | hex*.hex+(hexexponent) | hex+(hexexponent) | dec+.dec*(fltexponent)? | dec*.dec+(fltexponent)? | dec(fltexponent) */
+FLOAT   0x{HEXSET}+\.{HEXSET}*{HEXEXP}|0x{HEXSET}*\.{HEXSET}+{HEXEXP}|0x{HEXSET}+{HEXEXP}|[0-9]+\.[0-9]*{FLTEXP}?|[0-9]*\.[0-9]+{FLTEXP}?|[0-9]+{FLTEXP}
 OCT     (0)[0-7]*
 INT     ((0x){HEXSET}+|[1-9][0-9]*)
 STRING  \"(?:[^"\\]|\\.)*\"
