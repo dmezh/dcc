@@ -155,9 +155,9 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
 
 int process_uint(int is_signed, int type) {
     if (strlen(yytext) > 2 && yytext[0] == '0' && yytext[1] == 'x') {
-        yylval.number.integer=(unsigned long long)strtoull(yytext, NULL, 16);
+        yylval.number.integer = strtoull(yytext, NULL, 16);
     } else {
-        yylval.number.integer=(unsigned long long)strtoull(yytext, NULL, 10);
+        yylval.number.integer = strtoull(yytext, NULL, 10);
     }
     yylval.number.aux_type = type;
     yylval.number.is_signed = is_signed;
@@ -165,14 +165,14 @@ int process_uint(int is_signed, int type) {
 }
 
 int process_oct(int is_signed, int type) {
-    yylval.number.integer=(unsigned long long)strtoull(yytext, NULL, 8);
+    yylval.number.integer = strtoull(yytext, NULL, 8);
     yylval.number.aux_type = type;
     yylval.number.is_signed = is_signed;
     return NUMBER;
 }
 
 int process_real(int type) {
-    yylval.number.real = (long double)strtold(yytext, NULL);
+    yylval.number.real = strtold(yytext, NULL);
     yylval.number.aux_type = type;
     return NUMBER;
 }
