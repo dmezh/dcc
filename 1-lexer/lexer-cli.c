@@ -48,5 +48,5 @@ int main() {
     int t;
     while ((t=yylex()))
         printtok(t);
-    printf("EOF\n");
+    // printf("EOF\n");
 }
