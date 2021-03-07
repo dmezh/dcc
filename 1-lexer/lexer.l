@@ -190,5 +190,6 @@ unsigned char parse_char_safe(char* str, int* i) {
         print_context(1);
         fprintf(stderr, "numeric escape sequence out of range\n");
     }
+    if (c > 0xFF) c = 0xFF;
     return (unsigned char)c;
 }

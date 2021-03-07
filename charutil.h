@@ -29,7 +29,6 @@ long long int parse_char(char* str, int* i) {
                 newchar = strtol(str+(++(*i)), &newstr, 16);
                 if (newstr == str+(*i)) return -1;
                 *i = newstr - str;
-                if (newchar > 0xFF) newchar = 0xFF;
                 return newchar;
             default: // we'll give octal a try
                 ; // empty
@@ -37,7 +36,6 @@ long long int parse_char(char* str, int* i) {
                 sscanf(str+(*i), "%3o%n", (unsigned int*)&newchar, &chars_read);
                 if (!chars_read) return -1;
                 *i = *i + chars_read;
-                if (newchar > 0xFF) newchar = 0xFF;
                 return newchar;
         }
     } else {
