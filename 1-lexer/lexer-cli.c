@@ -39,7 +39,7 @@ void printtok(int token) {
 
 int main() {
     int t;
-    while (t=yylex())
+    while ((t=yylex()))
         printtok(t);
     printf("EOF\n");
 }
