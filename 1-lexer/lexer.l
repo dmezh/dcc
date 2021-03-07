@@ -121,42 +121,36 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
                                 }
 {INT}                           {   
                                     uint_parse();
-                                    yylval.number.integer = (int)yylval.number.integer;
                                     yylval.number.aux_type = s_INT;
                                     yylval.number.is_signed = 1;
                                     return NUMBER;
                                 }
 {INT}[Ll]                       {
                                     uint_parse();
-                                    yylval.number.integer = (long)yylval.number.integer;
                                     yylval.number.aux_type = s_LONG;
                                     yylval.number.is_signed = 1;
                                     return NUMBER;
                                 }
 {INT}(LL|ll)                    {
                                     uint_parse();
-                                    yylval.number.integer = (long long)yylval.number.integer;
                                     yylval.number.aux_type = s_LONGLONG;
                                     yylval.number.is_signed = 1;
                                     return NUMBER;
                                 }
 {INT}[Uu]                       {
                                     uint_parse();
-                                    yylval.number.integer = (unsigned int)yylval.number.integer;
                                     yylval.number.aux_type = s_INT;
                                     yylval.number.is_signed = 0;
                                     return NUMBER;
                                 }
 {INT}([Uu][Ll]|[Ll][Uu])        {   
                                     uint_parse();
-                                    yylval.number.integer = (unsigned long)yylval.number.integer;
                                     yylval.number.aux_type = s_LONG;
                                     yylval.number.is_signed = 0;
                                     return NUMBER;
                                 }
 {INT}([Uu](LL|ll)|(LL|ll)[Uu])  {   
                                     uint_parse();
-                                    yylval.number.integer = (unsigned long long)yylval.number.integer;
                                     yylval.number.aux_type = s_LONGLONG;
                                     yylval.number.is_signed = 0;
                                     return NUMBER;
