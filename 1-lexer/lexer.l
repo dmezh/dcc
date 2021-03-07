@@ -5,6 +5,7 @@
 %x ENDL
 %{
 #include "lexer.h"
+#include "charutil.h"
 YYSTYPE yylval;
 struct context context = {NULL, 0};
 %}
@@ -125,19 +126,17 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
 
 {STRING}                        {
                                     /* thanks to https://stackoverflow.com/questions/249791/regex-for-quoted-string-with-escaping-quotes */
-                                    // freed way later
                                     yylval.textlit.str = (char*)calloc(strlen(yytext+1), sizeof(char)); /* can't be longer than this */
                                     yylval.textlit.len = 0;
-                                    for (int i = 1; i<strlen(yytext)-1; i++) { /* skipping the first and last (") */
-                                        i = char_parse(i);
-                                    }
+                                    for (int i = 1; i<strlen(yytext)-1; ) /* skipping the first and last (") */
+                                        yylval.textlit.str[yylval.textlit.len++] = parse_char_safe(yytext, &i);
                                     return STRING;
                                 }
 {CHAR}                          {
-                                    // freed way later
                                     yylval.textlit.str = (char*)calloc(1, sizeof(char));
-                                    yylval.textlit.len = 0;
-                                    int chars_read = char_parse(1);
+                                    yylval.textlit.len = 1;
+                                    int chars_read = 0;
+                                    yylval.textlit.str[0] = parse_char_safe(yytext+1, &chars_read);
                                     if (strlen(yytext) - 2 != chars_read) { // minus the single quotes
                                         fprintf(stderr, "warning: character constant too long for its type\n");
                                     }
@@ -146,7 +145,6 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
 
 {PUNCT}                         { return yytext[0]; }
 [A-Za-z_][A-Za-z0-9_]*          {
-                                    // freed way later
                                     yylval.ident = strdup(yytext);
                                     return IDENT;
                                 }
@@ -182,55 +180,15 @@ void print_context(int warn) {
     fprintf(stderr, "%s - in %s at line %d: ", (warn ? "warning" : "Error"), FRIENDLYFN, context.lineno);
 }
 
-/* parse one char from yytext and write it to yylval */
-int char_parse(int i)
-{
-    unsigned long long newchar = 0; // helps us detect+warn about extremely long out-of-range hex escapes
-    if (yytext[i] == '\\') {
-        switch (yytext[++i])
-        {
-            case '\'': yylval.textlit.str[yylval.textlit.len++] = '\''; break;
-            case '\"': yylval.textlit.str[yylval.textlit.len++] = '\"'; break;
-            case '\?': yylval.textlit.str[yylval.textlit.len++] = '\?'; break;
-            case '\\': yylval.textlit.str[yylval.textlit.len++] = '\\'; break;
-            case 'a':  yylval.textlit.str[yylval.textlit.len++] = '\a'; break;
-            case 'b':  yylval.textlit.str[yylval.textlit.len++] = '\b'; break;
-            case 'f':  yylval.textlit.str[yylval.textlit.len++] = '\f'; break;
-            case 'n':  yylval.textlit.str[yylval.textlit.len++] = '\n'; break;
-            case 'r':  yylval.textlit.str[yylval.textlit.len++] = '\r'; break;
-            case 't':  yylval.textlit.str[yylval.textlit.len++] = '\t'; break;
-            case 'v':  yylval.textlit.str[yylval.textlit.len++] = '\v'; break;
-            case 'x':
-                ; // empty
-                char* newyytext = 0;
-                newchar = strtol(yytext+(++i), &newyytext, 16);
-                if (newyytext == yytext+i) goto badseq;
-                if (newchar > 0xFF) {
-                    print_context(1);
-                    fprintf(stderr, "hex escape sequence out of range\n");
-                }
-                yylval.textlit.str[yylval.textlit.len++] = (char)newchar;
-                i = newyytext - yytext - 1;
-                break;
-            default: // we'll give octal a try
-                ; // empty
-                int chars_read = 0;
-                sscanf(yytext+i, "%3o%n", (unsigned int*)&newchar, &chars_read);
-                if (!chars_read) goto badseq;
-                i = i + chars_read - 1;
-                if (newchar > 0xFF) {
-                    print_context(1);
-                    fprintf(stderr, "octal escape sequence out of range\n");
-                }
-                yylval.textlit.str[yylval.textlit.len++] = (char)newchar;
-                break;
-badseq:
-                print_context(0);
-                fprintf(stderr, "unrecognized escape sequence\n");
-                exit(5);       
-        }   
-    } else {
-        yylval.textlit.str[yylval.textlit.len++] = yytext[i];
+char parse_char_safe(char* str, int* i) {
+    int c = parse_char(str, i);
+    if (c < 0) {
+        print_context(0);
+        fprintf(stderr, "unrecognized escape sequence\n");
+        exit(5);
+    } else if (c > 0xFF) {
+        print_context(1);
+        fprintf(stderr, "numeric escape sequence out of range\n");
     }
-    return i;
+    return (char)c;
 }
