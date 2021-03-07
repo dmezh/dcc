@@ -7,8 +7,9 @@
 // returns -1 if invalid esc sequence
 // does not cast to char; handle over-length esc seqs at caller
 // pointer to i - pointer to new current pos in string
-long long int parse_char(char* str, int* i) {
+long long int parse_char(char* str, int* i, int* type) {
     long long int newchar = 0; // for obscenely long hex escapes
+    if (type) *type = 0; // 0 normal, 1 hex, 2 oct
     if (str[*i] == '\\') {
         switch (str[++(*i)])
         {
@@ -29,6 +30,7 @@ long long int parse_char(char* str, int* i) {
                 newchar = strtol(str+(++(*i)), &newstr, 16);
                 if (newstr == str+(*i)) return -1;
                 *i = newstr - str;
+                if (type) *type = 1;
                 return newchar;
             default: // we'll give octal a try
                 ; // empty
@@ -36,6 +38,7 @@ long long int parse_char(char* str, int* i) {
                 sscanf(str+(*i), "%3o%n", (unsigned int*)&newchar, &chars_read);
                 if (!chars_read) return -1;
                 *i = *i + chars_read;
+                if (type) *type = 2;
                 return newchar;
         }
     } else {

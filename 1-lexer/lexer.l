@@ -138,7 +138,8 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
                                     int chars_read = 0;
                                     yylval.charlit = (unsigned char)parse_char_safe(yytext+1, &chars_read);
                                     if (strlen(yytext) - 2 != chars_read) { // minus the single quotes
-                                        fprintf(stderr, "warning: character constant too long for its type\n");
+                                        print_context(1);
+                                        fprintf(stderr, "character constant too long for its type\n");
                                     }
                                     return CHARLIT;
                                 }
@@ -177,18 +178,19 @@ int process_real(int type) {
 }
 
 void print_context(int warn) {
-    fprintf(stderr, "%s - in %s at line %d: ", (warn ? "warning" : "Error"), FRIENDLYFN, context.lineno);
+    fprintf(stderr, "%s:%d %s: ", FRIENDLYFN, context.lineno, (warn ? "(warning)" : "Error"));
 }
 
 unsigned char parse_char_safe(char* str, int* i) {
-    long long int c = parse_char(str, i);
+    int type;
+    long long int c = parse_char(str, i, &type);
     if (c < 0) {
         print_context(0);
         fprintf(stderr, "unrecognized escape sequence\n");
         exit(5);
     } else if (c > 0xFF) {
         print_context(1);
-        fprintf(stderr, "numeric escape sequence out of range\n");
+        fprintf(stderr, "%s escape sequence out of range\n", type==1?"hex":"octal");
     }
     if (c > 0xFF) c = 0xFF;
     return (unsigned char)c;
