@@ -13,7 +13,8 @@ HEXSET  [0-9A-Fa-f]
 HEXEXP  ([Pp][+-]?[0-9]+)
 FLTEXP  ([Ee][+-]?[0-9]+)
 FLOAT   ((0x){HEXSET}+(\.){HEXSET}*{HEXEXP})|((0x){HEXSET}*(\.){HEXSET}+{HEXEXP})|((0x){HEXSET}+{HEXEXP})|([0-9]+(\.)[0-9]*{FLTEXP}?)|([0-9]*(\.)[0-9]+{FLTEXP}?)|([0-9]+{FLTEXP})
-INT     ((0x){HEXSET}+|[0-9]+)
+OCT     (0)[0-7]*
+INT     ((0x){HEXSET}+|[1-9][0-9]*)
 STRING  \"(?:[^"\\]|\\.)*\"
 CHAR    \'(?:[^'\\]|\\.)*\'
 PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
@@ -104,57 +105,23 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
 \<%             { return '{';       }
 \%>             { return '}';       }
 
-{FLOAT}                         {   
-                                    real_parse();
-                                    yylval.number.aux_type = s_DOUBLE;
-                                    return NUMBER;
-                                }
-{FLOAT}[Ff]                     {   
-                                    real_parse();
-                                    yylval.number.aux_type = s_FLOAT;
-                                    return NUMBER;
-                                }
-{FLOAT}[Ll]                     {   
-                                    real_parse();
-                                    yylval.number.aux_type = s_LONGDOUBLE;
-                                    return NUMBER;
-                                }
-{INT}                           {   
-                                    uint_parse();
-                                    yylval.number.aux_type = s_INT;
-                                    yylval.number.is_signed = 1;
-                                    return NUMBER;
-                                }
-{INT}[Ll]                       {
-                                    uint_parse();
-                                    yylval.number.aux_type = s_LONG;
-                                    yylval.number.is_signed = 1;
-                                    return NUMBER;
-                                }
-{INT}(LL|ll)                    {
-                                    uint_parse();
-                                    yylval.number.aux_type = s_LONGLONG;
-                                    yylval.number.is_signed = 1;
-                                    return NUMBER;
-                                }
-{INT}[Uu]                       {
-                                    uint_parse();
-                                    yylval.number.aux_type = s_INT;
-                                    yylval.number.is_signed = 0;
-                                    return NUMBER;
-                                }
-{INT}([Uu][Ll]|[Ll][Uu])        {   
-                                    uint_parse();
-                                    yylval.number.aux_type = s_LONG;
-                                    yylval.number.is_signed = 0;
-                                    return NUMBER;
-                                }
-{INT}([Uu](LL|ll)|(LL|ll)[Uu])  {   
-                                    uint_parse();
-                                    yylval.number.aux_type = s_LONGLONG;
-                                    yylval.number.is_signed = 0;
-                                    return NUMBER;
-                                }
+{FLOAT}                         {   return process_real(s_DOUBLE);          }
+{FLOAT}[Ff]                     {   return process_real(s_FLOAT);           }
+{FLOAT}[Ll]                     {   return process_real(s_LONGDOUBLE);      }
+
+{OCT}                           {   return process_oct (1, s_INT);          }
+{OCT}[Ll]                       {   return process_oct (1, s_LONG);         }
+{OCT}(LL|ll)                    {   return process_oct (1, s_LONGLONG);     }
+{OCT}[Uu]                       {   return process_oct (0, s_INT);          }
+{OCT}([Uu][Ll]|[Ll][Uu])        {   return process_oct (0, s_LONG);         }
+{OCT}([Uu](LL|ll)|(LL|ll)[Uu])  {   return process_oct (0, s_LONGLONG);     }
+
+{INT}                           {   return process_uint(1, s_INT);          }
+{INT}[Ll]                       {   return process_uint(1, s_LONG);         }
+{INT}(LL|ll)                    {   return process_uint(1, s_LONGLONG);     }
+{INT}[Uu]                       {   return process_uint(0, s_INT);          }
+{INT}([Uu][Ll]|[Ll][Uu])        {   return process_uint(0, s_LONG);         }
+{INT}([Uu](LL|ll)|(LL|ll)[Uu])  {   return process_uint(0, s_LONGLONG);     }
 
 {STRING}                        {
                                     /* thanks to https://stackoverflow.com/questions/249791/regex-for-quoted-string-with-escaping-quotes */
@@ -187,18 +154,28 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
 .                               { print_context(0); fprintf(stderr,"unknown token %s\n",yytext);   }
 %%
 
-void uint_parse() {
+int process_uint(int is_signed, int type) {
     if (strlen(yytext) > 2 && yytext[0] == '0' && yytext[1] == 'x') {
         yylval.number.integer=(unsigned long long)strtoull(yytext, NULL, 16);
-    } else if (yytext[0] == '0') {
-        yylval.number.integer=(unsigned long long)strtoull(yytext, NULL, 8);
     } else {
         yylval.number.integer=(unsigned long long)strtoull(yytext, NULL, 10);
     }
+    yylval.number.aux_type = type;
+    yylval.number.is_signed = is_signed;
+    return NUMBER;
 }
 
-void real_parse() {
+int process_oct(int is_signed, int type) {
+    yylval.number.integer=(unsigned long long)strtoull(yytext, NULL, 8);
+    yylval.number.aux_type = type;
+    yylval.number.is_signed = is_signed;
+    return NUMBER;
+}
+
+int process_real(int type) {
     yylval.number.real = (long double)strtold(yytext, NULL);
+    yylval.number.aux_type = type;
+    return NUMBER;
 }
 
 void print_context(int warn) {
