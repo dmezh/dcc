@@ -51,6 +51,7 @@ struct context {
 typedef union YYSTYPE {
     struct number number;
     struct textlit textlit;
+    unsigned char charlit;
     char* ident;
 } YYSTYPE;
 

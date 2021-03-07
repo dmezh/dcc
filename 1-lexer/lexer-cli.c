@@ -32,7 +32,7 @@ void printtok(int token) {
                 return;
             case CHARLIT:
                 printf("CHARLIT\t");
-                emit_char(yylval.textlit.str[0]);
+                emit_char(yylval.charlit);
                 printf("\n");
                 return;
             case IDENT:

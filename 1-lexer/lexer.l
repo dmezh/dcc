@@ -135,10 +135,8 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
                                     return STRING;
                                 }
 {CHAR}                          {
-                                    yylval.textlit.str = (char*)calloc(1, sizeof(char));
-                                    yylval.textlit.len = 1;
                                     int chars_read = 0;
-                                    yylval.textlit.str[0] = (unsigned char)parse_char_safe(yytext+1, &chars_read);
+                                    yylval.charlit = (unsigned char)parse_char_safe(yytext+1, &chars_read);
                                     if (strlen(yytext) - 2 != chars_read) { // minus the single quotes
                                         fprintf(stderr, "warning: character constant too long for its type\n");
                                     }
