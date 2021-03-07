@@ -6,7 +6,7 @@
 
 // returns -1 if invalid esc sequence
 // does not cast to char; handle over-length esc seqs at caller
-// pointer to i == pointer to new current pos in string
+// pointer to i - pointer to new current pos in string
 int parse_char(char* str, int* i) {
     int newchar = 0;
     if (str[*i] == '\\') {
@@ -40,6 +40,30 @@ int parse_char(char* str, int* i) {
         }
     } else {
         return str[(*i)++];
+    }
+}
+
+void emit_char(unsigned char c) {
+    switch (c)
+    {
+            case '\'': printf("\\\'"); break;
+            case '\"': printf("\\\""); break;
+            case '\?': printf("?");    break;
+            case '\\': printf("\\\\"); break;
+            case '\0': printf("\\0");  break;
+            case '\a': printf("\\a");  break;
+            case '\b': printf("\\b");  break;
+            case '\f': printf("\\f");  break;
+            case '\n': printf("\\n");  break;
+            case '\r': printf("\\r");  break;
+            case '\t': printf("\\t");  break;
+            case '\v': printf("\\v");  break;
+            default:
+                if (c >= 33 && c <= 126) {
+                    printf("%c", c);
+                } else {
+                    printf("\\%03o", c);
+                }
     }
 }
 

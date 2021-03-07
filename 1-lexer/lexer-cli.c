@@ -2,6 +2,7 @@
 #include "lex.yy.c"
 #include "tokens-string.h"
 #include "lexer.h"
+#include "charutil.h"
 
 void printtok(int token) {
     printf("%s\t%d\t", FRIENDLYFN, context.lineno);
@@ -23,10 +24,16 @@ void printtok(int token) {
                 printf("%s\n", int_types_str[yylval.number.aux_type]);
                 return;
             case STRING:
-                printf("STRING\t%s\n", yylval.textlit.str);
+                printf("STRING\t");
+                for (int i = 0; i<yylval.textlit.len; i++) {
+                    emit_char(yylval.textlit.str[i]);
+                }
+                printf("\n");
                 return;
             case CHARLIT:
-                printf("CHARLIT\t%c\n", yylval.textlit.str[0]);
+                printf("CHARLIT\t");
+                emit_char(yylval.textlit.str[0]);
+                printf("\n");
                 return;
             case IDENT:
                 printf("IDENT\t%s\n", yylval.ident);
