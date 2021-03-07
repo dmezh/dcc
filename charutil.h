@@ -7,8 +7,8 @@
 // returns -1 if invalid esc sequence
 // does not cast to char; handle over-length esc seqs at caller
 // pointer to i - pointer to new current pos in string
-int parse_char(char* str, int* i) {
-    int newchar = 0;
+long long int parse_char(char* str, int* i) {
+    long long int newchar = 0; // for obscenely long hex escapes
     if (str[*i] == '\\') {
         switch (str[++(*i)])
         {
