@@ -7,6 +7,7 @@
 #define FRIENDLYFN context.filename ? context.filename : "<stdin>"
 
 void uint_parse();
+void real_parse();
 int char_parse(int i); // i is position in yytext[] to parse
 void print_context(int warn);
 
@@ -45,7 +46,7 @@ struct context {
     int lineno;
 };
 
-typedef struct YYSTYPE {
+typedef union YYSTYPE {
     struct number number;
     struct textlit textlit;
     char* ident;

@@ -10,7 +10,9 @@ struct context context = {NULL, 0};
 %}
 
 HEXSET  [0-9A-Fa-f]
-FLOAT   ((0x){HEXSET}+(\.)({HEXSET}+)?)|([0-9]+(\.)([0-9]+)?)
+HEXEXP  ([Pp][+-]?[0-9]+)
+FLTEXP  ([Ee][+-]?[0-9]+)
+FLOAT   ((0x){HEXSET}+(\.){HEXSET}*{HEXEXP})|((0x){HEXSET}*(\.){HEXSET}+{HEXEXP})|((0x){HEXSET}+{HEXEXP})|([0-9]+(\.)[0-9]*{FLTEXP}?)|([0-9]*(\.)[0-9]+{FLTEXP}?)|([0-9]+{FLTEXP})
 INT     ((0x){HEXSET}+|[0-9]+)
 STRING  \"(?:[^"\\]|\\.)*\"
 CHAR    \'(?:[^'\\]|\\.)*\'
@@ -103,10 +105,20 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
 \%>             { return '}';       }
 
 {FLOAT}                         {   
-                                    fprintf(stderr, "gotcha\n");
+                                    real_parse();
+                                    yylval.number.aux_type = s_DOUBLE;
                                     return NUMBER;
                                 }
-
+{FLOAT}[Ff]                     {   
+                                    real_parse();
+                                    yylval.number.aux_type = s_FLOAT;
+                                    return NUMBER;
+                                }
+{FLOAT}[Ll]                     {   
+                                    real_parse();
+                                    yylval.number.aux_type = s_LONGDOUBLE;
+                                    return NUMBER;
+                                }
 {INT}                           {   
                                     uint_parse();
                                     yylval.number.integer = (int)yylval.number.integer;
@@ -152,7 +164,7 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
 
 {STRING}                        {
                                     /* thanks to https://stackoverflow.com/questions/249791/regex-for-quoted-string-with-escaping-quotes */
-                                    if (yylval.textlit.str) free(yylval.textlit.str);
+                                    // freed way later
                                     yylval.textlit.str = (char*)calloc(strlen(yytext+1), sizeof(char)); /* can't be longer than this */
                                     yylval.textlit.len = 0;
                                     for (int i = 1; i<strlen(yytext)-1; i++) { /* skipping the first and last (") */
@@ -161,7 +173,7 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
                                     return STRING;
                                 }
 {CHAR}                          {
-                                    if (yylval.textlit.str) free(yylval.textlit.str);
+                                    // freed way later
                                     yylval.textlit.str = (char*)calloc(1, sizeof(char));
                                     yylval.textlit.len = 0;
                                     int chars_read = char_parse(1);
@@ -173,7 +185,7 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
 
 {PUNCT}                         { return yytext[0]; }
 [A-Za-z_][A-Za-z0-9_]*          {
-                                    if (yylval.ident) free(yylval.ident);
+                                    // freed way later
                                     yylval.ident = strdup(yytext);
                                     return IDENT;
                                 }
@@ -189,6 +201,10 @@ void uint_parse() {
     } else {
         yylval.number.integer=(unsigned long long)strtoull(yytext, NULL, 10);
     }
+}
+
+void real_parse() {
+    yylval.number.real = (long double)strtold(yytext, NULL);
 }
 
 void print_context(int warn) {
@@ -228,7 +244,7 @@ int char_parse(int i)
             default: // we'll give octal a try
                 ; // empty
                 int chars_read = 0;
-                sscanf(yytext+i, "%3o%n", &newchar, &chars_read);
+                sscanf(yytext+i, "%3o%n", (unsigned int*)&newchar, &chars_read);
                 if (!chars_read) goto badseq;
                 i = i + chars_read - 1;
                 if (newchar > 0xFF) {

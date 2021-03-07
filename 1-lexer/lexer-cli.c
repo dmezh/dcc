@@ -14,11 +14,12 @@ void printtok(int token) {
     {
             case NUMBER:
                 printf("NUMBER\t");
-                if (yylval.number.aux_type > s_REAL)
-                    printf("REAL\t%f\t", yylval.number.real);
-                else 
+                if (yylval.number.aux_type > s_REAL) {
+                    printf("REAL\t%Lg\t", yylval.number.real);
+                } else {
                     printf("INTEGER\t%llu\t", yylval.number.integer);
-                if (!yylval.number.is_signed) printf("UNSIGNED,");
+                    if (!yylval.number.is_signed) printf("UNSIGNED,");
+                }
                 printf("%s\n", int_types_str[yylval.number.aux_type]);
                 return;
             case STRING:
@@ -38,7 +39,6 @@ void printtok(int token) {
 
 int main() {
     int t;
-    yylval.textlit.str = NULL; // ugly hack; fix pending yylval's fate
     while (t=yylex())
         printtok(t);
     printf("EOF\n");
