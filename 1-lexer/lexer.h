@@ -8,7 +8,7 @@
 
 int process_uint();
 int process_oct();
-void real_parse();
+int process_real();
 int char_parse(int i); // i is position in yytext[] to parse
 void print_context(int warn);
 
