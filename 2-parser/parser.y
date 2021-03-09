@@ -27,29 +27,19 @@
 %token FLOAT FOR GOTO IF INLINE INT LONG REGISTER RESTRICT RETURN SHORT SIGNED SIZEOF
 %token STATIC STRUCT SWITCH TYPEDEF UNION UNSIGNED VOID VOLATILE WHILE _BOOL _COMPLEX _IMAGINARY
 
+%type<astn_p> statement expr
+
 %token<number> NUMBER
 %token<strlit> STRING
-%token<charlit> CHARLIT
+%token<charlit> CHARLIT // todo: charlits
 %token<ident> IDENT
-%type<astn_p> constant
-%type<astn_p> ident
-%type<astn_p> stringlit
-%type<astn_p> statement
-%type<astn_p> expr
-%type<astn_p> array_subscript
-%type<astn_p> fncall
-%type<astn_p> select
-%type<astn_p> indsel
-%type<astn_p> postop
-%type<astn_p> primary_expr
-%type<astn_p> postfix_expr
-%type<astn_p> unary_expr
-%type<astn_p> sizeof
+%type<astn_p> primary_expr constant stringlit ident
+%type<astn_p> postfix_expr array_subscript fncall select indsel postop
+%type<astn_p> unary_expr unops sizeof
 %type<astn_p> cast_expr
 %type<astn_p> mult_expr
 %type<astn_p> addit_expr
 %type<astn_p> shift_expr
-%type<astn_p> unops
 
 %left '.'
 %left PLUSPLUS MINUSMINUS
