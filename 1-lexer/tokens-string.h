@@ -1,9 +1,9 @@
+// precarious situation with this now that we use parser.tab.h
+
 const char* tokens_str[] = {
     "TOKEOF",
-    "IDENT",
-    "CHARLIT",
-    "STRING",
-    "NUMBER",
+    "",
+    "",
     "INDSEL",
     "PLUSPLUS",
     "MINUSMINUS",
@@ -63,4 +63,7 @@ const char* tokens_str[] = {
     "_BOOL",
     "_COMPLEX",
     "_IMAGINARY",
+    "NUMBER",
+    "STRING",
+    "IDENT"
 };

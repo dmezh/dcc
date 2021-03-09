@@ -41,7 +41,7 @@ void printtok(int token) {
                 printf("IDENT\t%s\n", yylval.ident);
                 return;
             default:
-                printf("%s\n", token ? tokens_str[token - 256] : tokens_str[0]);
+                printf("%s\n", token ? tokens_str[token - 255] : tokens_str[0]);
     }
     return;
 }
