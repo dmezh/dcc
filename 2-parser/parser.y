@@ -46,7 +46,7 @@
 %type<astn_p> logand_expr
 %type<astn_p> logor_expr
 %type<astn_p> tern_expr
-%type<astn_p> s_assign
+%type<astn_p> assign
 
 %left '.'
 %left PLUSPLUS MINUSMINUS
@@ -56,9 +56,6 @@ statement:
     expr ';'                    {   $$=$1; print_ast($1); YYACCEPT; }
 ;
 
-expr:
-    s_assign
-;
 // ----------------------------------------------------------------------------
 // 6.5.1 Primary expressions
 primary_expr:
@@ -255,24 +252,30 @@ tern_expr:
                                         }
 ;
 // ----------------------------------------------------------------------------
-// 6.5.16.1 Assignment
-s_assign:
+// 6.5.16 Assignment
+assign:
     tern_expr
-|   unary_expr '=' s_assign     {   $$=astn_alloc(ASTN_ASSIGN);
+|   unary_expr '=' assign       {   $$=astn_alloc(ASTN_ASSIGN);
                                     $$->astn_assign.left=$1;
                                     $$->astn_assign.right=$3;
                                 }
-|   unary_expr TIMESEQ s_assign {   $$=cassign_alloc('*', $1, $3);  }
-|   unary_expr DIVEQ s_assign   {   $$=cassign_alloc('/', $1, $3);  }
-|   unary_expr MODEQ s_assign   {   $$=cassign_alloc('%', $1, $3);  }
-|   unary_expr PLUSEQ s_assign  {   $$=cassign_alloc('+', $1, $3);  }
-|   unary_expr MINUSEQ s_assign {   $$=cassign_alloc('-', $1, $3);  }
-|   unary_expr SHLEQ s_assign   {   $$=cassign_alloc(SHL, $1, $3);  }
-|   unary_expr SHREQ s_assign   {   $$=cassign_alloc(SHR, $1, $3);  }
-|   unary_expr ANDEQ s_assign   {   $$=cassign_alloc('&', $1, $3);  }
-|   unary_expr XOREQ s_assign   {   $$=cassign_alloc('^', $1, $3);  }
-|   unary_expr OREQ s_assign    {   $$=cassign_alloc('|', $1, $3);  }
+|   unary_expr TIMESEQ assign   {   $$=cassign_alloc('*', $1, $3);  }
+|   unary_expr DIVEQ assign     {   $$=cassign_alloc('/', $1, $3);  }
+|   unary_expr MODEQ assign     {   $$=cassign_alloc('%', $1, $3);  }
+|   unary_expr PLUSEQ assign    {   $$=cassign_alloc('+', $1, $3);  }
+|   unary_expr MINUSEQ assign   {   $$=cassign_alloc('-', $1, $3);  }
+|   unary_expr SHLEQ assign     {   $$=cassign_alloc(SHL, $1, $3);  }
+|   unary_expr SHREQ assign     {   $$=cassign_alloc(SHR, $1, $3);  }
+|   unary_expr ANDEQ assign     {   $$=cassign_alloc('&', $1, $3);  }
+|   unary_expr XOREQ assign     {   $$=cassign_alloc('^', $1, $3);  }
+|   unary_expr OREQ assign      {   $$=cassign_alloc('|', $1, $3);  }
 ;
+// ----------------------------------------------------------------------------
+// 6.5.17 Comma operator
+expr:
+    assign
+|   expr ',' assign             {   $$=binop_alloc(',', $1, $3);    }
+
 %%
 
 int main() {
