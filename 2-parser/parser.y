@@ -41,6 +41,7 @@
 %type<astn_p> addit_expr
 %type<astn_p> shift_expr
 %type<astn_p> relat_expr
+%type<astn_p> eqlty_expr
 
 %left '.'
 %left PLUSPLUS MINUSMINUS
@@ -51,7 +52,7 @@ statement:
 ;
 
 expr:
-    relat_expr
+    eqlty_expr
 ;
 
 // ----------------------------------------------------------------------------
@@ -197,6 +198,13 @@ relat_expr:
 |   relat_expr '>' shift_expr   {   $$=binop_alloc('>', $1, $3);    }
 |   relat_expr LTEQ shift_expr  {   $$=binop_alloc(LTEQ, $1, $3);   }
 |   relat_expr GTEQ shift_expr  {   $$=binop_alloc(GTEQ, $1, $3);   }
+
+// ----------------------------------------------------------------------------
+// 6.5.9 Equality operators
+eqlty_expr:
+    relat_expr
+|   eqlty_expr EQEQ relat_expr  {   $$=binop_alloc(EQEQ, $1, $3);   }
+|   eqlty_expr NOTEQ relat_expr {   $$=binop_alloc(NOTEQ, $1, $3);  }
 
 %%
 
