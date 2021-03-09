@@ -7,6 +7,7 @@
     int yylex(void);
     void yyerror (const char *s) { fprintf(stderr, "o! %s\n", s);}
     astn *unop_alloc(int op, astn* target);
+    astn *binop_alloc(int op, astn* left, astn* right);
 %}
 
 %define parse.trace
@@ -45,6 +46,7 @@
 %type<astn_p> unary_expr
 %type<astn_p> sizeof
 %type<astn_p> cast_expr
+%type<astn_p> mult_expr
 %type<astn_p> unops
 
 %left '.'
@@ -56,7 +58,7 @@ statement:
 ;
 
 expr:
-    cast_expr
+    mult_expr
 ;
 
 // ----------------------------------------------------------------------------
@@ -171,8 +173,22 @@ cast_expr:
 
 // ----------------------------------------------------------------------------
 // 6.5.5 Multiplicative operators
+mult_expr:
+    cast_expr
+|   mult_expr '*' cast_expr     {   $$=binop_alloc('*', $1, $3);    }
+|   mult_expr '/' cast_expr     {   $$=binop_alloc('/', $1, $3);    }
+|   mult_expr '%' cast_expr     {   $$=binop_alloc('%', $1, $3);    }
+
 
 %%
+
+astn *binop_alloc(int op, astn* left, astn* right) {
+    astn *n=astn_alloc(ASTN_BINOP);
+    n->astn_binop.op=op;
+    n->astn_binop.left=left;
+    n->astn_binop.right=right;
+    return n;
+}
 
 astn *unop_alloc(int op, astn* target) {
     astn *n=astn_alloc(ASTN_UNOP);
