@@ -8,6 +8,7 @@
     void yyerror (const char *s) { fprintf(stderr, "o! %s\n", s);}
     astn *unop_alloc(int op, astn* target);
     astn *binop_alloc(int op, astn* left, astn* right);
+    astn *cassign_alloc(int op, astn* left, astn* right);
 %}
 
 %define parse.trace
@@ -48,6 +49,7 @@
 %type<astn_p> logand_expr
 %type<astn_p> logor_expr
 %type<astn_p> tern_expr
+%type<astn_p> s_assign
 
 %left '.'
 %left PLUSPLUS MINUSMINUS
@@ -58,7 +60,7 @@ statement:
 ;
 
 expr:
-    tern_expr
+    s_assign
 ;
 // ----------------------------------------------------------------------------
 // 6.5.1 Primary expressions
@@ -196,12 +198,14 @@ relat_expr:
 |   relat_expr '>' shift_expr   {   $$=binop_alloc('>', $1, $3);    }
 |   relat_expr LTEQ shift_expr  {   $$=binop_alloc(LTEQ, $1, $3);   }
 |   relat_expr GTEQ shift_expr  {   $$=binop_alloc(GTEQ, $1, $3);   }
+;
 // ----------------------------------------------------------------------------
 // 6.5.9 Equality operators
 eqlty_expr:
     relat_expr
 |   eqlty_expr EQEQ relat_expr  {   $$=binop_alloc(EQEQ, $1, $3);   }
 |   eqlty_expr NOTEQ relat_expr {   $$=binop_alloc(NOTEQ, $1, $3);  }
+;
 // ----------------------------------------------------------------------------
 // 6.5.10 Bitwise AND operator
 bwand_expr:
@@ -224,13 +228,13 @@ bwor_expr:
 // 6.5.13 Logican AND operator
 logand_expr:
     bwor_expr
-|   logand_expr LOGAND bwor_expr{   $$=binop_alloc(LOGAND, $1, $3); }
+|   logand_expr LOGAND bwor_expr    {   $$=binop_alloc(LOGAND, $1, $3); }
 ;
 // ----------------------------------------------------------------------------
 // 6.5.14 Logical OR operator
 logor_expr:
     logand_expr
-|   logor_expr LOGOR logand_expr{   $$=binop_alloc(LOGOR, $1, $3);  }
+|   logor_expr LOGOR logand_expr    {   $$=binop_alloc(LOGOR, $1, $3);  }
 ;
 // ----------------------------------------------------------------------------
 // 6.5.15 Conditional (ternary) operator
@@ -241,7 +245,34 @@ tern_expr:
                                             $$->astn_tern.t_then=$3;
                                             $$->astn_tern.t_else=$5;
                                         }
+;
+// ----------------------------------------------------------------------------
+// 6.5.16.1 Assignment
+s_assign:
+    tern_expr
+|   unary_expr '=' s_assign     {   $$=astn_alloc(ASTN_ASSIGN);
+                                    $$->astn_assign.left=$1;
+                                    $$->astn_assign.right=$3;
+                                }
+|   unary_expr TIMESEQ s_assign {   $$=cassign_alloc('*', $1, $3);  }
+|   unary_expr DIVEQ s_assign   {   $$=cassign_alloc('/', $1, $3);  }
+|   unary_expr MODEQ s_assign   {   $$=cassign_alloc('%', $1, $3);  }
+|   unary_expr PLUSEQ s_assign  {   $$=cassign_alloc('+', $1, $3);  }
+|   unary_expr MINUSEQ s_assign {   $$=cassign_alloc('-', $1, $3);  }
+|   unary_expr SHLEQ s_assign   {   $$=cassign_alloc(SHL, $1, $3);  }
+|   unary_expr SHREQ s_assign   {   $$=cassign_alloc(SHR, $1, $3);  }
+|   unary_expr ANDEQ s_assign   {   $$=cassign_alloc('&', $1, $3);  }
+|   unary_expr XOREQ s_assign   {   $$=cassign_alloc('^', $1, $3);  }
+|   unary_expr OREQ s_assign    {   $$=cassign_alloc('|', $1, $3);  }
+;
 %%
+
+astn *cassign_alloc(int op, astn* left, astn* right) {
+    astn *n=astn_alloc(ASTN_ASSIGN);
+    n->astn_assign.left=left;
+    n->astn_assign.right=binop_alloc(op, left, right);
+    return n;
+}
 
 astn *binop_alloc(int op, astn* left, astn* right) {
     astn *n=astn_alloc(ASTN_BINOP);
@@ -260,5 +291,6 @@ astn *unop_alloc(int op, astn* target) {
 
 int main() {
     yydebug = 0;
-    yyparse();
+    while (1)
+        yyparse();
 }

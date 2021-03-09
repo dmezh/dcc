@@ -13,10 +13,10 @@ enum astn_type {
     ASTN_SELECT,
     ASTN_UNOP,
     ASTN_SIZEOF,
-    ASTN_TERN
+    ASTN_TERN,
 };
 
-struct astn_assign {
+struct astn_assign { // could have been binop but separated for clarity
     // struct astn* left, *right;
     struct astn *left, *right;
 };
