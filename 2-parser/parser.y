@@ -36,8 +36,11 @@
 %type<astn_p> array_subscript
 %type<astn_p> fncall
 %type<astn_p> select
+%type<astn_p> indsel
 %type<astn_p> primary_expr
 %type<astn_p> postfix_expr
+
+%left '.'
 %%
 
 expr:
@@ -59,7 +62,17 @@ postfix_expr:
 |   array_subscript
 |   fncall
 |   select
+|   indsel
 // DOING NOW: indsel
+;
+
+array_subscript:
+    postfix_expr '[' expr ']'   {   $$=astn_alloc(ASTN_DEREF);
+                                    $$->astn_deref.target=astn_alloc(ASTN_BINOP);
+                                    $$->astn_deref.target->astn_binop.op='+';
+                                    $$->astn_deref.target->astn_binop.left=$1;
+                                    $$->astn_deref.target->astn_binop.right=$3;
+                                }
 ;
 
 fncall:
@@ -70,20 +83,18 @@ fncall:
     // todo: with args
 
 select:
-    primary_expr '.' ident      {
+    postfix_expr '.' ident      {
                                     $$=astn_alloc(ASTN_SELECT);
                                     $$->astn_select.parent = $1;
                                     $$->astn_select.member = $3;
                                 }
 
-array_subscript:
-    postfix_expr '[' expr ']'   {   $$=astn_alloc(ASTN_DEREF);
-                                    $$->astn_deref.target=astn_alloc(ASTN_BINOP);
-                                    $$->astn_deref.target->astn_binop.op='+';
-                                    $$->astn_deref.target->astn_binop.left=$1;
-                                    $$->astn_deref.target->astn_binop.right=$3;
+indsel:
+    postfix_expr INDSEL ident   {   $$=astn_alloc(ASTN_SELECT);
+                                    $$->astn_select.parent=astn_alloc(ASTN_DEREF);
+                                    $$->astn_select.parent->astn_deref.target=$1;
+                                    $$->astn_select.member=$3;
                                 }
-;
 
 ident:
     IDENT                       {   $$=astn_alloc(ASTN_IDENT);
