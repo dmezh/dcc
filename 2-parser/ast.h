@@ -79,5 +79,8 @@ typedef struct astn {
 
 astn* astn_alloc();
 void print_ast(astn *n);
+astn *unop_alloc(int op, astn* target);
+astn *binop_alloc(int op, astn* left, astn* right);
+astn *cassign_alloc(int op, astn* left, astn* right);
 
 #endif

@@ -92,3 +92,25 @@ void print_ast(astn *n) {
             tabs--; return;
     }
 }
+
+astn *cassign_alloc(int op, astn* left, astn* right) {
+    astn *n=astn_alloc(ASTN_ASSIGN);
+    n->astn_assign.left=left;
+    n->astn_assign.right=binop_alloc(op, left, right);
+    return n;
+}
+
+astn *binop_alloc(int op, astn* left, astn* right) {
+    astn *n=astn_alloc(ASTN_BINOP);
+    n->astn_binop.op=op;
+    n->astn_binop.left=left;
+    n->astn_binop.right=right;
+    return n;
+}
+
+astn *unop_alloc(int op, astn* target) {
+    astn *n=astn_alloc(ASTN_UNOP);
+    n->astn_unop.op=op;
+    n->astn_unop.target=target;
+    return n;
+}
