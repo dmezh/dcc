@@ -43,6 +43,11 @@
 %type<astn_p> relat_expr
 %type<astn_p> eqlty_expr
 %type<astn_p> bwand_expr
+%type<astn_p> bwxor_expr
+%type<astn_p> bwor_expr
+%type<astn_p> logand_expr
+%type<astn_p> logor_expr
+%type<astn_p> tern_expr
 
 %left '.'
 %left PLUSPLUS MINUSMINUS
@@ -53,9 +58,8 @@ statement:
 ;
 
 expr:
-    bwand_expr
+    tern_expr
 ;
-
 // ----------------------------------------------------------------------------
 // 6.5.1 Primary expressions
 primary_expr:
@@ -83,7 +87,6 @@ stringlit:
                                     $$->astn_strlit.strlit=$1;
                                 }
 ;
-
 // ----------------------------------------------------------------------------
 // 6.5.2 Postfix operators
 postfix_expr:
@@ -131,7 +134,6 @@ postop:
     postfix_expr MINUSMINUS     {   $$=unop_alloc(MINUSMINUS, $1);  }
 |   postfix_expr PLUSPLUS       {   $$=unop_alloc(PLUSPLUS, $1);    }
 ;
-
 // ----------------------------------------------------------------------------
 // 6.5.3 Unary operators
 unary_expr:
@@ -158,14 +160,12 @@ sizeof:
                                 }
 // todo: sizeof abstract types
 ;
-
 // ----------------------------------------------------------------------------
 // 6.5.4 Cast operators
 cast_expr:
     unary_expr
 // todo: casts
 ;
-
 // ----------------------------------------------------------------------------
 // 6.5.5 Multiplicative operators
 mult_expr:
@@ -174,7 +174,6 @@ mult_expr:
 |   mult_expr '/' cast_expr     {   $$=binop_alloc('/', $1, $3);    }
 |   mult_expr '%' cast_expr     {   $$=binop_alloc('%', $1, $3);    }
 ;
-
 // ----------------------------------------------------------------------------
 // 6.5.6 Additive operators
 addit_expr:
@@ -182,7 +181,6 @@ addit_expr:
 |   addit_expr '+' mult_expr    {   $$=binop_alloc('+', $1, $3);    }
 |   addit_expr '-' mult_expr    {   $$=binop_alloc('-', $1, $3);    }
 ;
-
 // ----------------------------------------------------------------------------
 // 6.5.7 Bitwise shift operators
 shift_expr:
@@ -190,7 +188,6 @@ shift_expr:
 |   shift_expr SHL addit_expr   {   $$=binop_alloc(SHL, $1, $3);    }
 |   shift_expr SHR addit_expr   {   $$=binop_alloc(SHR, $1, $3);    }
 ;
-
 // ----------------------------------------------------------------------------
 // 6.5.8 Relational operators
 relat_expr:
@@ -199,20 +196,51 @@ relat_expr:
 |   relat_expr '>' shift_expr   {   $$=binop_alloc('>', $1, $3);    }
 |   relat_expr LTEQ shift_expr  {   $$=binop_alloc(LTEQ, $1, $3);   }
 |   relat_expr GTEQ shift_expr  {   $$=binop_alloc(GTEQ, $1, $3);   }
-
 // ----------------------------------------------------------------------------
 // 6.5.9 Equality operators
 eqlty_expr:
     relat_expr
 |   eqlty_expr EQEQ relat_expr  {   $$=binop_alloc(EQEQ, $1, $3);   }
 |   eqlty_expr NOTEQ relat_expr {   $$=binop_alloc(NOTEQ, $1, $3);  }
-
 // ----------------------------------------------------------------------------
 // 6.5.10 Bitwise AND operator
 bwand_expr:
     eqlty_expr
 |   bwand_expr '&' eqlty_expr   {   $$=binop_alloc('&', $1, $3);    }
-
+;
+// ----------------------------------------------------------------------------
+// 6.5.11 Bitwise XOR operator
+bwxor_expr:
+    bwand_expr
+|   bwxor_expr '^' bwand_expr   {   $$=binop_alloc('^', $1, $3);    }
+;
+// ----------------------------------------------------------------------------
+// 6.5.12 Bitwise OR operator
+bwor_expr:
+    bwxor_expr
+|   bwor_expr '|' bwxor_expr    {   $$=binop_alloc('|', $1, $3);    }
+;
+// ----------------------------------------------------------------------------
+// 6.5.13 Logican AND operator
+logand_expr:
+    bwor_expr
+|   logand_expr LOGAND bwor_expr{   $$=binop_alloc(LOGAND, $1, $3); }
+;
+// ----------------------------------------------------------------------------
+// 6.5.14 Logical OR operator
+logor_expr:
+    logand_expr
+|   logor_expr LOGOR logand_expr{   $$=binop_alloc(LOGOR, $1, $3);  }
+;
+// ----------------------------------------------------------------------------
+// 6.5.15 Conditional (ternary) operator
+tern_expr:
+    logor_expr
+|   logor_expr '?' expr ':' tern_expr   {   $$=astn_alloc(ASTN_TERN);
+                                            $$->astn_tern.cond=$1;
+                                            $$->astn_tern.t_then=$3;
+                                            $$->astn_tern.t_else=$5;
+                                        }
 %%
 
 astn *binop_alloc(int op, astn* left, astn* right) {

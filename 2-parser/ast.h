@@ -13,6 +13,7 @@ enum astn_type {
     ASTN_SELECT,
     ASTN_UNOP,
     ASTN_SIZEOF,
+    ASTN_TERN
 };
 
 struct astn_assign {
@@ -56,6 +57,10 @@ struct astn_sizeof {
     struct astn *target;
 };
 
+struct astn_tern {
+    struct astn *cond, *t_then, *t_else;
+};
+
 typedef struct astn {
     enum astn_type type;
     union {
@@ -68,6 +73,7 @@ typedef struct astn {
         struct astn_select astn_select;
         struct astn_unop astn_unop;
         struct astn_sizeof astn_sizeof;
+        struct astn_tern astn_tern;
     };
 } astn;
 
