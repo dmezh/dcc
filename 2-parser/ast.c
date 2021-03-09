@@ -13,7 +13,7 @@ astn* astn_alloc(enum astn_type type) {
 void print_ast(astn *n) {
     static int tabs = 0;     //     -> __ <- two spaces
     for (int i=0; i<tabs; i++) printf("  ");
-    if (!n) return; // if we just want to print tabs (ASTN_TERN)
+    if (!n) return; // if we just want to print tabs, pass NULL
     switch (n->type) {
 
 /**/    case ASTN_NUM:

@@ -33,21 +33,12 @@
 %type<astn_p> postfix_expr array_subscript fncall arg_list select indsel postop
 %type<astn_p> unary_expr unops sizeof
 %type<astn_p> cast_expr
-%type<astn_p> mult_expr
-%type<astn_p> addit_expr
-%type<astn_p> shift_expr
-%type<astn_p> relat_expr
-%type<astn_p> eqlty_expr
-%type<astn_p> bwand_expr
-%type<astn_p> bwxor_expr
-%type<astn_p> bwor_expr
-%type<astn_p> logand_expr
-%type<astn_p> logor_expr
+%type<astn_p> mult_expr addit_expr shift_expr
+%type<astn_p> relat_expr eqlty_expr
+%type<astn_p> bwand_expr bwxor_expr bwor_expr logand_expr logor_expr
 %type<astn_p> tern_expr
 %type<astn_p> assign
 
-%left '.'
-%left PLUSPLUS MINUSMINUS
 %%
 
 statement:
@@ -114,7 +105,6 @@ fncall:
                                     int argnum = list_measure($$->astn_fncall.args);
                                     $$->astn_fncall.argcount=argnum;
                                 }
-    // todo: with args
 ;
 
 arg_list:
