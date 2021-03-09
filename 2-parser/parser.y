@@ -47,6 +47,7 @@
 %type<astn_p> sizeof
 %type<astn_p> cast_expr
 %type<astn_p> mult_expr
+%type<astn_p> addit_expr
 %type<astn_p> unops
 
 %left '.'
@@ -58,7 +59,7 @@ statement:
 ;
 
 expr:
-    mult_expr
+    addit_expr
 ;
 
 // ----------------------------------------------------------------------------
@@ -178,6 +179,15 @@ mult_expr:
 |   mult_expr '*' cast_expr     {   $$=binop_alloc('*', $1, $3);    }
 |   mult_expr '/' cast_expr     {   $$=binop_alloc('/', $1, $3);    }
 |   mult_expr '%' cast_expr     {   $$=binop_alloc('%', $1, $3);    }
+;
+
+// ----------------------------------------------------------------------------
+// 6.5.6 Additive operators
+addit_expr:
+    mult_expr
+|   addit_expr '+' mult_expr    {   $$=binop_alloc('+', $1, $3);    }
+|   addit_expr '-' mult_expr    {   $$=binop_alloc('-', $1, $3);    }
+
 
 
 %%
