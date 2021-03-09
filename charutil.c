@@ -9,17 +9,17 @@ long long int parse_char(char* str, int* i, int* type) {
     if (str[*i] == '\\') {
         switch (str[++(*i)])
         {
-            case '\'': (*i)++; return '\''; break;
-            case '\"': (*i)++; return '\"'; break;
-            case '\?': (*i)++; return '\?'; break;
-            case '\\': (*i)++; return '\\'; break;
-            case 'a':  (*i)++; return '\a'; break;
-            case 'b':  (*i)++; return '\b'; break;
-            case 'f':  (*i)++; return '\f'; break;
-            case 'n':  (*i)++; return '\n'; break;
-            case 'r':  (*i)++; return '\r'; break;
-            case 't':  (*i)++; return '\t'; break;
-            case 'v':  (*i)++; return '\v'; break;
+            case '\'': (*i)++; return '\'';
+            case '\"': (*i)++; return '\"';
+            case '\?': (*i)++; return '\?';
+            case '\\': (*i)++; return '\\';
+            case 'a':  (*i)++; return '\a';
+            case 'b':  (*i)++; return '\b';
+            case 'f':  (*i)++; return '\f';
+            case 'n':  (*i)++; return '\n';
+            case 'r':  (*i)++; return '\r';
+            case 't':  (*i)++; return '\t';
+            case 'v':  (*i)++; return '\v';
             case 'x':
                 ; // empty
                 char* newstr = NULL;

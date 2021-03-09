@@ -30,7 +30,7 @@
 %token<strlit> STRING
 %token<ident> IDENT
 %type<astn_p> primary_expr constant stringlit ident
-%type<astn_p> postfix_expr array_subscript fncall select indsel postop
+%type<astn_p> postfix_expr array_subscript fncall arg_list select indsel postop
 %type<astn_p> unary_expr unops sizeof
 %type<astn_p> cast_expr
 %type<astn_p> mult_expr
@@ -51,7 +51,8 @@
 %%
 
 statement:
-    expr ';'                    {   $$=$1; print_ast($1); YYACCEPT; }
+    expr ';'                    {   print_ast($1); printf("\n");    }
+|   statement expr ';'          {   print_ast($1); printf("\n");    }
 ;
 
 // ----------------------------------------------------------------------------
@@ -104,10 +105,21 @@ array_subscript:
 fncall:
     postfix_expr '(' ')'        {   $$=astn_alloc(ASTN_FNCALL);
                                     $$->astn_fncall.fn=$1;
+                                    $$->astn_fncall.argcount=0;
                                     $$->astn_fncall.args=NULL;
+                                }
+|   postfix_expr '(' arg_list ')'   {   $$=astn_alloc(ASTN_FNCALL);
+                                    $$->astn_fncall.fn=$1;
+                                    $$->astn_fncall.args=$3;
+                                    int argnum = list_measure($$->astn_fncall.args);
+                                    $$->astn_fncall.argcount=argnum;
                                 }
     // todo: with args
 ;
+
+arg_list:
+    assign                      {   $$=list_alloc($1);          }
+|   arg_list ',' assign         {   $1=$$; list_append($3, $1); }
 
 select:
     postfix_expr '.' ident      {
@@ -135,13 +147,13 @@ unary_expr:
 |   unops
 |   PLUSPLUS unary_expr         {   astn *n=astn_alloc(ASTN_NUM);
                                     n->astn_num.number.integer=1;
-                                    n->astn_num.number.is_signed=0;
+                                    n->astn_num.number.is_signed=1;
                                     n->astn_num.number.aux_type=s_INT;
                                     $$=cassign_alloc('+', $2, n);
                                 }
 |   MINUSMINUS unary_expr       {   astn *n=astn_alloc(ASTN_NUM);
                                     n->astn_num.number.integer=1;
-                                    n->astn_num.number.is_signed=0;
+                                    n->astn_num.number.is_signed=1;
                                     n->astn_num.number.aux_type=s_INT;
                                     $$=cassign_alloc('-', $2, n);
                                 }
@@ -278,6 +290,5 @@ expr:
 
 int main() {
     yydebug = 0;
-    while (1)
-        yyparse();
+    yyparse();
 }

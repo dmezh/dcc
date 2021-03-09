@@ -15,12 +15,13 @@ void print_ast(astn *n) {
     for (int i=0; i<tabs; i++) printf("  ");
     if (!n) return; // if we just want to print tabs (ASTN_TERN)
     switch (n->type) {
-        case ASTN_NUM:
+
+/**/    case ASTN_NUM:
             if (n->astn_num.number.aux_type == s_CHARLIT) {
                 printf("CHARLIT: ");
                 emit_char(yylval.number.integer);
                 printf("\n");
-                return;
+                break;
             } else {
                 printf("CONSTANT (");
                 if (!n->astn_num.number.is_signed) printf("UNSIGNED ");
@@ -29,21 +30,25 @@ void print_ast(astn *n) {
                     printf("%llu\n", n->astn_num.number.integer);
                 else
                     printf("%Lg", n->astn_num.number.real);
-                return;
+                break;
             }
-        case ASTN_ASSIGN:
+
+/**/    case ASTN_ASSIGN:
             printf("ASSIGNMENT\n");
             tabs++;
                 print_ast(n->astn_assign.left);
                 print_ast(n->astn_assign.right);
-            tabs--; return;
-        case ASTN_IDENT:
+            tabs--; break;
+
+/**/    case ASTN_IDENT:
             printf("IDENT: %s\n", n->astn_ident.ident);
-            return;
-        case ASTN_STRLIT:
-            printf("STRING:\t%s\n", n->astn_strlit.strlit.str);
-            return;
-        case ASTN_BINOP:
+            break;
+
+/**/    case ASTN_STRLIT:
+            printf("STRING: %s\n", n->astn_strlit.strlit.str);
+            break;
+
+/**/    case ASTN_BINOP:
             printf("BINARY OP ");
             switch (n->astn_binop.op) {
                 case SHL:   printf("<<\n"); break;
@@ -59,17 +64,30 @@ void print_ast(astn *n) {
             tabs++;
                 print_ast(n->astn_binop.left);
                 print_ast(n->astn_binop.right);
-            tabs--; return;
-        case ASTN_FNCALL: // wip
-            printf("FNCALL\n");
-            return;
-        case ASTN_SELECT:
+            tabs--; break;
+
+/**/     case ASTN_FNCALL: // wip
+            printf("FNCALL w/ %d args\n", n->astn_fncall.argcount);
+            astn *arg = n->astn_fncall.args;
+            tabs++; 
+                print_ast(n->astn_fncall.fn);
+                for (int i=0; i<n->astn_fncall.argcount; i++) {
+                    print_ast(0); printf("ARG %d\n", i);
+                    tabs++;
+                        print_ast(arg->astn_list.me);
+                    tabs--;
+                    arg=arg->astn_list.next;
+                }
+            tabs--; break;
+
+/**/    case ASTN_SELECT:
             printf("SELECT\n");
             tabs++;
                 print_ast(n->astn_select.parent);
                 print_ast(n->astn_select.member);
-            tabs--; return;
-        case ASTN_UNOP:
+            tabs--; break;
+
+/**/    case ASTN_UNOP:
             printf("UNOP ");
             switch (n->astn_unop.op) {
                 case PLUSPLUS:      printf("POSTINC\n");                break;
@@ -80,13 +98,15 @@ void print_ast(astn *n) {
             }
             tabs++;
                 print_ast(n->astn_unop.target);
-            tabs--; return;
-        case ASTN_SIZEOF:
+            tabs--; break;
+
+/**/    case ASTN_SIZEOF:
             printf("SIZEOF\n");
             tabs++;
                 print_ast(n->astn_sizeof.target);
-            tabs--; return;
-        case ASTN_TERN: // 
+            tabs--; break;
+
+/**/    case ASTN_TERN:
             printf("TERNARY\n");
             tabs++;
                 print_ast(0); printf("IF:\n");
@@ -97,7 +117,10 @@ void print_ast(astn *n) {
 
                 print_ast(0); printf("ELSE:\n");
                 tabs++; print_ast(n->astn_tern.t_else); tabs--;
-            tabs--; return;
+            tabs--; break;
+
+/**/    case ASTN_LIST: // unused
+            print_ast(n->astn_list.me);
     }
 }
 
@@ -121,4 +144,26 @@ astn *unop_alloc(int op, astn* target) {
     n->astn_unop.op=op;
     n->astn_unop.target=target;
     return n;
+}
+
+astn *list_alloc(astn* me) {
+    astn *l=astn_alloc(ASTN_LIST);
+    l->astn_list.me=me;
+    l->astn_list.next=NULL;
+    return l;
+}
+//              (arg to add)(head of ll)
+astn *list_append(astn* new, astn* head) {
+    astn *n=list_alloc(new);
+    while (head->astn_list.next) head=head->astn_list.next;
+    head->astn_list.next = n;
+    return n;
+}
+
+int list_measure(astn* head) {
+    int c = 0;
+    while ((head=head->astn_list.next)) {
+        c++;
+    }
+    return c + 1;
 }

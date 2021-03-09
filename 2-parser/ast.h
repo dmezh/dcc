@@ -14,6 +14,7 @@ enum astn_type {
     ASTN_UNOP,
     ASTN_SIZEOF,
     ASTN_TERN,
+    ASTN_LIST
 };
 
 struct astn_assign { // could have been binop but separated for clarity
@@ -40,6 +41,7 @@ struct astn_binop {
 };
 
 struct astn_fncall {
+    int argcount;
     struct astn *fn;
     struct astn *args; // should be an arg_expr_list
 };
@@ -61,6 +63,10 @@ struct astn_tern {
     struct astn *cond, *t_then, *t_else;
 };
 
+struct astn_list {
+    struct astn *me, *next;
+};
+
 typedef struct astn {
     enum astn_type type;
     union {
@@ -74,13 +80,17 @@ typedef struct astn {
         struct astn_unop astn_unop;
         struct astn_sizeof astn_sizeof;
         struct astn_tern astn_tern;
+        struct astn_list astn_list;
     };
 } astn;
 
-astn* astn_alloc();
+astn* astn_alloc(enum astn_type type);
 void print_ast(astn *n);
 astn *unop_alloc(int op, astn* target);
 astn *binop_alloc(int op, astn* left, astn* right);
 astn *cassign_alloc(int op, astn* left, astn* right);
+int list_measure(astn* head);
+astn *list_alloc(astn* me);
+astn *list_append(astn* new, astn* head);
 
 #endif
