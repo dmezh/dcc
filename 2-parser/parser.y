@@ -43,7 +43,7 @@
 
 statement:
     expr ';'                    {   print_ast($1); printf("\n");    }
-|   statement expr ';'          {   print_ast($1); printf("\n");    }
+|   statement expr ';'          {   print_ast($2); printf("\n");    }
 ;
 
 // ----------------------------------------------------------------------------
