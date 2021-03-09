@@ -98,7 +98,7 @@ postfix_expr:
 |   select
 |   indsel
 |   postop
-// todo: ++, --, typename+init list
+// todo: typename+init list
 ;
 
 array_subscript:
@@ -141,7 +141,18 @@ postop:
 unary_expr:
     postfix_expr
 |   unops
-// todo: pre ++ and --
+|   PLUSPLUS unary_expr         {   astn *n=astn_alloc(ASTN_NUM);
+                                    n->astn_num.number.integer=1;
+                                    n->astn_num.number.is_signed=0;
+                                    n->astn_num.number.aux_type=s_INT;
+                                    $$=cassign_alloc('+', $2, n);
+                                }
+|   MINUSMINUS unary_expr       {   astn *n=astn_alloc(ASTN_NUM);
+                                    n->astn_num.number.integer=1;
+                                    n->astn_num.number.is_signed=0;
+                                    n->astn_num.number.aux_type=s_INT;
+                                    $$=cassign_alloc('-', $2, n);
+                                }
 // todo: casts
 |   sizeof
 // todo: _Alignof
