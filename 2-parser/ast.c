@@ -8,13 +8,10 @@ astn* astn_alloc(enum astn_type type) {
     return n;
 }
 
-void puttab(int t) {
-    for (int i=0; i<t; i++) putchar(' ');
-}
-
 void print_ast(astn *n) {
     static int tabs = 0;
-    puttab(tabs);
+    for (int i=0; i<tabs; i++) printf("  ");
+
     switch (n->type) {
         case ASTN_NUM:
             printf("CONSTANT (");
@@ -28,8 +25,8 @@ void print_ast(astn *n) {
         case ASTN_ASSIGN:
             printf("ASSIGNMENT\n");
             tabs++;
-            puttab(tabs); print_ast(n->astn_assign.left);
-            puttab(tabs); print_ast(n->astn_assign.right);
+            print_ast(n->astn_assign.left);
+            print_ast(n->astn_assign.right);
             tabs--; return;
         case ASTN_IDENT:
             printf("IDENT: %s\n", n->astn_ident.ident);
@@ -40,13 +37,13 @@ void print_ast(astn *n) {
         case ASTN_BINOP:
             printf("BINARY OP %c\n", n->astn_binop.op);
             tabs++;
-            puttab(tabs); print_ast(n->astn_binop.left);
-            puttab(tabs); print_ast(n->astn_binop.right);
+            print_ast(n->astn_binop.left);
+            print_ast(n->astn_binop.right);
             tabs--; return;
         case ASTN_DEREF:
             printf("DEREF\n");
             tabs++;
-            puttab(tabs); print_ast(n->astn_deref.target);
+            print_ast(n->astn_deref.target);
             tabs--; return;
         case ASTN_FNCALL: // wip
             printf("FNCALL\n");
@@ -54,8 +51,8 @@ void print_ast(astn *n) {
         case ASTN_SELECT:
             printf("SELECT\n");
             tabs++;
-            puttab(tabs); print_ast(n->astn_select.parent);
-            puttab(tabs); print_ast(n->astn_select.member);
+            print_ast(n->astn_select.parent);
+            print_ast(n->astn_select.member);
             tabs--; return;
     }
 }
