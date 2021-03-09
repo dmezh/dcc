@@ -3,7 +3,7 @@ enum tokens {
 	IDENT=257,	/* This is where yacc will put it */
 	CHARLIT,
 	STRING,
-	NUMBER,
+	NUMBER = 258,
 	INDSEL,
 	PLUSPLUS,
 	MINUSMINUS,

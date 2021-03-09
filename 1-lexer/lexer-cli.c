@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include "lex.yy.c"
 #include "tokens-string.h"
 #include "lexer.h"
 #include "charutil.h"
@@ -25,8 +24,8 @@ void printtok(int token) {
                 return;
             case STRING:
                 printf("STRING\t");
-                for (int i = 0; i<yylval.textlit.len; i++) {
-                    emit_char(yylval.textlit.str[i]);
+                for (int i = 0; i<yylval.strlit.len; i++) {
+                    emit_char(yylval.strlit.str[i]);
                 }
                 printf("\n");
                 return;

@@ -64,14 +64,3 @@ const char* tokens_str[] = {
     "_COMPLEX",
     "_IMAGINARY",
 };
-
-const char* int_types_str[] = {
-    "UNSPEC",
-    "INT",
-    "LONG",
-    "LONGLONG",
-    "REAL", // just used for logic, shouldn't be assigned
-    "FLOAT",
-    "DOUBLE",
-    "LONGDOUBLE",
-};

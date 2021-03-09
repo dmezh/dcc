@@ -128,10 +128,10 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
 
 {STRING}                        {
                                     /* thanks to https://stackoverflow.com/questions/249791/regex-for-quoted-string-with-escaping-quotes */
-                                    yylval.textlit.str = (char*)calloc(strlen(yytext+1), sizeof(char)); /* can't be longer than this */
-                                    yylval.textlit.len = 0;
+                                    yylval.strlit.str = (char*)calloc(strlen(yytext+1), sizeof(char)); /* can't be longer than this */
+                                    yylval.strlit.len = 0;
                                     for (int i = 1; i<strlen(yytext)-1; ) /* skipping the first and last (") */
-                                        yylval.textlit.str[yylval.textlit.len++] = (unsigned char)parse_char_safe(yytext, &i);
+                                        yylval.strlit.str[yylval.strlit.len++] = (unsigned char)parse_char_safe(yytext, &i);
                                     return STRING;
                                 }
 {CHAR}                          {
