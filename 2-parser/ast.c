@@ -29,7 +29,7 @@ void print_ast(astn *n) {
                 if (n->astn_num.number.aux_type < s_REAL)
                     printf("%llu\n", n->astn_num.number.integer);
                 else
-                    printf("%Lg", n->astn_num.number.real);
+                    printf("%Lg\n", n->astn_num.number.real);
                 break;
             }
 
