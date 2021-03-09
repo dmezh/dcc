@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "ast.h"
+#include "parser.tab.h"
 
 astn* astn_alloc(enum astn_type type) {
     astn *n = (astn*)malloc(sizeof(astn));
@@ -40,11 +41,6 @@ void print_ast(astn *n) {
             print_ast(n->astn_binop.left);
             print_ast(n->astn_binop.right);
             tabs--; return;
-        case ASTN_DEREF:
-            printf("DEREF\n");
-            tabs++;
-            print_ast(n->astn_deref.target);
-            tabs--; return;
         case ASTN_FNCALL: // wip
             printf("FNCALL\n");
             return;
@@ -53,6 +49,23 @@ void print_ast(astn *n) {
             tabs++;
             print_ast(n->astn_select.parent);
             print_ast(n->astn_select.member);
+            tabs--; return;
+        case ASTN_UNOP:
+            printf("UNOP ");
+            switch (n->astn_unop.op) {
+                case PLUSPLUS: printf("POSTINC\n"); break;
+                case MINUSMINUS: printf("POSTDEC\n"); break;
+                case '*': printf("DEREF\n"); break;
+                case '&': printf("ADDRESSOF\n"); break;
+                default: printf("%c\n", n->astn_unop.op); break;
+            }
+            tabs++;
+            print_ast(n->astn_unop.target);
+            tabs--; return;
+        case ASTN_SIZEOF:
+            printf("SIZEOF\n");
+            tabs++;
+            print_ast(n->astn_sizeof.target);
             tabs--; return;
     }
 }

@@ -6,6 +6,7 @@
     #include "ast.h"
     int yylex(void);
     void yyerror (const char *s) { fprintf(stderr, "o! %s\n", s);}
+    astn *unop_alloc(int op, astn* target);
 %}
 
 %define parse.trace
@@ -32,22 +33,33 @@
 %type<astn_p> constant
 %type<astn_p> ident
 %type<astn_p> stringlit
+%type<astn_p> statement
 %type<astn_p> expr
 %type<astn_p> array_subscript
 %type<astn_p> fncall
 %type<astn_p> select
 %type<astn_p> indsel
+%type<astn_p> postop
 %type<astn_p> primary_expr
 %type<astn_p> postfix_expr
+%type<astn_p> unary_expr
+%type<astn_p> sizeof
+%type<astn_p> cast_expr
+%type<astn_p> unops
 
 %left '.'
+%left PLUSPLUS MINUSMINUS
 %%
 
-expr:
-    postfix_expr                {   print_ast($1);  }
+statement:
+    expr ';'                    {   $$=$1; print_ast($1); YYACCEPT; }
 ;
-// 6.5.1 Primary expressions
 
+expr:
+    cast_expr
+;
+
+// 6.5.1 Primary expressions
 primary_expr:
     ident
 |   constant
@@ -63,15 +75,43 @@ postfix_expr:
 |   fncall
 |   select
 |   indsel
-// DOING NOW: indsel
+|   postop
+// todo: ++, --, typename+init list
+;
+
+unary_expr:
+    postfix_expr
+|   unops
+// todo: pre ++ and --
+// todo: casts
+|   sizeof
+;
+
+unops:
+    '&' cast_expr               {   $$=unop_alloc('&', $2); }
+|   '*' cast_expr               {   $$=unop_alloc('*', $2); }
+|   '+' cast_expr               {   $$=unop_alloc('+', $2); }
+|   '-' cast_expr               {   $$=unop_alloc('-', $2); }
+|   '!' cast_expr               {   $$=unop_alloc('!', $2); }
+|   '~' cast_expr               {   $$=unop_alloc('~', $2); }
+;
+
+cast_expr:
+    unary_expr
+;
+
+sizeof:
+    SIZEOF unary_expr           {   $$=astn_alloc(ASTN_SIZEOF);
+                                    $$->astn_sizeof.target=$2;
+                                }
+// todo: sizeof abstract types
 ;
 
 array_subscript:
-    postfix_expr '[' expr ']'   {   $$=astn_alloc(ASTN_DEREF);
-                                    $$->astn_deref.target=astn_alloc(ASTN_BINOP);
-                                    $$->astn_deref.target->astn_binop.op='+';
-                                    $$->astn_deref.target->astn_binop.left=$1;
-                                    $$->astn_deref.target->astn_binop.right=$3;
+    postfix_expr '[' expr ']'   {   $$=unop_alloc('*', astn_alloc(ASTN_BINOP));
+                                    $$->astn_unop.target->astn_binop.op='+';
+                                    $$->astn_unop.target->astn_binop.left=$1;
+                                    $$->astn_unop.target->astn_binop.right=$3;
                                 }
 ;
 
@@ -81,6 +121,7 @@ fncall:
                                     $$->astn_fncall.args=NULL;
                                 }
     // todo: with args
+;
 
 select:
     postfix_expr '.' ident      {
@@ -88,13 +129,19 @@ select:
                                     $$->astn_select.parent = $1;
                                     $$->astn_select.member = $3;
                                 }
+;
 
 indsel:
     postfix_expr INDSEL ident   {   $$=astn_alloc(ASTN_SELECT);
-                                    $$->astn_select.parent=astn_alloc(ASTN_DEREF);
-                                    $$->astn_select.parent->astn_deref.target=$1;
+                                    $$->astn_select.parent=unop_alloc('*', $1);
                                     $$->astn_select.member=$3;
                                 }
+;
+
+postop:
+    postfix_expr MINUSMINUS     {   $$=unop_alloc(MINUSMINUS, $1);  }
+|   postfix_expr PLUSPLUS       {   $$=unop_alloc(PLUSPLUS, $1);    }
+;
 
 ident:
     IDENT                       {   $$=astn_alloc(ASTN_IDENT);
@@ -115,6 +162,13 @@ stringlit:
 ;   
 
 %%
+
+astn *unop_alloc(int op, astn* target) {
+    astn *n=astn_alloc(ASTN_UNOP);
+    n->astn_unop.op=op;
+    n->astn_unop.target=target;
+    return n;
+}
 
 int main() {
     yydebug = 0;

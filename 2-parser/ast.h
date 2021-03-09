@@ -9,9 +9,10 @@ enum astn_type {
     ASTN_IDENT,
     ASTN_STRLIT,
     ASTN_BINOP,
-    ASTN_DEREF,
     ASTN_FNCALL,
     ASTN_SELECT,
+    ASTN_UNOP,
+    ASTN_SIZEOF,
 };
 
 struct astn_assign {
@@ -33,12 +34,8 @@ struct astn_strlit {
 };
 
 struct astn_binop {
-    char op;
+    int op;
     struct astn *left, *right;
-};
-
-struct astn_deref {
-    struct astn *target;
 };
 
 struct astn_fncall {
@@ -50,6 +47,15 @@ struct astn_select {
     struct astn *parent, *member;
 };
 
+struct astn_unop {
+    int op;
+    struct astn *target;
+};
+
+struct astn_sizeof {
+    struct astn *target;
+};
+
 typedef struct astn {
     enum astn_type type;
     union {
@@ -58,9 +64,10 @@ typedef struct astn {
         struct astn_ident astn_ident;
         struct astn_strlit astn_strlit;
         struct astn_binop astn_binop;
-        struct astn_deref astn_deref;
         struct astn_fncall astn_fncall;
         struct astn_select astn_select;
+        struct astn_unop astn_unop;
+        struct astn_sizeof astn_sizeof;
     };
 } astn;
 
