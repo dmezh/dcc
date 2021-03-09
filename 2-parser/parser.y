@@ -59,6 +59,7 @@ expr:
     cast_expr
 ;
 
+// ----------------------------------------------------------------------------
 // 6.5.1 Primary expressions
 primary_expr:
     ident
@@ -68,6 +69,25 @@ primary_expr:
 // the fuck is a generic selection?
 ;
 
+ident:
+    IDENT                       {   $$=astn_alloc(ASTN_IDENT);
+                                    $$->astn_ident.ident=$1;
+                                }
+;
+
+constant:
+    NUMBER                      {   $$=astn_alloc(ASTN_NUM);
+                                    $$->astn_num.number=$1;
+                                }
+;
+
+stringlit:
+    STRING                      {   $$=astn_alloc(ASTN_STRLIT);
+                                    $$->astn_strlit.strlit=$1;
+                                }
+;
+
+// ----------------------------------------------------------------------------
 // 6.5.2 Postfix operators
 postfix_expr:
     primary_expr
@@ -77,34 +97,6 @@ postfix_expr:
 |   indsel
 |   postop
 // todo: ++, --, typename+init list
-;
-
-unary_expr:
-    postfix_expr
-|   unops
-// todo: pre ++ and --
-// todo: casts
-|   sizeof
-;
-
-unops:
-    '&' cast_expr               {   $$=unop_alloc('&', $2); }
-|   '*' cast_expr               {   $$=unop_alloc('*', $2); }
-|   '+' cast_expr               {   $$=unop_alloc('+', $2); }
-|   '-' cast_expr               {   $$=unop_alloc('-', $2); }
-|   '!' cast_expr               {   $$=unop_alloc('!', $2); }
-|   '~' cast_expr               {   $$=unop_alloc('~', $2); }
-;
-
-cast_expr:
-    unary_expr
-;
-
-sizeof:
-    SIZEOF unary_expr           {   $$=astn_alloc(ASTN_SIZEOF);
-                                    $$->astn_sizeof.target=$2;
-                                }
-// todo: sizeof abstract types
 ;
 
 array_subscript:
@@ -143,23 +135,42 @@ postop:
 |   postfix_expr PLUSPLUS       {   $$=unop_alloc(PLUSPLUS, $1);    }
 ;
 
-ident:
-    IDENT                       {   $$=astn_alloc(ASTN_IDENT);
-                                    $$->astn_ident.ident=$1;
-                                }
+// ----------------------------------------------------------------------------
+// 6.5.3 Unary operators
+unary_expr:
+    postfix_expr
+|   unops
+// todo: pre ++ and --
+// todo: casts
+|   sizeof
+// todo: _Alignof
 ;
 
-constant:
-    NUMBER                      {   $$=astn_alloc(ASTN_NUM);
-                                    $$->astn_num.number=$1;
-                                }
+unops:
+    '&' cast_expr               {   $$=unop_alloc('&', $2); }
+|   '*' cast_expr               {   $$=unop_alloc('*', $2); }
+|   '+' cast_expr               {   $$=unop_alloc('+', $2); }
+|   '-' cast_expr               {   $$=unop_alloc('-', $2); }
+|   '!' cast_expr               {   $$=unop_alloc('!', $2); }
+|   '~' cast_expr               {   $$=unop_alloc('~', $2); }
 ;
 
-stringlit:
-    STRING                      {   $$=astn_alloc(ASTN_STRLIT);
-                                    $$->astn_strlit.strlit=$1;
+sizeof:
+    SIZEOF unary_expr           {   $$=astn_alloc(ASTN_SIZEOF);
+                                    $$->astn_sizeof.target=$2;
                                 }
-;   
+// todo: sizeof abstract types
+;
+
+// ----------------------------------------------------------------------------
+// 6.5.4 Cast operators
+cast_expr:
+    unary_expr
+// todo: casts
+;
+
+// ----------------------------------------------------------------------------
+// 6.5.5 Multiplicative operators
 
 %%
 
