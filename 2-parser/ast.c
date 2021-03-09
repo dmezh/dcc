@@ -40,6 +40,8 @@ void print_ast(astn *n) {
             switch (n->astn_binop.op) {
                 case SHL:   printf("<<\n"); break;
                 case SHR:   printf(">>\n"); break;
+                case LTEQ:  printf("<=\n"); break;
+                case GTEQ:  printf(">=\n"); break;
                 default:    printf("%c\n", n->astn_binop.op); break;
             }
             tabs++;
