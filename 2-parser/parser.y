@@ -48,6 +48,7 @@
 %type<astn_p> cast_expr
 %type<astn_p> mult_expr
 %type<astn_p> addit_expr
+%type<astn_p> shift_expr
 %type<astn_p> unops
 
 %left '.'
@@ -59,7 +60,7 @@ statement:
 ;
 
 expr:
-    addit_expr
+    shift_expr
 ;
 
 // ----------------------------------------------------------------------------
@@ -188,7 +189,12 @@ addit_expr:
 |   addit_expr '+' mult_expr    {   $$=binop_alloc('+', $1, $3);    }
 |   addit_expr '-' mult_expr    {   $$=binop_alloc('-', $1, $3);    }
 
-
+// ----------------------------------------------------------------------------
+// 6.5.7 Bitwise shift operators
+shift_expr:
+    addit_expr
+|   shift_expr SHL addit_expr   {   $$=binop_alloc(SHL, $1, $3);    }
+|   shift_expr SHR addit_expr   {   $$=binop_alloc(SHR, $1, $3);    }
 
 %%
 

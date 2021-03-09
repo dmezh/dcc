@@ -36,7 +36,12 @@ void print_ast(astn *n) {
             printf("STRING:\t%s\n", n->astn_strlit.strlit.str);
             return;
         case ASTN_BINOP:
-            printf("BINARY OP %c\n", n->astn_binop.op);
+            printf("BINARY OP ");
+            switch (n->astn_binop.op) {
+                case SHL:   printf("<<\n"); break;
+                case SHR:   printf(">>\n"); break;
+                default:    printf("%c\n", n->astn_binop.op); break;
+            }
             tabs++;
             print_ast(n->astn_binop.left);
             print_ast(n->astn_binop.right);
@@ -53,11 +58,11 @@ void print_ast(astn *n) {
         case ASTN_UNOP:
             printf("UNOP ");
             switch (n->astn_unop.op) {
-                case PLUSPLUS: printf("POSTINC\n"); break;
-                case MINUSMINUS: printf("POSTDEC\n"); break;
-                case '*': printf("DEREF\n"); break;
-                case '&': printf("ADDRESSOF\n"); break;
-                default: printf("%c\n", n->astn_unop.op); break;
+                case PLUSPLUS:      printf("POSTINC\n");                break;
+                case MINUSMINUS:    printf("POSTDEC\n");                break;
+                case '*':           printf("DEREF\n");                  break;
+                case '&':           printf("ADDRESSOF\n");              break;
+                default:            printf("%c\n", n->astn_unop.op);    break;
             }
             tabs++;
             print_ast(n->astn_unop.target);
