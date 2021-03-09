@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "ast.h"
 #include "parser.tab.h"
+#include "charutil.h"
 
 astn* astn_alloc(enum astn_type type) {
     astn *n = (astn*)malloc(sizeof(astn));
@@ -15,14 +16,21 @@ void print_ast(astn *n) {
     if (!n) return; // if we just want to print tabs (ASTN_TERN)
     switch (n->type) {
         case ASTN_NUM:
-            printf("CONSTANT (");
-            if (!n->astn_num.number.is_signed) printf("UNSIGNED ");
-            printf("%s): ", int_types_str[n->astn_num.number.aux_type]);
-            if (n->astn_num.number.aux_type < s_REAL)
-                printf("%llu\n", n->astn_num.number.integer);
-            else
-                printf("%Lg", n->astn_num.number.real);
-            return;
+            if (n->astn_num.number.aux_type == s_CHARLIT) {
+                printf("CHARLIT: ");
+                emit_char(yylval.number.integer);
+                printf("\n");
+                return;
+            } else {
+                printf("CONSTANT (");
+                if (!n->astn_num.number.is_signed) printf("UNSIGNED ");
+                printf("%s): ", int_types_str[n->astn_num.number.aux_type]);
+                if (n->astn_num.number.aux_type < s_REAL)
+                    printf("%llu\n", n->astn_num.number.integer);
+                else
+                    printf("%Lg", n->astn_num.number.real);
+                return;
+            }
         case ASTN_ASSIGN:
             printf("ASSIGNMENT\n");
             tabs++;

@@ -14,7 +14,6 @@
 {
     struct number number;
     struct strlit strlit;
-    unsigned char charlit;
     char* ident;
     astn* astn_p;
 }
@@ -29,7 +28,6 @@
 
 %token<number> NUMBER
 %token<strlit> STRING
-%token<charlit> CHARLIT // todo: charlits
 %token<ident> IDENT
 %type<astn_p> primary_expr constant stringlit ident
 %type<astn_p> postfix_expr array_subscript fncall select indsel postop

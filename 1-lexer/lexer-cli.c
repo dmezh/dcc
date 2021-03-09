@@ -13,25 +13,28 @@ void printtok(int token) {
     switch(token)
     {
             case NUMBER:
-                printf("NUMBER\t");
-                if (yylval.number.aux_type > s_REAL) {
-                    printf("REAL\t%Lg\t", yylval.number.real);
+                if (yylval.number.aux_type == s_CHARLIT) {
+                    printf("CHARLIT\t");
+                    emit_char(yylval.number.integer);
+                    printf("\n");
+                    return;
                 } else {
-                    printf("INTEGER\t%llu\t", yylval.number.integer);
-                    if (!yylval.number.is_signed) printf("UNSIGNED,");
+                    printf("NUMBER\t");
+                    if (yylval.number.aux_type > s_REAL) {
+                        printf("REAL\t%Lg\t", yylval.number.real);
+                    } 
+                    else {
+                        printf("INTEGER\t%llu\t", yylval.number.integer);
+                        if (!yylval.number.is_signed) printf("UNSIGNED,");
+                    }
+                    printf("%s\n", int_types_str[yylval.number.aux_type]);
+                    return;
                 }
-                printf("%s\n", int_types_str[yylval.number.aux_type]);
-                return;
             case STRING:
                 printf("STRING\t");
                 for (int i = 0; i<yylval.strlit.len; i++) {
                     emit_char(yylval.strlit.str[i]);
                 }
-                printf("\n");
-                return;
-            case CHARLIT:
-                printf("CHARLIT\t");
-                emit_char(yylval.charlit);
                 printf("\n");
                 return;
             case IDENT:
