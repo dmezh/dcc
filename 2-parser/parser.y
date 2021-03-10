@@ -173,29 +173,23 @@ cast_expr:
 // todo: casts
 ;
 // ----------------------------------------------------------------------------
-// 6.5.5 Multiplicative operators
+// 6.5.5-14 Binary (two-arg) operators
 mult_expr:
     cast_expr
 |   mult_expr '*' cast_expr     {   $$=binop_alloc('*', $1, $3);    }
 |   mult_expr '/' cast_expr     {   $$=binop_alloc('/', $1, $3);    }
 |   mult_expr '%' cast_expr     {   $$=binop_alloc('%', $1, $3);    }
 ;
-// ----------------------------------------------------------------------------
-// 6.5.6 Additive operators
 addit_expr:
     mult_expr
 |   addit_expr '+' mult_expr    {   $$=binop_alloc('+', $1, $3);    }
 |   addit_expr '-' mult_expr    {   $$=binop_alloc('-', $1, $3);    }
 ;
-// ----------------------------------------------------------------------------
-// 6.5.7 Bitwise shift operators
 shift_expr:
     addit_expr
 |   shift_expr SHL addit_expr   {   $$=binop_alloc(SHL, $1, $3);    }
 |   shift_expr SHR addit_expr   {   $$=binop_alloc(SHR, $1, $3);    }
 ;
-// ----------------------------------------------------------------------------
-// 6.5.8 Relational operators
 relat_expr:
     shift_expr
 |   relat_expr '<' shift_expr   {   $$=binop_alloc('<', $1, $3);    }
@@ -203,39 +197,27 @@ relat_expr:
 |   relat_expr LTEQ shift_expr  {   $$=binop_alloc(LTEQ, $1, $3);   }
 |   relat_expr GTEQ shift_expr  {   $$=binop_alloc(GTEQ, $1, $3);   }
 ;
-// ----------------------------------------------------------------------------
-// 6.5.9 Equality operators
 eqlty_expr:
     relat_expr
 |   eqlty_expr EQEQ relat_expr  {   $$=binop_alloc(EQEQ, $1, $3);   }
 |   eqlty_expr NOTEQ relat_expr {   $$=binop_alloc(NOTEQ, $1, $3);  }
 ;
-// ----------------------------------------------------------------------------
-// 6.5.10 Bitwise AND operator
 bwand_expr:
     eqlty_expr
 |   bwand_expr '&' eqlty_expr   {   $$=binop_alloc('&', $1, $3);    }
 ;
-// ----------------------------------------------------------------------------
-// 6.5.11 Bitwise XOR operator
 bwxor_expr:
     bwand_expr
 |   bwxor_expr '^' bwand_expr   {   $$=binop_alloc('^', $1, $3);    }
 ;
-// ----------------------------------------------------------------------------
-// 6.5.12 Bitwise OR operator
 bwor_expr:
     bwxor_expr
 |   bwor_expr '|' bwxor_expr    {   $$=binop_alloc('|', $1, $3);    }
 ;
-// ----------------------------------------------------------------------------
-// 6.5.13 Logican AND operator
 logand_expr:
     bwor_expr
 |   logand_expr LOGAND bwor_expr    {   $$=binop_alloc(LOGAND, $1, $3); }
 ;
-// ----------------------------------------------------------------------------
-// 6.5.14 Logical OR operator
 logor_expr:
     logand_expr
 |   logor_expr LOGOR logand_expr    {   $$=binop_alloc(LOGOR, $1, $3);  }
