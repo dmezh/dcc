@@ -1,1 +1,6 @@
 *.out
+lit/*
+1-lexer/lex
+1-lexer/lex.yy.c
+1-lexer/lecture-example/*
+2-parser/parser.tab*

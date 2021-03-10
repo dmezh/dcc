@@ -6,7 +6,7 @@
 	flex lexer.l
 
   test:
-	gcc -E ltests/*c | ./lex | diff -b ltests/ltest.out - | wc -l
+	gcc -E ltests/*c | ./lex | diff -b ltests/ltest.out -
 
   clean:
 	$(RM) lex lex.yy.c
