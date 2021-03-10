@@ -1,4 +1,4 @@
-name: Build standalone lexer
+name: Compile the compiler
 
 on:
   push:
@@ -10,7 +10,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: make
+    - name: make standalone parser
+      run: |
+        cd 2-parser
+        make
+    - name: make standalone lexer
       run: |
         cd 1-lexer
         make
