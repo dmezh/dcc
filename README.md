@@ -19,7 +19,7 @@ make
 You can also use `make test` to compare against a provided (from class) standard lexing test suite.
 
 ## Parser
-The [parser](2-parser/) is built with Bison parses tokenized input. Currently, expressions are supported (but not declarations, etc). The output is an abstract syntax tree, which is dumped to stdout when using the standaline parser. The parser directly calls the lexer, so feed it preprocessed C files or individual lines just like for the lexer.
+The [parser](2-parser/) is built with Bison parses tokenized input. Currently, expressions are supported (but not declarations, etc). The output is an abstract syntax tree, which is dumped to stdout when using the standalone parser. The parser directly calls the lexer, so feed it preprocessed C files or individual lines just like for the lexer.
 
 To build/use standalone:
 ```bash
