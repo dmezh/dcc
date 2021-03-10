@@ -53,7 +53,7 @@ primary_expr:
 |   constant
 |   stringlit
 |   '(' expr ')'                {   $$=$2;   }
-// the fuck is a generic selection?
+// generic selections yeah ok
 ;
 
 ident:
@@ -102,14 +102,13 @@ fncall:
 |   postfix_expr '(' arg_list ')'   {   $$=astn_alloc(ASTN_FNCALL);
                                     $$->astn_fncall.fn=$1;
                                     $$->astn_fncall.args=$3;
-                                    int argnum = list_measure($$->astn_fncall.args);
-                                    $$->astn_fncall.argcount=argnum;
+                                    $$->astn_fncall.argcount=list_measure($$->astn_fncall.args);
                                 }
 ;
 
 arg_list:
     assign                      {   $$=list_alloc($1);          }
-|   arg_list ',' assign         {   $1=$$; list_append($3, $1); }
+|   arg_list ',' assign         {   $$=$1; list_append($3, $1); }
 
 select:
     postfix_expr '.' ident      {
