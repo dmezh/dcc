@@ -18,9 +18,9 @@ void print_ast(astn *n) {
 
 /**/    case ASTN_NUM:
             if (n->astn_num.number.aux_type == s_CHARLIT) {
-                printf("CHARLIT: ");
-                emit_char(yylval.number.integer);
-                printf("\n");
+                printf("CHARLIT: '");
+                emit_char(n->astn_num.number.integer);
+                printf("'\n");
                 break;
             } else {
                 printf("CONSTANT (");
@@ -45,7 +45,11 @@ void print_ast(astn *n) {
             break;
 
 /**/    case ASTN_STRLIT:
-            printf("STRING: %s\n", n->astn_strlit.strlit.str);
+            printf("STRING: \"");
+            for (int i=0; i<n->astn_strlit.strlit.len; i++) {
+                emit_char(n->astn_strlit.strlit.str[i]);
+            }
+            printf("\"\n");
             break;
 
 /**/    case ASTN_BINOP:
