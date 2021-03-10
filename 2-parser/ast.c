@@ -124,7 +124,13 @@ void print_ast(astn *n) {
             tabs--; break;
 
 /**/    case ASTN_LIST: // unused
-            print_ast(n->astn_list.me);
+            printf("COMMALIST\n");
+            tabs++;
+            do {
+                print_ast(n->astn_list.me);
+            }
+            while (n=n->astn_list.next);
+            tabs--;
     }
 }
 

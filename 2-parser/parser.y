@@ -255,7 +255,10 @@ assign:
 // 6.5.17 Comma operator
 expr:
     assign
-|   expr ',' assign             {   $$=binop_alloc(',', $1, $3);    }
+|   expr ',' assign             {   if (!($1->type==ASTN_LIST))
+                                        $1=list_alloc($1);
+                                    $$=$1; list_append($3, $1);
+                                }
 
 %%
 
