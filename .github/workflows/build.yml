@@ -1,0 +1,21 @@
+name: Compile the compiler
+
+on:
+  push:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: make standalone parser
+      run: |
+        cd ~/2-parser
+        make
+    - name: make standalone lexer
+      run: |
+        cd ~/1-lexer
+        make
+        make test
