@@ -16,6 +16,6 @@ jobs:
         make
     - name: make standalone lexer
       run: |
-        cd ../1-lexer
+        cd 1-lexer
         make
         make test
