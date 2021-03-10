@@ -14,4 +14,4 @@ jobs:
       run: |
         cd 1-lexer
         make
-	make test
+        make test
