@@ -137,13 +137,13 @@ unary_expr:
 |   PLUSPLUS unary_expr         {   astn *n=astn_alloc(ASTN_NUM);
                                     n->astn_num.number.integer=1;
                                     n->astn_num.number.is_signed=1;
-                                    n->astn_num.number.aux_type=s_INT;
+                                    n->astn_num.number.aux_type=t_INT;
                                     $$=cassign_alloc('+', $2, n);
                                 }
 |   MINUSMINUS unary_expr       {   astn *n=astn_alloc(ASTN_NUM);
                                     n->astn_num.number.integer=1;
                                     n->astn_num.number.is_signed=1;
-                                    n->astn_num.number.aux_type=s_INT;
+                                    n->astn_num.number.aux_type=t_INT;
                                     $$=cassign_alloc('-', $2, n);
                                 }
 // todo: casts

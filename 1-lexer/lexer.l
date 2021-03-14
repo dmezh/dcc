@@ -108,23 +108,23 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
 \<%             { return '{';       }
 \%>             { return '}';       }
 
-{FLOAT}                         {   return process_real(s_DOUBLE);          }
-{FLOAT}[Ff]                     {   return process_real(s_FLOAT);           }
-{FLOAT}[Ll]                     {   return process_real(s_LONGDOUBLE);      }
+{FLOAT}                         {   return process_real(t_DOUBLE);          }
+{FLOAT}[Ff]                     {   return process_real(t_FLOAT);           }
+{FLOAT}[Ll]                     {   return process_real(t_LONGDOUBLE);      }
 
-{OCT}                           {   return process_oct (1, s_INT);          }
-{OCT}[Ll]                       {   return process_oct (1, s_LONG);         }
-{OCT}(LL|ll)                    {   return process_oct (1, s_LONGLONG);     }
-{OCT}[Uu]                       {   return process_oct (0, s_INT);          }
-{OCT}([Uu][Ll]|[Ll][Uu])        {   return process_oct (0, s_LONG);         }
-{OCT}([Uu](LL|ll)|(LL|ll)[Uu])  {   return process_oct (0, s_LONGLONG);     }
+{OCT}                           {   return process_oct (1, t_INT);          }
+{OCT}[Ll]                       {   return process_oct (1, t_LONG);         }
+{OCT}(LL|ll)                    {   return process_oct (1, t_LONGLONG);     }
+{OCT}[Uu]                       {   return process_oct (0, t_INT);          }
+{OCT}([Uu][Ll]|[Ll][Uu])        {   return process_oct (0, t_LONG);         }
+{OCT}([Uu](LL|ll)|(LL|ll)[Uu])  {   return process_oct (0, t_LONGLONG);     }
 
-{INT}                           {   return process_uint(1, s_INT);          }
-{INT}[Ll]                       {   return process_uint(1, s_LONG);         }
-{INT}(LL|ll)                    {   return process_uint(1, s_LONGLONG);     }
-{INT}[Uu]                       {   return process_uint(0, s_INT);          }
-{INT}([Uu][Ll]|[Ll][Uu])        {   return process_uint(0, s_LONG);         }
-{INT}([Uu](LL|ll)|(LL|ll)[Uu])  {   return process_uint(0, s_LONGLONG);     }
+{INT}                           {   return process_uint(1, t_INT);          }
+{INT}[Ll]                       {   return process_uint(1, t_LONG);         }
+{INT}(LL|ll)                    {   return process_uint(1, t_LONGLONG);     }
+{INT}[Uu]                       {   return process_uint(0, t_INT);          }
+{INT}([Uu][Ll]|[Ll][Uu])        {   return process_uint(0, t_LONG);         }
+{INT}([Uu](LL|ll)|(LL|ll)[Uu])  {   return process_uint(0, t_LONGLONG);     }
 
 {STRING}                        {
                                     /* thanks to https://stackoverflow.com/questions/249791/regex-for-quoted-string-with-escaping-quotes */
@@ -137,7 +137,7 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
 {CHAR}                          {
                                     int chars_read = 0;
                                     yylval.number.integer = (unsigned char)parse_char_safe(yytext+1, &chars_read);
-                                    yylval.number.aux_type = s_CHARLIT;
+                                    yylval.number.aux_type = t_CHARLIT;
                                     if (strlen(yytext) - 2 != chars_read) { // minus the single quotes
                                         print_context(1);
                                         fprintf(stderr, "character constant too long for its type\n");
