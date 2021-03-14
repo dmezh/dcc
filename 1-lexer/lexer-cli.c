@@ -13,14 +13,14 @@ void printtok(int token) {
     switch(token)
     {
             case NUMBER:
-                if (yylval.number.aux_type == t_CHARLIT) {
+                if (yylval.number.aux_type == s_CHARLIT) {
                     printf("CHARLIT\t");
                     emit_char(yylval.number.integer);
                     printf("\n");
                     return;
                 } else {
                     printf("NUMBER\t");
-                    if (yylval.number.aux_type > t_REAL) {
+                    if (yylval.number.aux_type > s_REAL) {
                         printf("REAL\t%Lg\t", yylval.number.real);
                     } 
                     else {

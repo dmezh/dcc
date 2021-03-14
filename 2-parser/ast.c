@@ -17,7 +17,7 @@ void print_ast(astn *n) {
     switch (n->type) {
 
 /**/    case ASTN_NUM:
-            if (n->astn_num.number.aux_type == t_CHARLIT) {
+            if (n->astn_num.number.aux_type == s_CHARLIT) {
                 printf("CHARLIT: '");
                 emit_char(n->astn_num.number.integer);
                 printf("'\n");
@@ -26,7 +26,7 @@ void print_ast(astn *n) {
                 printf("CONSTANT (");
                 if (!n->astn_num.number.is_signed) printf("UNSIGNED ");
                 printf("%s): ", int_types_str[n->astn_num.number.aux_type]);
-                if (n->astn_num.number.aux_type < t_REAL)
+                if (n->astn_num.number.aux_type < s_REAL)
                     printf("%llu\n", n->astn_num.number.integer);
                 else
                     printf("%Lg\n", n->astn_num.number.real);

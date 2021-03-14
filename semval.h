@@ -2,15 +2,15 @@
 #define SEMVAL_H
 
 enum int_types {
-    t_UNSPEC,
-    t_CHARLIT,
-    t_INT,
-    t_LONG,
-    t_LONGLONG,
-    t_REAL, // just used for logic, shouldn't be assigned
-    t_FLOAT,
-    t_DOUBLE,
-    t_LONGDOUBLE,
+    s_UNSPEC,
+    s_CHARLIT,
+    s_INT,
+    s_LONG,
+    s_LONGLONG,
+    s_REAL, // just used for logic, shouldn't be assigned
+    s_FLOAT,
+    s_DOUBLE,
+    s_LONGDOUBLE,
 };
 
 static const char* int_types_str[] = {
