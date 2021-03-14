@@ -1,6 +1,10 @@
+.vscode
 *.out
 lit/*
 1-lexer/lex
-1-lexer/lex.yy.c
-1-lexer/lecture-example/*
+1-lexer/lex.yy.*
+1-lexer/lecture_example/*
 2-parser/parser.tab*
+2-parser/parse
+2-parser/parser.output
+*p-test*.c
