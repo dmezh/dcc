@@ -1,6 +1,6 @@
 # build cli parser
   all: clean parser lexer
-	gcc parser.tab.c ast.c symtab.c ../1-lexer/lex.yy.c ../*.c -I../ -o parse -Wpedantic -std=gnu11
+	gcc parser.tab.c ast.c symtab.c ../1-lexer/lex.yy.c ../*.c -I../ -o parse -Wpedantic -Wall -Wextra -std=gnu11
 
   lexer: ../1-lexer/lexer.l
 	flex -o ../1-lexer/lex.yy.c ../1-lexer/lexer.l

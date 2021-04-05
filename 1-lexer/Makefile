@@ -1,6 +1,6 @@
 # build cli lexer
   all: clean lexer lexer-cli.c
-	gcc lexer-cli.c lex.yy.c ../charutil.c -o lex -std=gnu99 -I../
+	gcc lexer-cli.c lex.yy.c ../charutil.c ../semval.c -o lex -Wall -Wextra -Wpedantic -std=gnu11 -I../
 
   lexer: lexer.l
 	flex lexer.l

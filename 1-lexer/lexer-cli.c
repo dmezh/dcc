@@ -1,7 +1,11 @@
+#include <stdbool.h>
 #include <stdio.h>
-#include "tokens-string.h"
-#include "lexer.h"
+
+#include "../2-parser/parser.tab.h"
 #include "charutil.h"
+#include "lexer.h"
+#include "semval.h"
+#include "tokens-string.h"
 
 void printtok(int token) {
     printf("%s\t%d\t", FRIENDLYFN, context.lineno);

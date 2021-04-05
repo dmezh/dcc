@@ -1,8 +1,10 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include "ast.h"
-#include "parser.tab.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "charutil.h"
+#include "parser.tab.h"
 #include "util.h"
 
 astn* astn_alloc(enum astn_type type) {

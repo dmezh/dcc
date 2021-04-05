@@ -1,6 +1,8 @@
 #ifndef SEMVAL_H
 #define SEMVAL_H
 
+#include <stdbool.h>
+
 enum int_types {
     s_UNSPEC,
     s_CHARLIT,
@@ -13,23 +15,15 @@ enum int_types {
     s_LONGDOUBLE,
 };
 
-static const char* int_types_str[] = {
-    "UNSPEC",
-    "CHARLIT",
-    "INT",
-    "LONG",
-    "LONGLONG",
-    "REAL", // just used for logic, shouldn't be assigned
-    "FLOAT",
-    "DOUBLE",
-    "LONGDOUBLE",
-};
+extern const char* int_types_str[];
 
 struct number {
-    unsigned long long integer;
-    long double real;
-    int aux_type;
-    int is_signed;
+    union {
+        unsigned long long integer;
+        long double real;
+    };
+    enum int_types aux_type;
+    bool is_signed;
 };
 
 struct strlit {

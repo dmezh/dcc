@@ -1,8 +1,9 @@
+#include "util.h"
+
+#include <features.h> // for __GLIBC__; I'm pretty sure stdio or something includes this anyway
+#include <execinfo.h> // for backtrace
 #include <stdio.h>
 #include <stdlib.h>
-#include <features.h> // for __GLIBC__; I'm pretty sure stdio or something includes this anyway
-#include <execinfo.h>
-#include "util.h"
 
 void *safe_malloc(size_t size) {
     void *m = malloc(size);

@@ -1,9 +1,10 @@
 // basic character utilities
+#include "charutil.h"
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-long long int parse_char(char* str, int* i, int* type) {
+long long int parse_char(char* str, size_t* i, int* type) {
     long long int newchar = 0; // for obscenely long hex escapes
     if (type) *type = 0; // 0 normal, 1 hex, 2 oct
     if (str[*i] == '\\') {

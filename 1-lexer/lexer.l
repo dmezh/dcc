@@ -1,11 +1,26 @@
 /* tidy lexer */
 
 %option noyywrap
+/* we don't use these, disable or else -Wpedantic is upset */
+%option nounput
+%option noinput
 %x FILENAME
 %x ENDL
 %{
 #include "lexer.h"
+
+#include <stdbool.h>
+
+#include "../2-parser/ast.h"
+#include "../2-parser/parser.tab.h"
 #include "charutil.h"
+#include "semval.h"
+
+static int process_uint(bool is_signed, enum int_types type);
+static int process_oct(bool is_signed, enum int_types type);
+static int process_real(enum int_types type);
+static unsigned char parse_char_safe(char* str, size_t* i);
+
 YYSTYPE yylval;
 struct context context = {NULL, 1};
 %}
@@ -130,12 +145,12 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
                                     /* thanks to https://stackoverflow.com/questions/249791/regex-for-quoted-string-with-escaping-quotes */
                                     yylval.strlit.str = (char*)calloc(strlen(yytext+1), sizeof(char)); /* can't be longer than this */
                                     yylval.strlit.len = 0;
-                                    for (int i = 1; i<strlen(yytext)-1; ) /* skipping the first and last (") */
+                                    for (size_t i = 1; i<strlen(yytext)-1; ) /* skipping the first and last (") */
                                         yylval.strlit.str[yylval.strlit.len++] = (unsigned char)parse_char_safe(yytext, &i);
                                     return STRING;
                                 }
 {CHAR}                          {
-                                    int chars_read = 0;
+                                    size_t chars_read = 0;
                                     yylval.number.integer = (unsigned char)parse_char_safe(yytext+1, &chars_read);
                                     yylval.number.aux_type = s_CHARLIT;
                                     if (strlen(yytext) - 2 != chars_read) { // minus the single quotes
@@ -154,7 +169,7 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
 .                               { print_context(0); fprintf(stderr,"unknown token %s\n",yytext);   }
 %%
 
-int process_uint(int is_signed, int type) {
+static int process_uint(bool is_signed, enum int_types type) {
     if (strlen(yytext) > 2 && yytext[0] == '0' && yytext[1] == 'x') {
         yylval.number.integer = strtoull(yytext, NULL, 16);
     } else {
@@ -165,24 +180,24 @@ int process_uint(int is_signed, int type) {
     return NUMBER;
 }
 
-int process_oct(int is_signed, int type) {
+static int process_oct(bool is_signed, enum int_types type) {
     yylval.number.integer = strtoull(yytext, NULL, 8);
     yylval.number.aux_type = type;
     yylval.number.is_signed = is_signed;
     return NUMBER;
 }
 
-int process_real(int type) {
+static int process_real(enum int_types type) {
     yylval.number.real = strtold(yytext, NULL);
     yylval.number.aux_type = type;
     return NUMBER;
 }
 
-void print_context(int warn) {
+void print_context(bool warn) {
     fprintf(stderr, "%s:%d %s: ", FRIENDLYFN, context.lineno, (warn ? "(warning)" : "Error"));
 }
 
-unsigned char parse_char_safe(char* str, int* i) {
+static unsigned char parse_char_safe(char* str, size_t* i) {
     int type;
     long long int c = parse_char(str, i, &type);
     if (c < 0) {

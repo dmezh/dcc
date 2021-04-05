@@ -1,9 +1,12 @@
 /* parser */
 
+%code requires {
+    #include "ast.h"
+    #include "semval.h"
+}
+
 %{
     #include <stdio.h>
-    #include "semval.h"
-    #include "ast.h"
     int yylex(void);
     void yyerror (const char *s) { fprintf(stderr, "o! %s\n", s);}
 %}
