@@ -3,9 +3,10 @@
 #include "ast.h"
 #include "parser.tab.h"
 #include "charutil.h"
+#include "util.h"
 
 astn* astn_alloc(enum astn_type type) {
-    astn *n = (astn*)malloc(sizeof(astn));
+    astn *n = (astn*)safe_malloc(sizeof(astn));
     n->type = type;
     return n;
 }
