@@ -31,7 +31,7 @@ bool st_insert(char* ident) {
     if (st_lookup(ident)) return false;
     st_entry* new = safe_malloc(sizeof(st_entry));
     new->ident = ident;
-    
+
     if (!current_scope->first) { // currently-empty symtab
         current_scope->first = new;
         current_scope->last = new;

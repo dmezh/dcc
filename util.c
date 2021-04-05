@@ -44,4 +44,4 @@ void die(char* msg) {
     #endif
 
     abort();
-} 
+}
