@@ -24,6 +24,7 @@ typedef struct st_entry {
     char* ident;
     astn* type;
     enum namespaces ns;
+    bool has_init;
     union { // yeah we'll just copy initializers - avoids entangling us with the AST
         struct number numinit;
         struct strlit strinit;
@@ -72,6 +73,9 @@ typedef struct symtab {
 
 st_entry* st_lookup(char* ident);
 bool st_insert(char* ident);
+void new_scope(enum scope_types scope_type);
+void pop_scope();
+void destroy_symtab(symtab* target);
 void st_dump_single();
 
 #endif
