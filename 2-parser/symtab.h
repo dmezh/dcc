@@ -73,7 +73,7 @@ typedef struct symtab {
 
 extern symtab* current_scope;
 
-st_entry* st_lookup(char* ident);
+st_entry* st_lookup(const char* ident);
 bool st_insert(char* ident);
 void new_scope(enum scope_types scope_type);
 void pop_scope();

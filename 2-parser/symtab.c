@@ -22,7 +22,7 @@ symtab* current_scope = &root_symtab;
  *  //todo: walk the scope stack, not just current scope
  *  //todo: namespace stuff
  */
-st_entry* st_lookup(char* ident) {
+st_entry* st_lookup(const char* ident) {
     st_entry* cur = current_scope->first;
     while (cur) {   // works fine for first being NULL / empty symtab
         if (!strcmp(ident, cur->ident))
@@ -37,19 +37,20 @@ st_entry* st_lookup(char* ident) {
  *  return:
  *          true  - success
  *          false - ident already in current symtab
+ *  //todo: set type, namespace, initializer stuff
  */
 bool st_insert(char* ident) {
     if (st_lookup(ident)) return false;
     st_entry *new = safe_malloc(sizeof(st_entry));
     new->ident = ident;
+    new->next = NULL;
     if (!current_scope->first) { // currently-empty symtab
         current_scope->first = new;
-        current_scope->first->next = NULL;
         current_scope->last = new;
-        return true;
+    } else {
+        current_scope->last->next = new; // previous past will point to new last
+        current_scope->last = new;
     }
-    current_scope->last->next = new; // previous past will point to new last
-    current_scope->last = new;
     return true;
 }
 
@@ -82,17 +83,20 @@ void pop_scope() {
 }
 
 /*
- * Destroy symbol table, freeing all st_entry, but not their .type or .ident members
- * If root scope, just free the entries (since symtab itself is static)
+ *  Destroy symbol table, freeing all st_entry, but not their .type or .ident members
+ *  If root scope, just free the entries (since symtab itself is static)
  */
 void destroy_symtab(symtab* target) {
     // free all the entries first
-    st_entry* next = target->first->next;
+    st_entry *next = target->first->next;
     for (st_entry *e=target->first; e!=NULL; e=next) {
         next = e->next;
         free(e);
     }
-    if (target != &root_symtab) {
+    if (target == &root_symtab) { // in case you accidentally reuse root_symtab after this
+        target->first = NULL;     //                            but seriously please don't
+        target->last = NULL;
+    } else {
         free(target);
     }
 }
