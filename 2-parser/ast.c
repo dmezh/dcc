@@ -49,7 +49,7 @@ void print_ast(const astn *n) {
 
 /**/    case ASTN_STRLIT:
             printf("STRING: \"");
-            for (int i=0; i<n->astn_strlit.strlit.len; i++) {
+            for (size_t i=0; i<n->astn_strlit.strlit.len; i++) {
                 emit_char(n->astn_strlit.strlit.str[i]);
             }
             printf("\"\n");

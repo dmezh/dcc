@@ -2,6 +2,7 @@
 #define SEMVAL_H
 
 #include <stdbool.h>
+#include <stddef.h>
 
 enum int_types {
     s_UNSPEC,
@@ -28,7 +29,7 @@ struct number {
 
 struct strlit {
     char* str;
-    int len;
+    size_t len;
 };
 
 #endif
