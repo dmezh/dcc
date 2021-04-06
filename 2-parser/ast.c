@@ -8,12 +8,12 @@
 #include "util.h"
 
 astn* astn_alloc(enum astn_type type) {
-    astn *n = (astn*)safe_malloc(sizeof(astn));
+    astn *n = safe_malloc(sizeof(astn));
     n->type = type;
     return n;
 }
 
-void print_ast(astn *n) {
+void print_ast(const astn *n) {
     static int tabs = 0;     //     -> __ <- two spaces
     for (int i=0; i<tabs; i++) printf("  ");
     if (!n) return; // if we just want to print tabs, pass NULL
@@ -131,14 +131,14 @@ void print_ast(astn *n) {
     }
 }
 
-astn *cassign_alloc(int op, astn* left, astn* right) {
+astn *cassign_alloc(int op, astn *left, astn *right) {
     astn *n=astn_alloc(ASTN_ASSIGN);
     n->astn_assign.left=left;
     n->astn_assign.right=binop_alloc(op, left, right);
     return n;
 }
 
-astn *binop_alloc(int op, astn* left, astn* right) {
+astn *binop_alloc(int op, astn *left, astn *right) {
     astn *n=astn_alloc(ASTN_BINOP);
     n->astn_binop.op=op;
     n->astn_binop.left=left;
@@ -146,28 +146,28 @@ astn *binop_alloc(int op, astn* left, astn* right) {
     return n;
 }
 
-astn *unop_alloc(int op, astn* target) {
+astn *unop_alloc(int op, astn *target) {
     astn *n=astn_alloc(ASTN_UNOP);
     n->astn_unop.op=op;
     n->astn_unop.target=target;
     return n;
 }
 
-astn *list_alloc(astn* me) {
+astn *list_alloc(astn *me) {
     astn *l=astn_alloc(ASTN_LIST);
     l->astn_list.me=me;
     l->astn_list.next=NULL;
     return l;
 }
 //              (arg to add)(head of ll)
-astn *list_append(astn* new, astn* head) {
+astn *list_append(astn* new, astn *head) {
     astn *n=list_alloc(new);
     while (head->astn_list.next) head=head->astn_list.next;
     head->astn_list.next = n;
     return n;
 }
 
-int list_measure(astn* head) {
+int list_measure(const astn *head) {
     int c = 0;
     while ((head=head->astn_list.next)) {
         c++;

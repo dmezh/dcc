@@ -35,7 +35,7 @@ void *safe_realloc(void* old, size_t size) {
  */
 #define BACKTRACE_DEPTH 128
 
-_Noreturn void die(char* msg) {
+_Noreturn void die(const char* msg) {
     fprintf(stderr, "Internal error: %s\n", msg);
 
     #ifdef __GLIBC__

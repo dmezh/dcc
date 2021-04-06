@@ -85,12 +85,12 @@ typedef struct astn {
 } astn;
 
 astn* astn_alloc(enum astn_type type);
-void print_ast(astn *n);
-astn *unop_alloc(int op, astn* target);
-astn *binop_alloc(int op, astn* left, astn* right);
-astn *cassign_alloc(int op, astn* left, astn* right);
-int list_measure(astn* head);
+void print_ast(const astn *n);
+astn *unop_alloc(int op, astn *target);
+astn *binop_alloc(int op, astn *left, astn *right);
+astn *cassign_alloc(int op, astn *left, astn *right);
+int list_measure(const astn *head);
 astn *list_alloc(astn* me);
-astn *list_append(astn* new, astn* head);
+astn *list_append(astn *new, astn *head);
 
 #endif
