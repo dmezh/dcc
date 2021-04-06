@@ -22,5 +22,5 @@ int main() {
         printf("good, I was allowed to insert test6, dumping again:\n");
         st_dump_single();
     }
-    destroy_symtab(current_scope);
+    st_destroy(current_scope);
 }

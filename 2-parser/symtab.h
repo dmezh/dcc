@@ -75,9 +75,9 @@ extern symtab* current_scope;
 
 st_entry* st_lookup(const char* ident);
 bool st_insert(char* ident);
-void new_scope(enum scope_types scope_type);
-void pop_scope();
-void destroy_symtab(symtab* target);
+void st_new_scope(enum scope_types scope_type);
+void st_pop_scope();
+void st_destroy(symtab* target);
 void st_dump_single();
 
 #endif

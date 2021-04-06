@@ -57,7 +57,7 @@ bool st_insert(char* ident) {
 /*
  *  Create new scope/symtab and set it as current
  */
-void new_scope(enum scope_types scope_type) {
+void st_new_scope(enum scope_types scope_type) {
     symtab *new = safe_malloc(sizeof(symtab));
     *new = (symtab){
         .scope_type = scope_type,
@@ -71,7 +71,7 @@ void new_scope(enum scope_types scope_type) {
 /*
  *  Leave the current scope (return to parent)
  */
-void pop_scope() {
+void st_pop_scope() {
     if (!current_scope->parent) {
         if (current_scope == &root_symtab) {
             die("Attempted to pop root scope");
@@ -86,7 +86,7 @@ void pop_scope() {
  *  Destroy symbol table, freeing all st_entry, but not their .type or .ident members
  *  If root scope, just free the entries (since symtab itself is static)
  */
-void destroy_symtab(symtab* target) {
+void st_destroy(symtab* target) {
     // free all the entries first
     st_entry *next = target->first->next;
     for (st_entry *e=target->first; e!=NULL; e=next) {
