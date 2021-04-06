@@ -33,7 +33,7 @@ typedef struct st_entry {
 
 /*
  * We will maintain a stack of lexical scopes using a simple linked list of symbol
- * tables as. Each symbol table has a pointer to its parent - the scope from which
+ * tables. Each symbol table has a pointer to its parent - the scope from which
  * this scope was entered. We need this to properly resolve symbols during parsing,
  * where the lexical scope still matters. The root scope for the translation unit
  * is statically initialized and has a NULL *parent.
