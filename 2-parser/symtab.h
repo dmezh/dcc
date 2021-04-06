@@ -55,8 +55,9 @@ typedef struct st_entry {
  * current_scope: symtab 2  11|   thing3++;       // syntax error
  * current_scope: symtab 2  12| }                 // pop scope stack
  * current_scope: symtab 1  13|
- *
- *    symtab 1               symtab 2              symtab 3
+ * 
+ *                                                             *current_scope 
+ *    symtab 1               symtab 2              symtab 3  ⬋
  *   ,---------,  *parent  ,----------,  *parent  ,--------,
  *   | stuff.c |  <------  | main(){} |  <------  |  if{}  |
  *   `---------`           `----------`           `--------`
