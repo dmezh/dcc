@@ -83,6 +83,7 @@ void pop_scope() {
 
 /*
  * Destroy symbol table, freeing all st_entry, but not their .type or .ident members
+ * If root scope, just free the entries (since symtab itself is static)
  */
 void destroy_symtab(symtab* target) {
     // free all the entries first
@@ -91,7 +92,9 @@ void destroy_symtab(symtab* target) {
         next = e->next;
         free(e);
     }
-    free(target);
+    if (target != &root_symtab) {
+        free(target);
+    }
 }
 
 /*

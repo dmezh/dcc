@@ -71,6 +71,8 @@ typedef struct symtab {
     struct st_entry *first, *last;
 } symtab;
 
+extern symtab* current_scope;
+
 st_entry* st_lookup(char* ident);
 bool st_insert(char* ident);
 void new_scope(enum scope_types scope_type);
