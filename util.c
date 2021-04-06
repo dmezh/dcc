@@ -26,12 +26,16 @@ void *safe_realloc(void* old, size_t size) {
     return m;
 }
 
-// backtrace() depends on glibc
-// some of this might fail depending on how much damage we did,
-// but we'll die in this function one way or another  
+/*
+ * Die with backtrace
+ *
+ * backtrace() depends on glibc
+ * some of this might fail depending on how much damage we did,
+ * but we'll die in this function one way or another
+ */
 #define BACKTRACE_DEPTH 128
 
-void die(char* msg) {
+_Noreturn void die(char* msg) {
     fprintf(stderr, "Internal error: %s\n", msg);
 
     #ifdef __GLIBC__
