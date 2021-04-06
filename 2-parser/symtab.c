@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "util.h"
 
@@ -43,6 +44,7 @@ bool st_insert(char* ident) {
     new->ident = ident;
     if (!current_scope->first) { // currently-empty symtab
         current_scope->first = new;
+        current_scope->first->next = NULL;
         current_scope->last = new;
         return true;
     }
@@ -77,6 +79,19 @@ void pop_scope() {
         }
     }
     current_scope = current_scope->parent;
+}
+
+/*
+ * Destroy symbol table, freeing all st_entry, but not their .type or .ident members
+ */
+void destroy_symtab(symtab* target) {
+    // free all the entries first
+    st_entry* next = target->first->next;
+    for (st_entry *e=target->first; e!=NULL; e=next) {
+        next = e->next;
+        free(e);
+    }
+    free(target);
 }
 
 /*
