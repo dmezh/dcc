@@ -5,6 +5,7 @@
 
 #include "ast.h"
 #include "semval.h"
+#include "types.h"
 
 enum scope_types {
     SCOPE_FILE,
@@ -20,15 +21,22 @@ enum namespaces {
     NS_MISC
 };
 
+/*
+ * These will be directly pointed to by the AST.
+ * The symbol table is a linked list of these.
+*/
 typedef struct st_entry {
-    char* ident;
-    astn* type;
+    char *ident;
     enum namespaces ns;
+    
+    struct astn *type;
+    
     bool has_init;
     union { // yeah we'll just copy initializers - avoids entangling us with the AST
         struct number numinit;
         struct strlit strinit;
     };
+    
     struct st_entry *next;
 } st_entry;
 
@@ -80,5 +88,9 @@ void st_new_scope(enum scope_types scope_type);
 void st_pop_scope();
 void st_destroy(symtab* target);
 void st_dump_single();
+st_entry* stentry_alloc(char *ident);
+void begin_st_entry(astn *spec, astn *decl_list);
+bool st_insert_given(st_entry *new);
+astn* get_ptrchain_target(astn* top);
 
 #endif

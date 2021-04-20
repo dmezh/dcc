@@ -2,8 +2,12 @@
 #define AST_H
 
 #include "semval.h"
+#include "types.h"
 
-enum astn_type {
+// If you want to add a new astn type, add it to the enum, add the definition,
+// add it to the union in struct astn, and add it to print_ast in ast.c
+
+enum astn_types {
     ASTN_ASSIGN,
     ASTN_NUM,
     ASTN_IDENT,
@@ -14,7 +18,88 @@ enum astn_type {
     ASTN_UNOP,
     ASTN_SIZEOF,
     ASTN_TERN,
-    ASTN_LIST
+    ASTN_LIST,
+    ASTN_QUALTYPE,
+    ASTN_TYPESPEC,
+    ASTN_TYPEQUAL,
+    ASTN_STORSPEC,
+    ASTN_TYPE
+};
+
+// all of the below type-related shit should be moved out of ast.h
+// these are type SPECIFIERS, NOT types
+enum typespec {
+    TS_VOID,
+    TS_CHAR,
+    TS_SHORT,
+    TS_INT,
+    TS_LONG,
+    TS_FLOAT,
+    TS_DOUBLE,
+    TS_SIGNED,
+    TS_UNSIGNED,
+    TS__BOOL,
+    TS__COMPLEX
+};
+
+enum typequal {
+    TQ_CONST,
+    TQ_RESTRICT,
+    TQ_VOLATILE
+};
+
+enum storspec {
+    SS_TYPEDEF, // we're not doing typedefs, just ignore, plus this probably shouldn't be here
+    SS_EXTERN,
+    SS_STATIC,
+    SS_AUTO,
+    SS_REGISTER
+};
+
+enum dertypes {
+    t_PTR,
+    t_ARRAY,
+    t_FN,
+    t_STRUCT,
+    t_UNION
+};
+
+struct astn_type {
+    bool is_derived;
+    union {
+        struct {
+            enum dertypes type;
+            struct astn *target;
+        } derived;
+        struct {
+            enum scalar_types type;
+            enum storspec storspec;
+            bool is_unsigned;
+        } scalar;
+    };
+    bool is_volatile;
+    bool is_const;
+    bool is_restrict;
+    bool is_atomic;
+};
+
+struct astn_typespec {
+    enum typespec spec;
+    struct astn *next;
+};
+
+struct astn_typequal {
+    enum typequal qual;
+    struct astn *next;
+};
+
+struct astn_storspec {
+    enum storspec spec;
+    struct astn *next;
+};
+
+struct astn_qualtype {
+    struct qualtype qualtype;
 };
 
 struct astn_assign { // could have been binop but separated for clarity
@@ -68,7 +153,7 @@ struct astn_list {
 };
 
 typedef struct astn {
-    enum astn_type type;
+    enum astn_types type;
     union {
         struct astn_assign astn_assign;
         struct astn_num astn_num;
@@ -81,10 +166,15 @@ typedef struct astn {
         struct astn_sizeof astn_sizeof;
         struct astn_tern astn_tern;
         struct astn_list astn_list;
+        struct astn_qualtype astn_qualtype;
+        struct astn_typespec astn_typespec;
+        struct astn_typequal astn_typequal;
+        struct astn_storspec astn_storspec;
+        struct astn_type astn_type;
     };
 } astn;
 
-astn* astn_alloc(enum astn_type type);
+astn* astn_alloc(enum astn_types type);
 void print_ast(const astn *n);
 astn *unop_alloc(int op, astn *target);
 astn *binop_alloc(int op, astn *left, astn *right);
@@ -92,5 +182,12 @@ astn *cassign_alloc(int op, astn *left, astn *right);
 int list_measure(const astn *head);
 astn *list_alloc(astn* me);
 astn *list_append(astn *new, astn *head);
+astn *qualtype_alloc(enum scalar_types t);
+astn *typespec_alloc(enum typespec spec);
+astn *typequal_alloc(enum typequal spec);
+astn *storspec_alloc(enum storspec spec);
+astn *ptr_alloc(astn* target);
+void set_ptrchain_target(astn* top, astn* target);
+void reset_ptrchain_target(astn* top, astn* target);
 
 #endif

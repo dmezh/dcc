@@ -3,6 +3,7 @@
 %code requires {
     #include "ast.h"
     #include "semval.h"
+    #include "symtab.h"
 }
 
 %{
@@ -27,7 +28,7 @@
 %token FLOAT FOR GOTO IF INLINE INT LONG REGISTER RESTRICT RETURN SHORT SIGNED SIZEOF
 %token STATIC STRUCT SWITCH TYPEDEF UNION UNSIGNED VOID VOLATILE WHILE _BOOL _COMPLEX _IMAGINARY
 
-%type<astn_p> statement expr
+%type<astn_p> statement expr expr_stmt
 
 %token<number> NUMBER
 %token<strlit> STRING
@@ -42,13 +43,25 @@
 %type<astn_p> tern_expr
 %type<astn_p> assign
 
+%type<astn_p> decln_spec init_decl_list init_decl decl direct_decl type_spec type_qual stor_spec
+%type<astn_p> pointer
+
 %%
 
-statement:
-    expr ';'                    {   print_ast($1); printf("\n");    }
-|   statement expr ';'          {   print_ast($2); printf("\n");    }
+fulltree:
+    %empty
+|   fulltree statement
+|   fulltree decln
 ;
 
+statement:
+    expr_stmt                    {   print_ast($1); printf("\n");    }
+;
+
+expr_stmt:
+    expr ';'                     {   $$=$1;   }
+|   ';'                          {   $$=NULL;   }
+;
 // ----------------------------------------------------------------------------
 // 6.5.1 Primary expressions
 primary_expr:
@@ -259,7 +272,101 @@ assign:
 expr:
     assign
 |   expr ',' assign             {   $$=binop_alloc(',', $1, $3);    }
+;
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// 6.7 Declarations
 
+decln:
+    decln_spec init_decl_list ';'   {   //printf("declaration! dumping AST for specs:\n");
+                                        //print_ast($1);
+                                        //printf("dumping init_decl_list:\n");
+                                        //print_ast($2);
+
+                                        //printf("\ncalling begin_st_entry()\n");
+                                        begin_st_entry($1, $2);
+                                    }
+// no static_assert stuff
+;
+
+// this chains them together in "reverse" order - I needed that for convenience, and it shouldn't matter
+decln_spec:
+    type_spec
+|   type_qual
+|   stor_spec
+|   decln_spec type_spec            {   $$=$2;
+                                        $$->astn_typespec.next = $1;
+                                    }
+|   decln_spec type_qual            {   $$=$2;
+                                        $$->astn_typequal.next = $1;
+                                    }
+|   decln_spec stor_spec            {   $$=$2;
+                                        $$->astn_storspec.next = $1;
+                                    }
+;
+
+// for now just single, but it will be easy to add the full functionality
+// just make this a list and tweak begin_st_entry()
+init_decl_list:
+    init_decl
+;
+
+init_decl:
+    decl
+;
+// 6.7.6 Declarators
+decl:
+    pointer direct_decl             {   // set the target of the (potential) chain
+                                        set_ptrchain_target($1, $2);
+                                        $$=$1;
+                                    }
+|   direct_decl
+;
+
+direct_decl:
+    ident
+;
+
+// at the moment, I'm going to skip qualifiers for pointers like volatile * volatile int
+pointer:
+    '*'                             {   $$=ptr_alloc(NULL); // root of the (potential) chain
+                                    }         
+|   '*' pointer                     {   // we see a new element, make it the parent of the root and it
+                                        $$=ptr_alloc($2);
+                                    }
+;
+
+// 6.7.1 Storage class specifiers
+// no typedefs
+stor_spec:
+    EXTERN              {   $$=storspec_alloc(SS_EXTERN);   }
+|   STATIC              {   $$=storspec_alloc(SS_STATIC);   }
+|   AUTO                {   $$=storspec_alloc(SS_AUTO);     }
+|   REGISTER            {   $$=storspec_alloc(SS_REGISTER); }
+;
+
+// 6.7.2 Type specifiers
+type_spec:
+    VOID                {   $$=typespec_alloc(TS_VOID);     }
+|   CHAR                {   $$=typespec_alloc(TS_CHAR);     }
+|   SHORT               {   $$=typespec_alloc(TS_SHORT);    }
+|   INT                 {   $$=typespec_alloc(TS_INT);      }
+|   LONG                {   $$=typespec_alloc(TS_LONG);     }
+|   FLOAT               {   $$=typespec_alloc(TS_FLOAT);    }
+|   DOUBLE              {   $$=typespec_alloc(TS_DOUBLE);   }
+|   SIGNED              {   $$=typespec_alloc(TS_SIGNED);   }
+|   UNSIGNED            {   $$=typespec_alloc(TS_UNSIGNED); }
+|   _BOOL               {   $$=typespec_alloc(TS__BOOL);    }
+|   _COMPLEX            {   $$=typespec_alloc(TS__COMPLEX); }
+;
+
+// 6.7.3 Type qualifiers
+type_qual:
+    CONST               {   $$=typequal_alloc(TQ_CONST);    }
+|   RESTRICT            {   $$=typequal_alloc(TQ_RESTRICT); }
+|   VOLATILE            {   $$=typequal_alloc(TQ_VOLATILE); }
+;
 %%
 
 int main() {
