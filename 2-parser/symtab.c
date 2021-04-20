@@ -24,14 +24,13 @@ void begin_st_entry(astn *spec, astn *decl_list) {
     st_entry *new = stentry_alloc(get_ptrchain_target(decl_list)->astn_ident.ident);
     struct astn_type *t = &new->type->astn_type;
     // first, we will get signed/unsigned
-    astn *next = spec;
     unsigned VOIDs=0, CHARs=0, SHORTs=0, INTs=0, LONGs=0, FLOATs=0;
     unsigned DOUBLEs=0, SIGNEDs=0, UNSIGNEDs=0, BOOLs=0, COMPLEXs=0;
     unsigned total_typespecs = 0;
     bool storspec_set = false;
-    while (next) { // we'll do more validation later of the typespecs later
-        if (next->type == ASTN_TYPESPEC) {
-            switch (next->astn_typespec.spec) {
+    while (spec) { // we'll do more validation later of the typespecs later
+        if (spec->type == ASTN_TYPESPEC) {
+            switch (spec->astn_typespec.spec) {
                 case TS_VOID:       VOIDs++;        break;
                 case TS_CHAR:       CHARs++;        break;
                 case TS_SHORT:      SHORTs++;       break;
@@ -46,27 +45,29 @@ void begin_st_entry(astn *spec, astn *decl_list) {
                 default:    die("invalid typespec");
             }
             total_typespecs++;
-            astn* old = next;
-            next = next->astn_typespec.next;
+            astn* old = spec;
+            spec = spec->astn_typespec.next;
             free(old); // maybe a little memory management
-        } else if (next->type == ASTN_TYPEQUAL) { // specifying multiple times is valid
-            switch (next->astn_typequal.qual) {
+        } else if (spec->type == ASTN_TYPEQUAL) { // specifying multiple times is valid
+            switch (spec->astn_typequal.qual) {
                 case TQ_CONST:      t->is_const = true;       break;
                 case TQ_RESTRICT:   t->is_restrict = true;    break;
                 case TQ_VOLATILE:   t->is_volatile = true;    break;
+                default:    die("invalid typequal");
             }
-            astn* old = next;
-            next = next->astn_typequal.next;
+            astn* old = spec;
+            spec = spec->astn_typequal.next;
             free(old);
-        } else if (next->type == ASTN_STORSPEC) {
+        } else if (spec->type == ASTN_STORSPEC) {
             if (storspec_set) { // better error handling later
                 fprintf(stderr, "Error: cannot specify more storage class more than once\n");
                 exit(-5);
             }
-            t->scalar.storspec = next->astn_storspec.spec;
+            t->scalar.storspec = spec->astn_storspec.spec;
+            //printf("dbg - storspec astn has %d, so %s", spec->astn_storspec.spec, storage_specs_str[t->scalar.storspec]);
             storspec_set = true;
-            astn* old = next;
-            next = next->astn_storspec.next;
+            astn* old = spec;
+            spec = spec->astn_storspec.next;
             free(old);
         } else {
             die("Invalid astn type in spec chain");
@@ -195,7 +196,8 @@ long_end:
         //decl_list = decl_list->astn_type.derived.target;
         new->type = decl_list; // because otherwise it's just an IDENT
     }
-    printf("Installing symbol %s into symbol table with below type:\n", new->ident);
+    printf("Installing symbol <%s> into symbol table, storage class <%s>, with below type:\n", \
+            new->ident, storage_specs_str[new->type->astn_type.scalar.storspec]);
     print_ast(new->type);
     if (!st_insert_given(new)) {
         fprintf(stderr, "Error: attempted redeclaration of symbol %s\n", new->ident);

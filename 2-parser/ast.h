@@ -49,12 +49,14 @@ enum typequal {
 };
 
 enum storspec {
+    SS_AUTO = 0,
     SS_TYPEDEF, // we're not doing typedefs, just ignore, plus this probably shouldn't be here
     SS_EXTERN,
     SS_STATIC,
-    SS_AUTO,
     SS_REGISTER
 };
+
+extern const char* storage_specs_str[];
 
 enum dertypes {
     t_PTR,

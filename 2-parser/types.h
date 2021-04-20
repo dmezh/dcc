@@ -1,7 +1,8 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#include "ast.h"
+//#include "ast.h"
+#include <stdbool.h>
 
 // 6.7.1 - the below should include _Thread_local, but it has a different set of rules
 // see 6.7.1 Constraints

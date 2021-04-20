@@ -44,7 +44,7 @@
 %type<astn_p> assign
 
 %type<astn_p> decln_spec init_decl_list init_decl decl direct_decl type_spec type_qual stor_spec
-%type<astn_p> pointer
+%type<astn_p> pointer type_qual_list
 
 %%
 
@@ -331,11 +331,24 @@ direct_decl:
 // at the moment, I'm going to skip qualifiers for pointers like volatile * volatile int
 pointer:
     '*'                             {   $$=ptr_alloc(NULL); // root of the (potential) chain
-                                    }         
+                                    }
+|   '*' type_qual_list              {   $$=ptr_alloc(NULL);
+                                        qualify_type($$, $2);
+                                    }
 |   '*' pointer                     {   // we see a new element, make it the parent of the root and it
                                         $$=ptr_alloc($2);
                                     }
+|   '*' type_qual_list pointer      {
+                                        $$=ptr_alloc($2);
+                                        qualify_type($$, $2);
+                                    }
 ;
+
+type_qual_list:
+    type_qual
+|   type_qual_list type_qual        {   $$=$2;
+                                        $$->astn_typequal.next = $1;
+                                    }
 
 // 6.7.1 Storage class specifiers
 // no typedefs

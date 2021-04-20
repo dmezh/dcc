@@ -302,7 +302,7 @@ astn *storspec_alloc(enum storspec spec) {
     return n;
 }
 
-astn *ptr_alloc(astn* target) {
+astn *ptr_alloc(astn *target) {
     astn *n=astn_alloc(ASTN_TYPE);
     n->astn_type.is_derived = true;
     n->astn_type.derived.type = t_PTR;
@@ -310,14 +310,14 @@ astn *ptr_alloc(astn* target) {
     return n;
 }
 
-void set_ptrchain_target(astn* top, astn* target) {
+void set_ptrchain_target(astn *top, astn *target) {
     while (top->astn_type.derived.target) {
         top = top->astn_type.derived.target;
     }
     top->astn_type.derived.target = target;
 }
 
-void reset_ptrchain_target(astn* top, astn* target) {
+void reset_ptrchain_target(astn *top, astn *target) {
     astn* last = top;
     while (top->astn_type.derived.target) {
         last = top;
@@ -326,6 +326,22 @@ void reset_ptrchain_target(astn* top, astn* target) {
     last->astn_type.derived.target = target;
 }
 
+void qualify_type(astn *target, astn* qual) {
+    struct astn_type *t = &target->astn_type;
+    while (qual) {
+        if (qual->type == ASTN_TYPEQUAL) {
+            switch (qual->astn_typequal.qual) {
+                case TQ_CONST:      t->is_const = true;       break;
+                case TQ_RESTRICT:   t->is_restrict = true;    break;
+                case TQ_VOLATILE:   t->is_volatile = true;    break;
+                default:    die("invalid typequal");
+            }
+            qual = qual->astn_typequal.next;
+        } else {
+            die("non-spec astn in allegedly spec chain");
+        }
+    }
+}
 // get last target of chain of astn_types
 astn* get_ptrchain_target(astn* top) {
     while (top->astn_type.derived.target) {
@@ -341,3 +357,11 @@ int list_measure(const astn *head) {
     }
     return c + 1;
 }
+
+const char* storage_specs_str[] = {
+    [SS_AUTO] = "auto",
+    [SS_EXTERN] = "extern",
+    [SS_STATIC] = "static",
+    [SS_REGISTER] = "register",
+    [SS_TYPEDEF] = "typedef"
+};
