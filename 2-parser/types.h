@@ -33,3 +33,5 @@ enum scalar_types {
     t_DOUBLECPLX,
     t_LONGDOUBLECPLX
 };
+
+#endif
