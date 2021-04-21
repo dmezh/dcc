@@ -33,20 +33,3 @@ enum scalar_types {
     t_DOUBLECPLX,
     t_LONGDOUBLECPLX
 };
-
-// Note that 'int' may == either 'unsigned int' or 'signed int' in bitfields
-// this may need to be changed
-struct qualtype {
-    enum scalar_types base_type;
-
-    bool is_unsigned;
-
-    bool is_volatile;
-    bool is_const;
-    bool is_restrict;
-    bool is_atomic;
-
-    enum storage_specs storage_spec;
-};
-
-#endif

@@ -274,13 +274,6 @@ astn *list_append(astn* new, astn *head) {
     return n;
 }
 
-// this crime also needs to be changed
-astn *qualtype_alloc(enum scalar_types t) {
-    astn *n=astn_alloc(ASTN_QUALTYPE);
-    n->astn_qualtype.qualtype.base_type = t;
-    return n;
-}
-
 astn *typespec_alloc(enum typespec spec) {
     astn *n=astn_alloc(ASTN_TYPESPEC);
     n->astn_typespec.spec = spec;

@@ -19,7 +19,6 @@ enum astn_types {
     ASTN_SIZEOF,
     ASTN_TERN,
     ASTN_LIST,
-    ASTN_QUALTYPE,
     ASTN_TYPESPEC,
     ASTN_TYPEQUAL,
     ASTN_STORSPEC,
@@ -100,10 +99,6 @@ struct astn_storspec {
     struct astn *next;
 };
 
-struct astn_qualtype {
-    struct qualtype qualtype;
-};
-
 struct astn_assign { // could have been binop but separated for clarity
     // struct astn* left, *right;
     struct astn *left, *right;
@@ -168,7 +163,6 @@ typedef struct astn {
         struct astn_sizeof astn_sizeof;
         struct astn_tern astn_tern;
         struct astn_list astn_list;
-        struct astn_qualtype astn_qualtype;
         struct astn_typespec astn_typespec;
         struct astn_typequal astn_typequal;
         struct astn_storspec astn_storspec;
@@ -184,7 +178,6 @@ astn *cassign_alloc(int op, astn *left, astn *right);
 int list_measure(const astn *head);
 astn *list_alloc(astn* me);
 astn *list_append(astn *new, astn *head);
-astn *qualtype_alloc(enum scalar_types t);
 astn *typespec_alloc(enum typespec spec);
 astn *typequal_alloc(enum typequal spec);
 astn *storspec_alloc(enum storspec spec);
