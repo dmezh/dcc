@@ -302,24 +302,24 @@ astn *storspec_alloc(enum storspec spec) {
     return n;
 }
 
-astn *ptr_alloc(astn *target) {
+astn *dtype_alloc(astn *target, enum dertypes type) {
     astn *n=astn_alloc(ASTN_TYPE);
     n->astn_type.is_derived = true;
-    n->astn_type.derived.type = t_PTR;
+    n->astn_type.derived.type = type;
     n->astn_type.derived.target = target;
     return n;
 }
 
-void set_ptrchain_target(astn *top, astn *target) {
+void set_dtypechain_target(astn *top, astn *target) {
     while (top->astn_type.derived.target) {
         top = top->astn_type.derived.target;
     }
     top->astn_type.derived.target = target;
 }
 
-void reset_ptrchain_target(astn *top, astn *target) {
+void reset_dtypechain_target(astn *top, astn *target) {
     astn* last = top;
-    while (top->astn_type.derived.target) {
+    while (top->type == ASTN_TYPE && top->astn_type.derived.target) {
         last = top;
         top = top->astn_type.derived.target;
     }
@@ -344,7 +344,7 @@ void qualify_type(astn *target, astn* qual) {
 }
 // get last target of chain of astn_types
 astn* get_ptrchain_target(astn* top) {
-    while (top->astn_type.derived.target) {
+    while (top->type == ASTN_TYPE && top->astn_type.derived.target) {
         top = top->astn_type.derived.target;
     }
     return top;

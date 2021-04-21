@@ -188,8 +188,8 @@ astn *qualtype_alloc(enum scalar_types t);
 astn *typespec_alloc(enum typespec spec);
 astn *typequal_alloc(enum typequal spec);
 astn *storspec_alloc(enum storspec spec);
-astn *ptr_alloc(astn* target);
-void set_ptrchain_target(astn* top, astn* target);
-void reset_ptrchain_target(astn* top, astn* target);
+astn *dtype_alloc(astn* target, enum dertypes type);
+void set_dtypechain_target(astn* top, astn* target);
+void reset_dtypechain_target(astn* top, astn* target);
 
 #endif

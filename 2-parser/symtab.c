@@ -191,12 +191,12 @@ long_end:
     }
     //printf("FINALLY, the deduced type is: %d with signedness %d\n", t->scalar.type, !t->scalar.is_unsigned);
     // enter into symtab one day
-    reset_ptrchain_target(decl_list, new->type);
+    reset_dtypechain_target(decl_list, new->type);
     if (decl_list->type == ASTN_TYPE && decl_list->astn_type.is_derived) {
         //decl_list = decl_list->astn_type.derived.target;
         new->type = decl_list; // because otherwise it's just an IDENT
     }
-    printf("Installing symbol <%s> into symbol table, storage class <%s>, with below type:\n", \
+    //printf("Installing symbol <%s> into symbol table, storage class <%s>, with below type:\n", \
             new->ident, storage_specs_str[new->type->astn_type.scalar.storspec]);
     print_ast(new->type);
     if (!st_insert_given(new)) {

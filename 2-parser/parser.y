@@ -318,7 +318,7 @@ init_decl:
 // 6.7.6 Declarators
 decl:
     pointer direct_decl             {   // set the target of the (potential) chain
-                                        set_ptrchain_target($1, $2);
+                                        set_dtypechain_target($1, $2);
                                         $$=$1;
                                     }
 |   direct_decl
@@ -326,20 +326,24 @@ decl:
 
 direct_decl:
     ident
+|   direct_decl '[' assign ']'      {   $$=dtype_alloc($3, t_ARRAY);
+                                    }
 ;
 
-// at the moment, I'm going to skip qualifiers for pointers like volatile * volatile int
+// this works, but is wrong for qualified multiple pointers next to each other
+// `volatile int ** volatile i` should be volatile ptr to ptr to volatile int,
+// but is instead parsed as ptr to volatile ptr to volatile int
 pointer:
-    '*'                             {   $$=ptr_alloc(NULL); // root of the (potential) chain
+    '*'                             {   $$=dtype_alloc(NULL, t_PTR); // root of the (potential) chain
                                     }
-|   '*' type_qual_list              {   $$=ptr_alloc(NULL);
+|   '*' type_qual_list              {   $$=dtype_alloc(NULL, t_PTR);
                                         qualify_type($$, $2);
                                     }
 |   '*' pointer                     {   // we see a new element, make it the parent of the root and it
-                                        $$=ptr_alloc($2);
+                                        $$=dtype_alloc($2, t_PTR);
                                     }
 |   '*' type_qual_list pointer      {
-                                        $$=ptr_alloc($2);
+                                        $$=dtype_alloc($2, t_PTR);
                                         qualify_type($$, $2);
                                     }
 ;
