@@ -66,10 +66,6 @@ enum dertypes {
     t_UNION
 };
 
-struct astn_decl {
-    struct astn *head, *tail;
-};
-
 struct astn_type {
     bool is_derived;
     union {
@@ -88,6 +84,11 @@ struct astn_type {
     bool is_const;
     bool is_restrict;
     bool is_atomic;
+};
+
+struct astn_decl {
+    struct astn *init;
+    struct astn_type type;
 };
 
 struct astn_typespec {

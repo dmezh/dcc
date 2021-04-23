@@ -210,8 +210,8 @@ void print_ast(const astn *n) {
                 //printf("DBG: target is %p\n", (void*)n->astn_type.derived.target);
                 switch (n->astn_type.derived.type) {
                     case t_PTR:     printf("PTR TO");       break;
-                    case t_ARRAY:   printf("ARRAY");
-                                    /* old enhanced array AST dump
+                    case t_ARRAY:   printf("ARRAY\n");
+                                    /* old enhanced array AST dump */
                                     tabs++;
                                         print_ast(NULL);
                                         printf("SIZE:\n");
@@ -220,7 +220,7 @@ void print_ast(const astn *n) {
                                     tabs--;
                                         print_ast(NULL);
                                         printf("OF:");
-                                    */
+                                    
                                     break;
                     case t_FN:      printf("FN RETURNING"); break;
                     case t_STRUCT:  printf("STRUCT");       break;
@@ -234,7 +234,7 @@ void print_ast(const astn *n) {
                     else
                         printf("NULL");
                 tabs--;
-                // if (n->astn_type.derived.type == t_ARRAY) tabs--; // kludge!
+                if (n->astn_type.derived.type == t_ARRAY) tabs--; // kludge!
             } else {
                 if (n->astn_type.scalar.is_unsigned) printf("UNSIGNED ");
                 switch (n->astn_type.scalar.type) {
@@ -301,7 +301,7 @@ astn *typespec_alloc(enum typespec spec) {
     astn *n=astn_alloc(ASTN_TYPESPEC);
     n->astn_typespec.spec = spec;
     n->astn_typespec.next = NULL;
-    printf("ALLOCATED TSPEC\n");
+    //printf("ALLOCATED TSPEC\n");
     return n;
 }
 
@@ -324,8 +324,8 @@ astn *dtype_alloc(astn *target, enum dertypes type) {
     n->astn_type.is_derived = true;
     n->astn_type.derived.type = type;
     n->astn_type.derived.target = target;
-    printf("ALLOCATED DTYPE %p OF TYPE %s WITH TARGET %p\n",
-            (void*)n, dertypes_str[n->astn_type.derived.type], (void*)n->astn_type.derived.target);
+    //printf("ALLOCATED DTYPE %p OF TYPE %s WITH TARGET %p\n",
+    //        (void*)n, dertypes_str[n->astn_type.derived.type], (void*)n->astn_type.derived.target);
     return n;
 }
 
@@ -333,7 +333,7 @@ void set_dtypechain_target(astn *top, astn *target) {
     while (top->astn_type.derived.target) {
         top = top->astn_type.derived.target;
     }
-    printf("setting target to %p, I arrived at %p\n", (void*)target, (void*)top);
+    //printf("setting target to %p, I arrived at %p\n", (void*)target, (void*)top);
     top->astn_type.derived.target = target;
 }
 
@@ -343,7 +343,7 @@ void reset_dtypechain_target(astn *top, astn *target) {
         last = top;
         top = top->astn_type.derived.target;
     }
-    printf("resetting target to %p, I arrived at %p\n\n", (void*)target, (void*)last);
+    //printf("resetting target to %p, I arrived at %p\n\n", (void*)target, (void*)last);
     last->astn_type.derived.target = target;
 }
 
@@ -371,6 +371,7 @@ void qualify_type(astn *target, astn *qual) {
         }
     }
 }
+
 // get last target of chain of astn_types
 astn* get_dtypechain_target(astn* top) {
     while (top->type == ASTN_TYPE && top->astn_type.derived.target) {
