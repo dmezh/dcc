@@ -7,6 +7,14 @@
 #include "parser.tab.h"
 #include "util.h"
 
+const char* dertypes_str[] = {
+    [t_PTR] = "PTR",
+    [t_ARRAY] = "ARRAY",
+    [t_FN] = "FN",
+    [t_STRUCT] = "STRUCT",
+    [t_UNION] = "UNION"
+};
+
 astn* astn_alloc(enum astn_types type) {
     astn *n = safe_calloc(1, sizeof(astn));
     n->type = type;
@@ -17,7 +25,7 @@ int prints = 0;
 
 void print_ast(const astn *n) {
     static int tabs = 0;     //     -> __ <- two spaces
-    for (int i=0; i<tabs; i++) printf("  ");
+    for (int i=0; i<tabs; i++) printf("· ");
     if (!n) return; // if we just want to print tabs, pass NULL
     switch (n->type) {
 
@@ -189,7 +197,7 @@ void print_ast(const astn *n) {
             }
             break;
 
-/**/    case ASTN_TYPE:
+/**/    case ASTN_TYPE: // this ain't great
             //prints++;
             //printf("DBG: I type am %p\n", (void*)n);
             //printf("%d print time %s TYPE: ", prints, n->astn_type.is_derived ? "DERIVED" : "SCALAR");
@@ -202,7 +210,18 @@ void print_ast(const astn *n) {
                 //printf("DBG: target is %p\n", (void*)n->astn_type.derived.target);
                 switch (n->astn_type.derived.type) {
                     case t_PTR:     printf("PTR TO");       break;
-                    case t_ARRAY:   printf("ARRAY OF");     break;
+                    case t_ARRAY:   printf("ARRAY");
+                                    /* old enhanced array AST dump
+                                    tabs++;
+                                        print_ast(NULL);
+                                        printf("SIZE:\n");
+                                    tabs++;
+                                            print_ast(n->astn_type.derived.size);
+                                    tabs--;
+                                        print_ast(NULL);
+                                        printf("OF:");
+                                    */
+                                    break;
                     case t_FN:      printf("FN RETURNING"); break;
                     case t_STRUCT:  printf("STRUCT");       break;
                     case t_UNION:   printf("UNION");        break;
@@ -210,8 +229,12 @@ void print_ast(const astn *n) {
                 }
                 printf("\n");
                 tabs++;
-                    print_ast(n->astn_type.derived.target);
+                    if (n->astn_type.derived.target)
+                        print_ast(n->astn_type.derived.target);
+                    else
+                        printf("NULL");
                 tabs--;
+                // if (n->astn_type.derived.type == t_ARRAY) tabs--; // kludge!
             } else {
                 if (n->astn_type.scalar.is_unsigned) printf("UNSIGNED ");
                 switch (n->astn_type.scalar.type) {
@@ -278,6 +301,7 @@ astn *typespec_alloc(enum typespec spec) {
     astn *n=astn_alloc(ASTN_TYPESPEC);
     n->astn_typespec.spec = spec;
     n->astn_typespec.next = NULL;
+    printf("ALLOCATED TSPEC\n");
     return n;
 }
 
@@ -300,6 +324,8 @@ astn *dtype_alloc(astn *target, enum dertypes type) {
     n->astn_type.is_derived = true;
     n->astn_type.derived.type = type;
     n->astn_type.derived.target = target;
+    printf("ALLOCATED DTYPE %p OF TYPE %s WITH TARGET %p\n",
+            (void*)n, dertypes_str[n->astn_type.derived.type], (void*)n->astn_type.derived.target);
     return n;
 }
 
@@ -307,6 +333,7 @@ void set_dtypechain_target(astn *top, astn *target) {
     while (top->astn_type.derived.target) {
         top = top->astn_type.derived.target;
     }
+    printf("setting target to %p, I arrived at %p\n", (void*)target, (void*)top);
     top->astn_type.derived.target = target;
 }
 
@@ -316,10 +343,19 @@ void reset_dtypechain_target(astn *top, astn *target) {
         last = top;
         top = top->astn_type.derived.target;
     }
+    printf("resetting target to %p, I arrived at %p\n\n", (void*)target, (void*)last);
     last->astn_type.derived.target = target;
 }
 
-void qualify_type(astn *target, astn* qual) {
+
+// takes the final node of the parent (the IDENT), makes it the final node of the child,
+// and connects the child to the parent
+void merge_dtypechains(astn *parent, astn *child) {
+    set_dtypechain_target(child, get_dtypechain_target(parent));
+    reset_dtypechain_target(parent, child);
+}
+
+void qualify_type(astn *target, astn *qual) {
     struct astn_type *t = &target->astn_type;
     while (qual) {
         if (qual->type == ASTN_TYPEQUAL) {
@@ -331,12 +367,12 @@ void qualify_type(astn *target, astn* qual) {
             }
             qual = qual->astn_typequal.next;
         } else {
-            die("non-spec astn in allegedly spec chain");
+            die("non-qual astn in allegedly qual chain");
         }
     }
 }
 // get last target of chain of astn_types
-astn* get_ptrchain_target(astn* top) {
+astn* get_dtypechain_target(astn* top) {
     while (top->type == ASTN_TYPE && top->astn_type.derived.target) {
         top = top->astn_type.derived.target;
     }

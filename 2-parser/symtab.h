@@ -91,7 +91,7 @@ void st_dump_single();
 st_entry* stentry_alloc(char *ident);
 void begin_st_entry(astn *spec, astn *decl_list);
 bool st_insert_given(st_entry *new);
-astn* get_ptrchain_target(astn* top);
+astn* get_dtypechain_target(astn* top);
 void qualify_type(astn *target, astn* qual);
 
 #endif

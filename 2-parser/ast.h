@@ -56,6 +56,7 @@ enum storspec {
 };
 
 extern const char* storage_specs_str[];
+extern const char* dertypes_str[];
 
 enum dertypes {
     t_PTR,
@@ -65,12 +66,17 @@ enum dertypes {
     t_UNION
 };
 
+struct astn_decl {
+    struct astn *head, *tail;
+};
+
 struct astn_type {
     bool is_derived;
     union {
         struct {
             enum dertypes type;
             struct astn *target;
+            struct astn *size; // rename?
         } derived;
         struct {
             enum scalar_types type;
@@ -182,7 +188,9 @@ astn *typespec_alloc(enum typespec spec);
 astn *typequal_alloc(enum typequal spec);
 astn *storspec_alloc(enum storspec spec);
 astn *dtype_alloc(astn* target, enum dertypes type);
+astn* get_dtypechain_target(astn* top);
 void set_dtypechain_target(astn* top, astn* target);
 void reset_dtypechain_target(astn* top, astn* target);
+void merge_dtypechains(astn *parent, astn *child);
 
 #endif

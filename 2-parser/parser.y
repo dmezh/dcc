@@ -44,7 +44,7 @@
 %type<astn_p> assign
 
 %type<astn_p> decln_spec init_decl_list init_decl decl direct_decl type_spec type_qual stor_spec
-%type<astn_p> pointer type_qual_list
+%type<astn_p> pointer type_qual_list direct_decl_arr
 
 %%
 
@@ -318,15 +318,48 @@ init_decl:
 // 6.7.6 Declarators
 decl:
     pointer direct_decl             {   // set the target of the (potential) chain
-                                        set_dtypechain_target($1, $2);
-                                        $$=$1;
+                                        //printf("AST BEFORE:\n");
+                                        if ($2->type == ASTN_TYPE && $2->astn_type.is_derived) {
+                                            //print_ast($2);
+                                            //print_ast($1);
+                                            // the end of the $1 chain should now be the end of the $2 chain
+                                            //set_dtypechain_target($1, get_dtypechain_target($2));
+                                            //$1->astn_type.derived.target = get_dtypechain_target($2);
+                                            //reset_dtypechain_target($2, $1); // attach $1 chain to end of $2 chain
+                                            merge_dtypechains($2, $1);
+                                            $$=$2;
+                                            //printf("AFTER:\n");
+                                            //print_ast($2);
+                                        } else {
+                                            //print_ast($1);
+                                            set_dtypechain_target($1, $2);
+                                            $$=$1;
+                                        }
                                     }
 |   direct_decl
 ;
 
 direct_decl:
-    ident
-|   direct_decl '[' assign ']'      {   $$=dtype_alloc($3, t_ARRAY);
+    ident                           {   $$=$1;
+                                        printf("PASSING IDENT %p\n", (void*)$$);
+                                    }
+|   direct_decl_arr
+;
+
+// departing from the Standard's grammar here a bit
+direct_decl_arr:
+    ident '[' assign ']'             {   $$=dtype_alloc($1, t_ARRAY);
+                                        //set_dtypechain_target(n, $1);
+                                        $$->astn_type.derived.size = $3; // don't care for now
+                                        printf("REDUCING BASE ARRAY, size %llu\n", $3->astn_num.number.integer);
+                                    }
+|   direct_decl_arr '[' assign ']'  {   $$=dtype_alloc(NULL, t_ARRAY);
+                                        //set_dtypechain_target($$, get_dtypechain_target($1));
+                                        //reset_dtypechain_target($1, $$);
+                                        merge_dtypechains($1, $$);
+                                        $$->astn_type.derived.size = $3; // don't care for now
+                                        printf("REDUCING ARRAY, size %llu\n", $3->astn_num.number.integer);
+                                        $$=$1;
                                     }
 ;
 
@@ -335,16 +368,24 @@ direct_decl:
 // but is instead parsed as ptr to volatile ptr to volatile int
 pointer:
     '*'                             {   $$=dtype_alloc(NULL, t_PTR); // root of the (potential) chain
+                                        printf("REDUCING PTR\n");
                                     }
 |   '*' type_qual_list              {   $$=dtype_alloc(NULL, t_PTR);
                                         qualify_type($$, $2);
+                                        printf("REDUCING PTR\n");
                                     }
 |   '*' pointer                     {   // we see a new element, make it the parent of the root and it
-                                        $$=dtype_alloc($2, t_PTR);
+                                        $$=dtype_alloc(NULL, t_PTR);
+                                        set_dtypechain_target($2, $$);
+                                        $$=$2;
+                                        printf("REDUCING PTR\n");
                                     }
 |   '*' type_qual_list pointer      {
-                                        $$=dtype_alloc($2, t_PTR);
+                                        $$=dtype_alloc(NULL, t_PTR);
                                         qualify_type($$, $2);
+                                        set_dtypechain_target($3, $$);
+                                        $$=$3;
+                                        printf("REDUCING PTR\n");
                                     }
 ;
 

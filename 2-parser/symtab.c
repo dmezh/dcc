@@ -21,7 +21,7 @@ symtab *current_scope = &root_symtab;
 // but who does memory management anyway
 void begin_st_entry(astn *spec, astn *decl_list) {
     // the below will need revising for lists, and also some error checking
-    st_entry *new = stentry_alloc(get_ptrchain_target(decl_list)->astn_ident.ident);
+    st_entry *new = stentry_alloc(get_dtypechain_target(decl_list)->astn_ident.ident);
     struct astn_type *t = &new->type->astn_type;
     // first, we will get signed/unsigned
     unsigned VOIDs=0, CHARs=0, SHORTs=0, INTs=0, LONGs=0, FLOATs=0;
@@ -90,12 +90,12 @@ void begin_st_entry(astn *spec, astn *decl_list) {
 
     if (UNSIGNEDs) {
         t->scalar.is_unsigned = true;
-        t->scalar.type = t_INT; // may change
+        t->scalar.type = t_INT; // may change if more specifiers
         total_typespecs--;
     }
     if (SIGNEDs) {
         t->scalar.is_unsigned = false; // this is redundant
-        t->scalar.type = t_INT; // may change
+        t->scalar.type = t_INT; // may change if more specifiers
         total_typespecs--;
     }
 
@@ -201,7 +201,7 @@ long_end:
     print_ast(new->type);
     if (!st_insert_given(new)) {
         fprintf(stderr, "Error: attempted redeclaration of symbol %s\n", new->ident);
-        exit(-5);
+        //exit(-5); // ENABLE ME WHEN YOU START CARING!
     }
     //printf("ABOUT TO RET, PRINTING AST AT HEAD\n");
     //print_ast(decl_list);
