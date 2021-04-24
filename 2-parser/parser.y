@@ -44,7 +44,7 @@
 %type<astn_p> assign
 
 %type<astn_p> decln_spec init_decl_list init_decl decl direct_decl type_spec type_qual stor_spec
-%type<astn_p> pointer type_qual_list direct_decl_arr
+%type<astn_p> pointer type_qual_list direct_decl_arr arr_size
 
 %%
 
@@ -277,7 +277,6 @@ expr:
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 // 6.7 Declarations
-
 decln:
     decln_spec init_decl_list ';'   {   begin_st_entry($1, $2);     }
 // no static_assert stuff
@@ -329,6 +328,7 @@ init:
  * the grammar a little into an additional direct_decl_arr helped with this.
  *
  * Pointers are also naturally parsed 'inside out', so we do the same thing as with arrays.
+ * Then, all we need to do is stitch them together, with the following complication:
  *
  * The reader and I are likely in agreement that a reasonable AST representation of
  * the type of `int *i[];` looks like:
@@ -344,6 +344,9 @@ init:
  * When we link our PTRs with ARRAYs below, we move that last node, the IDENT, over to the child
  * chain to be its last node, so it's still last when we're done. This is in merge_dtypechains().
  * begin_st_entry() expects to find the IDENT as the very last element!
+ * int **i[1][2];   // (array(1) of array(2) of ptr to ptr)
+ * before: (chain of arrays)->(ident)     (chain of pointers)
+ * after:  (chain of arrays)->(chain of ptrs)->(ident)
 */
 
 // 6.7.6 Declarators
@@ -369,19 +372,23 @@ direct_decl:
 // departing from the Standard's grammar here a bit
 // because of that, there is ugliness with the parenthesized decl; please un-fuck this when able
 direct_decl_arr:
-    ident '[' assign ']'            {   $$=dtype_alloc($1, t_ARRAY);
-                                        $$->astn_type.derived.size = $3; // don't care for now
-                                    }
-|   direct_decl_arr '[' assign ']'  {   astn *n=dtype_alloc(NULL, t_ARRAY);
-                                        n->astn_type.derived.size = $3; // don't care for now
-                                        merge_dtypechains($1, n);
-                                        $$=$1;
-                                    }
-|   '(' decl ')' '[' assign ']'     {   astn *n=dtype_alloc(NULL, t_ARRAY);
-                                        n->astn_type.derived.size = $5; // don't care for now
-                                        merge_dtypechains($2, n);
-                                        $$=$2;
-                                    }
+    ident '[' arr_size ']'              {   $$=dtype_alloc($1, t_ARRAY);
+                                            $$->astn_type.derived.size = $3;
+                                        }
+|   direct_decl_arr '[' arr_size ']'    {   astn *n=dtype_alloc(NULL, t_ARRAY);
+                                            n->astn_type.derived.size = $3;
+                                            merge_dtypechains($1, n);
+                                            $$=$1;
+                                        }
+|   '(' decl ')' '[' arr_size ']'       {   astn *n=dtype_alloc(NULL, t_ARRAY);
+                                            n->astn_type.derived.size = $5;
+                                            merge_dtypechains($2, n);
+                                            $$=$2;
+                                        }
+
+arr_size:
+    %empty                          {   $$=NULL;    }
+|   assign
 ;
 
 pointer:

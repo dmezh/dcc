@@ -208,33 +208,42 @@ void print_ast(const astn *n) {
             if (n->astn_type.is_atomic)   printf("ATOMIC ");
             if (n->astn_type.is_derived) {
                 //printf("DBG: target is %p\n", (void*)n->astn_type.derived.target);
-                switch (n->astn_type.derived.type) {
-                    case t_PTR:     printf("PTR TO");       break;
-                    case t_ARRAY:   printf("ARRAY\n");
-                                    /* old enhanced array AST dump */
-                                    tabs++;
-                                        print_ast(NULL);
-                                        printf("SIZE:\n");
-                                    tabs++;
-                                            print_ast(n->astn_type.derived.size);
-                                    tabs--;
-                                        print_ast(NULL);
-                                        printf("OF:");
-                                    
-                                    break;
-                    case t_FN:      printf("FN RETURNING"); break;
-                    case t_STRUCT:  printf("STRUCT");       break;
-                    case t_UNION:   printf("UNION");        break;
-                    default:        die("invalid derived type");
+                if (n->astn_type.derived.type == t_ARRAY) {
+                    printf("ARRAY\n");
+                    tabs++;
+                        print_ast(NULL);
+                        printf("SIZE:");
+                        if (n->astn_type.derived.size) {
+                            printf("\n");
+                            tabs++;
+                                print_ast(n->astn_type.derived.size);
+                            tabs--;
+                        } else {
+                            printf(" (NONE)\n");
+                        }
+                        print_ast(NULL);
+                        printf("OF:\n");
+                        tabs++;
+                            print_ast(n->astn_type.derived.target);
+                        tabs--;
+                    tabs--;
+                } else {
+                    switch (n->astn_type.derived.type) {
+                        case t_PTR:     printf("PTR TO");       break;
+                        case t_FN:      printf("FN RETURNING"); break;
+                        case t_STRUCT:  printf("STRUCT");       break;
+                        case t_UNION:   printf("UNION");        break;
+                        default:        die("invalid derived type");
+                    }
+                    printf("\n");
+                    tabs++;
+                        if (n->astn_type.derived.target)
+                            print_ast(n->astn_type.derived.target);
+                        else
+                            printf("NULL");
+                    tabs--;
                 }
-                printf("\n");
-                tabs++;
-                    if (n->astn_type.derived.target)
-                        print_ast(n->astn_type.derived.target);
-                    else
-                        printf("NULL");
-                tabs--;
-                if (n->astn_type.derived.type == t_ARRAY) tabs--; // kludge!
+                //if (n->astn_type.derived.type == t_ARRAY) tabs--; // kludge!
             } else {
                 if (n->astn_type.scalar.is_unsigned) printf("UNSIGNED ");
                 switch (n->astn_type.scalar.type) {

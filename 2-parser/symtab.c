@@ -190,10 +190,8 @@ long_end:
         exit(-5);
     }
     //printf("FINALLY, the deduced type is: %d with signedness %d\n", t->scalar.type, !t->scalar.is_unsigned);
-    // enter into symtab one day
     reset_dtypechain_target(decl_list, new->type);
     if (decl_list->type == ASTN_TYPE && decl_list->astn_type.is_derived) {
-        //decl_list = decl_list->astn_type.derived.target;
         new->type = decl_list; // because otherwise it's just an IDENT
     }
     //printf("Installing symbol <%s> into symbol table, storage class <%s>, with below type:\n", \
@@ -203,12 +201,6 @@ long_end:
         fprintf(stderr, "Error: attempted redeclaration of symbol %s\n", new->ident);
         //exit(-5); // ENABLE ME WHEN YOU START CARING!
     }
-    //printf("ABOUT TO RET, PRINTING AST AT HEAD\n");
-    //print_ast(decl_list);
-    /* printf("I counted %d VOIDs, %d CHARs, %d SHORTs, %d INTs, %d LONGs, %d FLOATs,\n" \
-            "%d DOUBLEs, %d SIGNEDs, %d UNSIGNEDs, %d BOOLs, %d COMPLEXs\n", \
-            VOIDs, CHARs, SHORTs, INTs, LONGs, FLOATs, DOUBLEs, SIGNEDs, UNSIGNEDs, BOOLs, COMPLEXs);
-    */
 }
 
 /* 
