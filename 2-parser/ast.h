@@ -76,7 +76,6 @@ struct astn_type {
         } derived;
         struct {
             enum scalar_types type;
-            enum storspec storspec;
             bool is_unsigned;
         } scalar;
     };

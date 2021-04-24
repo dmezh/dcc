@@ -30,6 +30,8 @@ typedef struct st_entry {
     enum namespaces ns;
     
     struct astn *type;
+
+    enum storspec storspec;
     
     bool has_init;
     union { // yeah we'll just copy initializers - avoids entangling us with the AST
@@ -93,5 +95,6 @@ void begin_st_entry(astn *spec, astn *decl_list);
 bool st_insert_given(st_entry *new);
 astn* get_dtypechain_target(astn* top);
 void qualify_type(astn *target, astn* qual);
+enum storspec specify_type(astn *spec, struct astn_type *t);
 
 #endif

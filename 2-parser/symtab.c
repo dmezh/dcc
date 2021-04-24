@@ -7,6 +7,10 @@
 
 #include "util.h"
 
+#define st_error(...) \
+    fprintf(stderr, "Error declaring symbol: " __VA_ARGS__); \
+    exit(-5);
+
 // symtab for this translation unit
 symtab root_symtab = {
     .scope_type = SCOPE_FILE,
@@ -19,14 +23,34 @@ symtab *current_scope = &root_symtab;
 
 // in theory, you can destroy the spec chain after this function
 // but who does memory management anyway
+// decl_list is not yet a list!
 void begin_st_entry(astn *spec, astn *decl_list) {
     // the below will need revising for lists, and also some error checking
     st_entry *new = stentry_alloc(get_dtypechain_target(decl_list)->astn_ident.ident);
+
     struct astn_type *t = &new->type->astn_type;
-    // first, we will get signed/unsigned
+    new->storspec = specify_type(spec, t);
+    reset_dtypechain_target(decl_list, new->type); // end of chain is now the type instead of ident
+
+    if (decl_list->type == ASTN_TYPE && decl_list->astn_type.is_derived) {
+        new->type = decl_list; // because otherwise it's just an IDENT
+    }
+    //printf("Installing symbol <%s> into symbol table, storage class <%s>, with below type:\n", \
+            new->ident, storage_specs_str[new->type->astn_type.scalar.storspec]);
+    print_ast(new->type);
+
+    if (!st_insert_given(new)) {
+        st_error("attempted redeclaration of symbol %s\n", new->ident);
+    }
+}
+
+// apply type specifiers to a type, return storage specifier
+// also applies qualifiers!
+enum storspec specify_type(astn *spec, struct astn_type *t) {
     unsigned VOIDs=0, CHARs=0, SHORTs=0, INTs=0, LONGs=0, FLOATs=0;
     unsigned DOUBLEs=0, SIGNEDs=0, UNSIGNEDs=0, BOOLs=0, COMPLEXs=0;
     unsigned total_typespecs = 0;
+    enum storspec storspec = SS_AUTO;
     bool storspec_set = false;
     while (spec) { // we'll do more validation later of the typespecs later
         if (spec->type == ASTN_TYPESPEC) {
@@ -60,10 +84,9 @@ void begin_st_entry(astn *spec, astn *decl_list) {
             free(old);
         } else if (spec->type == ASTN_STORSPEC) {
             if (storspec_set) { // better error handling later
-                fprintf(stderr, "Error: cannot specify more storage class more than once\n");
-                exit(-5);
+                st_error("cannot specify more storage class more than once\n");
             }
-            t->scalar.storspec = spec->astn_storspec.spec;
+            storspec = spec->astn_storspec.spec;
             //printf("dbg - storspec astn has %d, so %s", spec->astn_storspec.spec, storage_specs_str[t->scalar.storspec]);
             storspec_set = true;
             astn* old = spec;
@@ -76,16 +99,13 @@ void begin_st_entry(astn *spec, astn *decl_list) {
 
     // validate and parse type specifiers into a single type + signedness
     if (UNSIGNEDs > 1 || SIGNEDs > 1) {
-        fprintf(stderr, "Error: cannot specify 'signed' or 'unsigned' more than once\n");
-        exit(-5);
+        st_error("cannot specify 'signed' or 'unsigned' more than once\n");
     }
     if (UNSIGNEDs && SIGNEDs) {
-        fprintf(stderr, "Error: cannot combine 'signed' and 'unsigned'\n");
-        exit(-5);
+        st_error("cannot combine 'signed' and 'unsigned'\n");
     }
     if ((VOIDs + CHARs + INTs + FLOATs + DOUBLEs + BOOLs) > 1) { // long and short not included
-        fprintf(stderr, "Error: cannot specify base type more than once\n");
-        exit(-5);
+        st_error("cannot specify base type more than once\n");
     }
 
     if (UNSIGNEDs) {
@@ -102,15 +122,13 @@ void begin_st_entry(astn *spec, astn *decl_list) {
     if (VOIDs) {
         total_typespecs--;
         if (total_typespecs) {
-            fprintf(stderr, "Error: cannot combine 'void' with other type specifiers\n");
-            exit(-5);
+            st_error("cannot combine 'void' with other type specifiers\n");
         }
         t->scalar.type = t_VOID;
     } else if (CHARs) {
         total_typespecs--;
         if (total_typespecs) {
-            fprintf(stderr, "Error: invalid combination of type specifiers\n");
-            exit(-5);
+            st_error("invalid combination of type specifiers\n");
         }
         t->scalar.type = t_CHAR;
     } else if (SHORTs) {
@@ -118,12 +136,10 @@ void begin_st_entry(astn *spec, astn *decl_list) {
             total_typespecs--;
             if (INTs) total_typespecs--; // we checked that there's only one earlier
         } else {
-            fprintf(stderr, "Error: cannot specify 'short' more than once\n");
-            exit(-5);
+            st_error("cannot specify 'short' more than once\n");
         }
         if (total_typespecs) { // maybe we should die here instead, because I don't see how this would happen naturally
-            fprintf(stderr, "Error: invalid combination of type specifiers\n");
-            exit(-5);
+            st_error("invalid combination of type specifiers\n");
         }
         t->scalar.type = t_SHORT;
     } else if (LONGs) {
@@ -145,12 +161,11 @@ void begin_st_entry(astn *spec, astn *decl_list) {
             total_typespecs -= 2;
             t->scalar.type = t_LONGLONG;
         } else {
-            fprintf(stderr, "Error: 'long' cannot be specified more than twice\n");
+            st_error("'long' cannot be specified more than twice\n");
         }
 long_end:
         if (total_typespecs) {
-            fprintf(stderr, "Error: invalid combination of type specifiers\n");
-            exit(-5);
+            st_error("invalid combination of type specifiers\n");
         }
     } else if (FLOATs) {
         total_typespecs--;
@@ -161,46 +176,30 @@ long_end:
             t->scalar.type = t_FLOAT;
         }
         if (total_typespecs) {
-            fprintf(stderr, "Error: invalid combination of type specifiers\n");
-            exit(-5);
+            st_error("invalid combination of type specifiers\n");
         }
     } else if (DOUBLEs) {
         total_typespecs--;
         if (total_typespecs) {
-            fprintf(stderr, "Error: invalid combination of type specifiers\n");
-            exit(-5);
+            st_error("invalid combination of type specifiers\n");
         }
         t->scalar.type = t_DOUBLE;
     } else if (BOOLs) {
         total_typespecs--;
         if (total_typespecs) {
-            fprintf(stderr, "Error: invalid combination of type specifiers\n");
-            exit(-5);
+            st_error("invalid combination of type specifiers\n");
         }
         t->scalar.type = t_BOOL;
     } else if (INTs) {
         total_typespecs--;
         if (total_typespecs) {
-            fprintf(stderr, "Error: invalid combination of type specifiers\n");
-            exit(-5);
+            st_error("invalid combination of type specifiers\n");
         }
         t->scalar.type = t_INT;
     } else {
-        fprintf(stderr, "Error: invalid combination of type specifiers\n");
-        exit(-5);
+        st_error("invalid combination of type specifiers\n");
     }
-    //printf("FINALLY, the deduced type is: %d with signedness %d\n", t->scalar.type, !t->scalar.is_unsigned);
-    reset_dtypechain_target(decl_list, new->type);
-    if (decl_list->type == ASTN_TYPE && decl_list->astn_type.is_derived) {
-        new->type = decl_list; // because otherwise it's just an IDENT
-    }
-    //printf("Installing symbol <%s> into symbol table, storage class <%s>, with below type:\n", \
-            new->ident, storage_specs_str[new->type->astn_type.scalar.storspec]);
-    print_ast(new->type);
-    if (!st_insert_given(new)) {
-        fprintf(stderr, "Error: attempted redeclaration of symbol %s\n", new->ident);
-        //exit(-5); // ENABLE ME WHEN YOU START CARING!
-    }
+    return storspec;
 }
 
 /* 
