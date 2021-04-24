@@ -1,3 +1,8 @@
+/*
+ * util.c
+ *
+ * Project-wide utilities
+ */
 #include "util.h"
 
 #include <features.h> // for __GLIBC__; I'm pretty sure stdio or something includes this anyway
@@ -5,6 +10,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* 
+ * -------------------------------------------------------------------
+ * Safe memory allocation - always use these and not raw malloc(), etc
+ * -------------------------------------------------------------------
+ */
 void *safe_malloc(size_t size) {
     void *m = malloc(size);
     if (!m)
@@ -25,9 +35,13 @@ void *safe_realloc(void* old, size_t size) {
         die("Error allocating memory (realloc)");
     return m;
 }
+/*
+ * -------------------------------------------------------------------
+ */
+
 
 /*
- * Die with backtrace
+ * Die with backtrace, for internal errors
  *
  * backtrace() depends on glibc
  * some of this might fail depending on how much damage we did,

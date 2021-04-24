@@ -1,9 +1,14 @@
-/* parser */
+/*
+ * parser.y
+ *
+ * The parser!
+ */
 
 %code requires {
     #include "ast.h"
     #include "semval.h"
     #include "symtab.h"
+    #include "types.h"
 }
 
 %{
@@ -395,14 +400,14 @@ pointer:
     '*'                             {   $$=dtype_alloc(NULL, t_PTR); // root of the (potential) chain
                                     }
 |   '*' type_qual_list              {   $$=dtype_alloc(NULL, t_PTR);
-                                        qualify_type($$, $2);
+                                        strict_qualify_type($2, &$$->astn_type);
                                     }
 |   '*' pointer                     {   $$=dtype_alloc(NULL, t_PTR);
                                         set_dtypechain_target($2, $$);
                                         $$=$2;
                                     }
 |   '*' type_qual_list pointer      {   $$=dtype_alloc(NULL, t_PTR);
-                                        qualify_type($$, $2);
+                                        strict_qualify_type($2, &$$->astn_type);
                                         set_dtypechain_target($3, $$);
                                         $$=$3;
                                     }

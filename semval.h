@@ -1,3 +1,9 @@
+/*
+ * semval.h
+ *
+ * Core definitions for semantic values.
+ */
+
 #ifndef SEMVAL_H
 #define SEMVAL_H
 

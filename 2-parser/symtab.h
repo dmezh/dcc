@@ -1,3 +1,9 @@
+/*
+ * symtab.h
+ *
+ * Core definitions for the symbol table.
+ */
+
 #ifndef SYMTAB_H
 #define SYMTAB_H
 
@@ -5,7 +11,7 @@
 
 #include "ast.h"
 #include "semval.h"
-#include "types.h"
+#include "types_common.h"
 
 enum scope_types {
     SCOPE_FILE,
@@ -94,7 +100,6 @@ st_entry* stentry_alloc(char *ident);
 void begin_st_entry(astn *spec, astn *decl_list);
 bool st_insert_given(st_entry *new);
 astn* get_dtypechain_target(astn* top);
-void qualify_type(astn *target, astn* qual);
-enum storspec specify_type(astn *spec, struct astn_type *t);
+enum storspec describe_type(astn *spec, struct astn_type *t);
 
 #endif

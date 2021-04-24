@@ -1,12 +1,17 @@
+/*
+ * ast.h
+ *
+ * Core definitions for the abstract syntax tree.
+ */
+
 #ifndef AST_H
 #define AST_H
 
 #include "semval.h"
-#include "types.h"
+#include "types_common.h"
 
 // If you want to add a new astn type, add it to the enum, add the definition,
 // add it to the union in struct astn, and add it to print_ast in ast.c
-
 enum astn_types {
     ASTN_ASSIGN,
     ASTN_NUM,
@@ -25,52 +30,11 @@ enum astn_types {
     ASTN_TYPE
 };
 
-// all of the below type-related shit should be moved out of ast.h
-// these are type SPECIFIERS, NOT types
-enum typespec {
-    TS_VOID,
-    TS_CHAR,
-    TS_SHORT,
-    TS_INT,
-    TS_LONG,
-    TS_FLOAT,
-    TS_DOUBLE,
-    TS_SIGNED,
-    TS_UNSIGNED,
-    TS__BOOL,
-    TS__COMPLEX
-};
-
-enum typequal {
-    TQ_CONST,
-    TQ_RESTRICT,
-    TQ_VOLATILE
-};
-
-enum storspec {
-    SS_AUTO = 0,
-    SS_TYPEDEF, // we're not doing typedefs, just ignore, plus this probably shouldn't be here
-    SS_EXTERN,
-    SS_STATIC,
-    SS_REGISTER
-};
-
-extern const char* storage_specs_str[];
-extern const char* dertypes_str[];
-
-enum dertypes {
-    t_PTR,
-    t_ARRAY,
-    t_FN,
-    t_STRUCT,
-    t_UNION
-};
-
 struct astn_type {
     bool is_derived;
     union {
         struct {
-            enum dertypes type;
+            enum der_types type;
             struct astn *target;
             struct astn *size; // rename?
         } derived;
@@ -178,16 +142,17 @@ typedef struct astn {
 
 astn* astn_alloc(enum astn_types type);
 void print_ast(const astn *n);
+
 astn *unop_alloc(int op, astn *target);
 astn *binop_alloc(int op, astn *left, astn *right);
 astn *cassign_alloc(int op, astn *left, astn *right);
-int list_measure(const astn *head);
+unsigned list_measure(const astn *head);
 astn *list_alloc(astn* me);
 astn *list_append(astn *new, astn *head);
 astn *typespec_alloc(enum typespec spec);
 astn *typequal_alloc(enum typequal spec);
 astn *storspec_alloc(enum storspec spec);
-astn *dtype_alloc(astn* target, enum dertypes type);
+astn *dtype_alloc(astn* target, enum der_types type);
 astn* get_dtypechain_target(astn* top);
 void set_dtypechain_target(astn* top, astn* target);
 void reset_dtypechain_target(astn* top, astn* target);

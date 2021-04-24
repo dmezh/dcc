@@ -1,3 +1,11 @@
+/*
+ * ast.c
+ * 
+ * This file contains functions for the construction and manipulation of the AST.
+ * x_alloc functions all allocate, potentially populate, and return new AST nodes.
+ * All AST node allocation should be done internally with astn_alloc. 
+ */
+
 #include "ast.h"
 
 #include <stdio.h>
@@ -7,22 +15,9 @@
 #include "parser.tab.h"
 #include "util.h"
 
-const char* dertypes_str[] = {
-    [t_PTR] = "PTR",
-    [t_ARRAY] = "ARRAY",
-    [t_FN] = "FN",
-    [t_STRUCT] = "STRUCT",
-    [t_UNION] = "UNION"
-};
-
-astn* astn_alloc(enum astn_types type) {
-    astn *n = safe_calloc(1, sizeof(astn));
-    n->type = type;
-    return n;
-}
-
-int prints = 0;
-
+/*
+ * Recursively dump AST, starting at n and ending when we can't go any deeper.
+ */
 void print_ast(const astn *n) {
     static int tabs = 0;     //     -> __ <- two spaces
     for (int i=0; i<tabs; i++) printf("· ");
@@ -270,6 +265,19 @@ void print_ast(const astn *n) {
     }
 }
 
+/*
+ * Allocate single astn safely.
+ * The entire compiler relies on the astn type being set, so we must do that.
+ */
+astn* astn_alloc(enum astn_types type) {
+    astn *n = safe_calloc(1, sizeof(astn));
+    n->type = type;
+    return n;
+}
+
+/*
+ * allocate complex assignment (*=, /=, etc) - 6.5.16
+ */
 astn *cassign_alloc(int op, astn *left, astn *right) {
     astn *n=astn_alloc(ASTN_ASSIGN);
     n->astn_assign.left=left;
@@ -277,6 +285,9 @@ astn *cassign_alloc(int op, astn *left, astn *right) {
     return n;
 }
 
+/*
+ * allocate binary operation
+ */
 astn *binop_alloc(int op, astn *left, astn *right) {
     astn *n=astn_alloc(ASTN_BINOP);
     n->astn_binop.op=op;
@@ -285,6 +296,9 @@ astn *binop_alloc(int op, astn *left, astn *right) {
     return n;
 }
 
+/*
+ * allocate unary operation
+ */
 astn *unop_alloc(int op, astn *target) {
     astn *n=astn_alloc(ASTN_UNOP);
     n->astn_unop.op=op;
@@ -292,12 +306,19 @@ astn *unop_alloc(int op, astn *target) {
     return n;
 }
 
+/*
+ * allocate a list node
+ */
 astn *list_alloc(astn *me) {
     astn *l=astn_alloc(ASTN_LIST);
     l->astn_list.me=me;
     l->astn_list.next=NULL;
     return l;
 }
+
+/*
+ * allocate a list node and append it to end of existing list (from head)
+ */
 //              (arg to add)(head of ll)
 astn *list_append(astn* new, astn *head) {
     astn *n=list_alloc(new);
@@ -306,6 +327,20 @@ astn *list_append(astn* new, astn *head) {
     return n;
 }
 
+/*
+ * return length of AST list starting at head
+ */
+unsigned list_measure(const astn *head) {
+    int c = 0;
+    while ((head=head->astn_list.next)) {
+        c++;
+    }
+    return c + 1;
+}
+
+/*
+ * allocate type specifier node
+ */
 astn *typespec_alloc(enum typespec spec) {
     astn *n=astn_alloc(ASTN_TYPESPEC);
     n->astn_typespec.spec = spec;
@@ -314,6 +349,9 @@ astn *typespec_alloc(enum typespec spec) {
     return n;
 }
 
+/*
+ * allocate type qualifier node
+ */
 astn *typequal_alloc(enum typequal qual) {
     astn *n=astn_alloc(ASTN_TYPEQUAL);
     n->astn_typequal.qual = qual;
@@ -321,6 +359,9 @@ astn *typequal_alloc(enum typequal qual) {
     return n;
 }
 
+/*
+ * allocate storage specifier node
+ */
 astn *storspec_alloc(enum storspec spec) {
     astn *n=astn_alloc(ASTN_STORSPEC);
     n->astn_storspec.spec = spec;
@@ -328,16 +369,23 @@ astn *storspec_alloc(enum storspec spec) {
     return n;
 }
 
-astn *dtype_alloc(astn *target, enum dertypes type) {
+/*
+ * allocate derived type node
+ */
+astn *dtype_alloc(astn *target, enum der_types type) {
     astn *n=astn_alloc(ASTN_TYPE);
     n->astn_type.is_derived = true;
     n->astn_type.derived.type = type;
     n->astn_type.derived.target = target;
     //printf("ALLOCATED DTYPE %p OF TYPE %s WITH TARGET %p\n",
-    //        (void*)n, dertypes_str[n->astn_type.derived.type], (void*)n->astn_type.derived.target);
+    //        (void*)n, der_types_str[n->astn_type.derived.type], (void*)n->astn_type.derived.target);
     return n;
 }
 
+/*
+ * set the final derived.target of a chain of derived type nodes, eg:
+ * (ptr to)->(array of)->...->target
+ */
 void set_dtypechain_target(astn *top, astn *target) {
     while (top->astn_type.derived.target) {
         top = top->astn_type.derived.target;
@@ -346,6 +394,9 @@ void set_dtypechain_target(astn *top, astn *target) {
     top->astn_type.derived.target = target;
 }
 
+/*
+ * same as above, but replace the existing final target, not append past it
+ */
 void reset_dtypechain_target(astn *top, astn *target) {
     astn* last = top;
     while (top->type == ASTN_TYPE && top->astn_type.derived.target) {
@@ -356,51 +407,21 @@ void reset_dtypechain_target(astn *top, astn *target) {
     last->astn_type.derived.target = target;
 }
 
-
-// takes the final node of the parent (the IDENT), makes it the final node of the child,
-// and connects the child to the parent
+/*
+ * takes the final node of the parent (the IDENT), makes it the final node of the child,
+ * and connects the child to the parent
+ */
 void merge_dtypechains(astn *parent, astn *child) {
     set_dtypechain_target(child, get_dtypechain_target(parent));
     reset_dtypechain_target(parent, child);
 }
 
-void qualify_type(astn *target, astn *qual) {
-    struct astn_type *t = &target->astn_type;
-    while (qual) {
-        if (qual->type == ASTN_TYPEQUAL) {
-            switch (qual->astn_typequal.qual) {
-                case TQ_CONST:      t->is_const = true;       break;
-                case TQ_RESTRICT:   t->is_restrict = true;    break;
-                case TQ_VOLATILE:   t->is_volatile = true;    break;
-                default:    die("invalid typequal");
-            }
-            qual = qual->astn_typequal.next;
-        } else {
-            die("non-qual astn in allegedly qual chain");
-        }
-    }
-}
-
-// get last target of chain of astn_types
+/*
+ * get last target of chain of derived types
+ */
 astn* get_dtypechain_target(astn* top) {
     while (top->type == ASTN_TYPE && top->astn_type.derived.target) {
         top = top->astn_type.derived.target;
     }
     return top;
 }
-
-int list_measure(const astn *head) {
-    int c = 0;
-    while ((head=head->astn_list.next)) {
-        c++;
-    }
-    return c + 1;
-}
-
-const char* storage_specs_str[] = {
-    [SS_AUTO] = "auto",
-    [SS_EXTERN] = "extern",
-    [SS_STATIC] = "static",
-    [SS_REGISTER] = "register",
-    [SS_TYPEDEF] = "typedef"
-};
