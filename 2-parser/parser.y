@@ -397,8 +397,7 @@ arr_size:
 ;
 
 pointer:
-    '*'                             {   $$=dtype_alloc(NULL, t_PTR); // root of the (potential) chain
-                                    }
+    '*'                             {   $$=dtype_alloc(NULL, t_PTR);    } // root of the (potential) chain
 |   '*' type_qual_list              {   $$=dtype_alloc(NULL, t_PTR);
                                         strict_qualify_type($2, &$$->astn_type);
                                     }
@@ -422,32 +421,32 @@ type_qual_list:
 // 6.7.1 Storage class specifiers
 // no typedefs
 stor_spec:
-    EXTERN              {   $$=storspec_alloc(SS_EXTERN);   }
-|   STATIC              {   $$=storspec_alloc(SS_STATIC);   }
-|   AUTO                {   $$=storspec_alloc(SS_AUTO);     }
-|   REGISTER            {   $$=storspec_alloc(SS_REGISTER); }
+    EXTERN              {   $$=storspec_alloc(SS_EXTERN);       }
+|   STATIC              {   $$=storspec_alloc(SS_STATIC);       }
+|   AUTO                {   $$=storspec_alloc(SS_AUTO);         }
+|   REGISTER            {   $$=storspec_alloc(SS_REGISTER);     }
 ;
 
 // 6.7.2 Type specifiers
 type_spec:
-    VOID                {   $$=typespec_alloc(TS_VOID);     }
-|   CHAR                {   $$=typespec_alloc(TS_CHAR);     }
-|   SHORT               {   $$=typespec_alloc(TS_SHORT);    }
-|   INT                 {   $$=typespec_alloc(TS_INT);      }
-|   LONG                {   $$=typespec_alloc(TS_LONG);     }
-|   FLOAT               {   $$=typespec_alloc(TS_FLOAT);    }
-|   DOUBLE              {   $$=typespec_alloc(TS_DOUBLE);   }
-|   SIGNED              {   $$=typespec_alloc(TS_SIGNED);   }
-|   UNSIGNED            {   $$=typespec_alloc(TS_UNSIGNED); }
-|   _BOOL               {   $$=typespec_alloc(TS__BOOL);    }
-|   _COMPLEX            {   $$=typespec_alloc(TS__COMPLEX); }
+    VOID                {   $$=typespec_alloc(TS_VOID);         }
+|   CHAR                {   $$=typespec_alloc(TS_CHAR);         }
+|   SHORT               {   $$=typespec_alloc(TS_SHORT);        }
+|   INT                 {   $$=typespec_alloc(TS_INT);          }
+|   LONG                {   $$=typespec_alloc(TS_LONG);         }
+|   FLOAT               {   $$=typespec_alloc(TS_FLOAT);        }
+|   DOUBLE              {   $$=typespec_alloc(TS_DOUBLE);       }
+|   SIGNED              {   $$=typespec_alloc(TS_SIGNED);       }
+|   UNSIGNED            {   $$=typespec_alloc(TS_UNSIGNED);     }
+|   _BOOL               {   $$=typespec_alloc(TS__BOOL);        }
+|   _COMPLEX            {   $$=typespec_alloc(TS__COMPLEX);     }
 ;
 
 // 6.7.3 Type qualifiers
 type_qual:
-    CONST               {   $$=typequal_alloc(TQ_CONST);    }
-|   RESTRICT            {   $$=typequal_alloc(TQ_RESTRICT); }
-|   VOLATILE            {   $$=typequal_alloc(TQ_VOLATILE); }
+    CONST               {   $$=typequal_alloc(TQ_CONST);        }
+|   RESTRICT            {   $$=typequal_alloc(TQ_RESTRICT);     }
+|   VOLATILE            {   $$=typequal_alloc(TQ_VOLATILE);     }
 ;
 %%
 
