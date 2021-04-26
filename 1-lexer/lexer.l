@@ -15,6 +15,7 @@
 #include "../2-parser/parser.tab.h"
 #include "charutil.h"
 #include "semval.h"
+#include "util.h"
 
 static int process_uint(bool is_signed, enum int_types type);
 static int process_oct(bool is_signed, enum int_types type);
@@ -92,6 +93,10 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
 "_Bool"         { return _BOOL;     }
 "_Complex"      { return _COMPLEX;  }
 "_Imaginary"    { return _IMAGINARY;}
+
+    /* Internal actions */
+"_perish"       { return _PERISH;   }
+"_examine"      { return _EXAMINE;  }
 
     /* in the order they appear in ISO 6.4.6 */
 ->              { return INDSEL;    }

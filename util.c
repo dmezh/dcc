@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "yak.ascii.h"
+
 /* 
  * -------------------------------------------------------------------
  * Safe memory allocation - always use these and not raw malloc(), etc
@@ -50,7 +52,9 @@ void *safe_realloc(void* old, size_t size) {
 #define BACKTRACE_DEPTH 128
 
 _Noreturn void die(const char* msg) {
-    fprintf(stderr, "Internal error: %s\n", msg);
+    fprintf(stderr, "\nInternal error: %s\n", msg);
+
+    fprintf(stderr, "%s\n", yak);
 
     #ifdef __GLIBC__
     fprintf(stderr, "Trying to print backtrace:\n------------------------------\n");

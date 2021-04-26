@@ -132,8 +132,18 @@ void print_ast(const astn *n) {
                 tabs++; print_ast(n->astn_tern.t_else); tabs--;
             tabs--; break;
 
-/**/    case ASTN_LIST: // unused
-            print_ast(n->astn_list.me);
+/**/    case ASTN_LIST:
+            printf("LIST:\n");
+            tabs++;
+                while (n) {
+                    print_ast(NULL);
+                    printf("LIST ELEMENT:\n");
+                    tabs++;
+                        print_ast(n->astn_list.me);
+                    tabs--;
+                    n = n->astn_list.next;
+                }
+            tabs--;
             break;
 /**/    case ASTN_TYPESPEC:
             printf("TYPESPEC ");
@@ -318,6 +328,7 @@ astn *list_alloc(astn *me) {
 
 /*
  * allocate a list node and append it to end of existing list (from head)
+ * return: ptr to new node
  */
 //              (arg to add)(head of ll)
 astn *list_append(astn* new, astn *head) {

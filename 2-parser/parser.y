@@ -9,6 +9,7 @@
     #include "semval.h"
     #include "symtab.h"
     #include "types.h"
+    #include "util.h"
 }
 
 %{
@@ -32,6 +33,7 @@
 %token OREQ XOREQ AUTO BREAK CASE CHAR CONST CONTINUE DEFAULT DO DOUBLE ELSE ENUM EXTERN
 %token FLOAT FOR GOTO IF INLINE INT LONG REGISTER RESTRICT RETURN SHORT SIGNED SIZEOF
 %token STATIC STRUCT SWITCH TYPEDEF UNION UNSIGNED VOID VOLATILE WHILE _BOOL _COMPLEX _IMAGINARY
+%token _PERISH _EXAMINE
 
 %type<astn_p> statement expr expr_stmt
 
@@ -51,12 +53,16 @@
 %type<astn_p> decln_spec init_decl_list init_decl decl direct_decl type_spec type_qual stor_spec
 %type<astn_p> pointer type_qual_list direct_decl_arr arr_size
 
+%type<astn_p> strunion_spec struct_decl_list struct_decl spec_qual_list
+%type<astn_p> struct_decltr_list struct_decltr
+
 %%
 
 fulltree:
     %empty
 |   fulltree statement
 |   fulltree decln
+|   fulltree internal
 ;
 
 statement:
@@ -67,6 +73,14 @@ expr_stmt:
     expr ';'                     {   $$=$1;   }
 |   ';'                          {   $$=NULL;   }
 ;
+
+// ----------------------------------------------------------------------------
+// Internal actions
+internal:
+    _PERISH                     {   die("You asked me to die!");    }
+|   _EXAMINE                    {   fprintf(stderr, "_examine not yet implemented\n");  }
+;
+
 // ----------------------------------------------------------------------------
 // 6.5.1 Primary expressions
 primary_expr:
@@ -309,10 +323,10 @@ init_decl_list:
     init_decl
 ;
 
+// skipping initializers at the moment!
 init_decl:
     decl
-|   decl '=' init                   {
-                                    }
+|   decl '=' init                   {   fprintf(stderr, "Warning: initializer will be ignored\n");      }
 ;
 
 // no initializer lists, just simple initializers
@@ -440,7 +454,60 @@ type_spec:
 |   UNSIGNED            {   $$=typespec_alloc(TS_UNSIGNED);     }
 |   _BOOL               {   $$=typespec_alloc(TS__BOOL);        }
 |   _COMPLEX            {   $$=typespec_alloc(TS__COMPLEX);     }
+|   strunion_spec       {   print_ast($1);    }
 ;
+
+// the struct becomes defined right after the '{' (Standard)
+strunion_spec:
+    str_or_union ident '{' struct_decl_list '}' {$$=$4;}
+|   str_or_union '{' struct_decl_list '}' {}
+|   str_or_union ident  {   /* shtufffffffff */                 }
+;
+
+// not an astn_p
+str_or_union:
+    STRUCT
+;
+
+// list of members - should this be a list of st_entry? does it even really need
+// to have any semantic actions / touch the ast? I think we should synthesize a list
+// of st_entry here and attempt to install them into a mini-scope symtab.
+struct_decl_list:
+    struct_decl                     {   $$=list_alloc($1);  }
+|   struct_decl_list struct_decl    {   list_append($2, $1);
+                                        $$=$1;
+                                    }
+;
+
+// this is equivalent 6.7 decln, where we have the specs/quals and are ready
+// to install.
+struct_decl:
+    spec_qual_list struct_decltr_list ';' { printf("I see member with specs:\n"); print_ast($1); 
+                                            printf("with decltr list:\n"); print_ast($2); }
+;
+
+// this is for the members
+spec_qual_list:
+    type_spec
+|   type_qual
+|   type_spec spec_qual_list {  $$=$1;
+                                $$->astn_typespec.next = $2;
+                             }
+|   type_qual spec_qual_list {  $$=$1;
+                                $$->astn_typequal.next = $2;
+                             }
+;
+
+// no ident lists at the moment
+struct_decltr_list:
+    struct_decltr
+;
+
+// no bitfields at the moment
+struct_decltr:
+    decl
+;
+
 
 // 6.7.3 Type qualifiers
 type_qual:
