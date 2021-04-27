@@ -111,5 +111,7 @@ astn* get_dtypechain_target(astn* top);
 enum storspec describe_type(astn *spec, struct astn_type *t);
 st_entry* st_lookup_ns(const char* ident, enum namespaces ns);
 void st_examine(char* ident);
+st_entry* st_lookup_fq(const char* ident, symtab* s, enum namespaces ns);
+void st_examine_member(char* tag, char* child);
 
 #endif

@@ -57,8 +57,6 @@ st_entry* st_define_struct(char *ident, astn *decl_list, YYLTYPE context) {
     }    
     strunion->members=current_scope;
     strunion->def_context=context;
-    printf("finished struct, here is the mini-scope:\n");
-    st_dump_single(current_scope);
     st_pop_scope();
     return strunion;
 }
@@ -95,9 +93,9 @@ void begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
         new->type = decl_list; // because otherwise it's just an IDENT
     }
 
-    printf("Installing symbol <%s> into symbol table, storage class <%s>, with below type:\n", \
-            new->ident, storspec_str[new->storspec]);
-    print_ast(new->type);
+    //printf("Installing symbol <%s> into symbol table, storage class <%s>, with below type:\n", \
+    //        new->ident, storspec_str[new->storspec]);
+    //print_ast(new->type);
 
     if (!st_insert_given(new)) {
         st_error("attempted redeclaration of symbol %s\n", new->ident);
@@ -130,7 +128,12 @@ st_entry* st_lookup(const char* ident) {
 }
 
 st_entry* st_lookup_ns(const char* ident, enum namespaces ns) {
-    st_entry* cur = current_scope->first;
+    return st_lookup_fq(ident, current_scope, ns);
+}
+
+// fully-qualified lookup; give me symtab to check and namespace
+st_entry* st_lookup_fq(const char* ident, symtab* s, enum namespaces ns) {
+    st_entry* cur = s->first;
     while (cur) {   // works fine for first being NULL / empty symtab
         if (cur->ns == ns && !strcmp(ident, cur->ident))
             return cur;
@@ -254,7 +257,7 @@ void st_dump_single() {
 }
 
 void st_dump_struct(st_entry* s) {
-    printf("Dumping tag-type mini scope of tag %s!\n", s->ident);
+    printf("Dumping tag-type mini scope of tag <%s>!\n", s->ident);
     st_entry* cur = s->members->first;
     while (cur) {
         st_dump_entry(cur);
@@ -272,9 +275,40 @@ void st_examine(char* ident) {
             st_dump_entry(e);
             if (i == NS_MEMBERS || i == NS_MISC)
                 print_ast(e->type);
+            if (e->is_strunion_def && e->members) {
+                st_dump_struct(e);
+            }
         }
     }
-    if (!count)
-        printf("No matches found for <%s> using lookup from current scope (%p)\n", ident, (void*)current_scope);
+    if (!count) {
+        printf("> No matches found for <%s> using lookup from current scope (%p)\n", ident, (void*)current_scope);
+    }
+    printf("\n");
+}
+
+void st_examine_member(char* tag, char* child) {
+    st_entry *e = st_lookup_ns(tag, NS_TAGS);
+    if (!e) {
+        printf("> I was not able to find tag <%s>.\n\n", tag);
+        return;
+    }
+    if (!e->members) {
+        printf("> Tag <%s> is declared, but not defined:\n", tag);
+        st_dump_entry(e);
+        printf("\n");
+        return;
+    }
+    st_entry *m = st_lookup_fq(child, e->members, NS_MEMBERS);
+    if (!m) {
+        printf("> I found tag <%s>, but not the member <%s>:\n", tag, child);
+        st_dump_entry(e);
+        printf("\n");
+        return;
+    }
+    printf("> Found <%s> -> <%s>:\n", tag, child);
+    st_dump_entry(m);
+    print_ast(m->type);
+    printf("\n");
+    return;
 }
 // currently only a single scope!!
