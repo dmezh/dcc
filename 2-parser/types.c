@@ -195,8 +195,6 @@ long_end:
             st_error("invalid combination of type specifiers\n");
         }
         t->scalar.type = t_INT;
-    } else {
-        st_error("invalid combination of type specifiers\n");
     }
     return storspec;
 }
