@@ -300,7 +300,7 @@ expr:
 // 6.7 Declarations
 decln:
     decln_spec ';'                  {   /* check for idiot user not actually declaring anything */ }
-|   decln_spec init_decl_list ';'   {   begin_st_entry(decl_alloc($1, $2), NS_MISC, @$);     }
+|   decln_spec init_decl_list ';'   {   begin_st_entry(decl_alloc($1, $2, @$), NS_MISC, @$);     }
 // no static_assert stuff
 ;
 
@@ -487,7 +487,7 @@ struct_decl_list:
 // this is equivalent 6.7 decln, where we have the specs/quals and are ready
 // to install.
 struct_decl:
-    spec_qual_list struct_decltr_list ';' { $$=decl_alloc($1, $2); }
+    spec_qual_list struct_decltr_list ';' { $$=decl_alloc($1, $2, @$); }
 ;
 
 // this is for the members

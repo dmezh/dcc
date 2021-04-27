@@ -437,10 +437,11 @@ astn *dtype_alloc(astn *target, enum der_types type) {
 /*
  * allocate decl type node
  */
-astn *decl_alloc(astn *specs, astn *type) {
+astn *decl_alloc(astn *specs, astn *type, YYLTYPE context) {
     astn *n=astn_alloc(ASTN_DECL);
     n->astn_decl.specs=specs;
     n->astn_decl.type=type;
+    n->astn_decl.context=context;
     return n;
 }
 

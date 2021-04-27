@@ -7,6 +7,7 @@
 #ifndef AST_H
 #define AST_H
 
+#include "location.h"
 #include "semval.h"
 #include "types_common.h"
 
@@ -40,6 +41,7 @@ struct st_entry;
 
 // as described in parser.y @ decl
 struct astn_decl {
+    YYLTYPE context;
     struct astn *specs, *type;
 };
 
@@ -173,7 +175,7 @@ astn *typespec_alloc(enum typespec spec);
 astn *typequal_alloc(enum typequal spec);
 astn *storspec_alloc(enum storspec spec);
 astn *dtype_alloc(astn* target, enum der_types type);
-astn *decl_alloc(astn *specs, astn *type);
+astn *decl_alloc(astn *specs, astn *type, YYLTYPE context);
 astn *strunion_alloc(struct st_entry* symbol);
 astn* get_dtypechain_target(astn* top);
 void set_dtypechain_target(astn* top, astn* target);

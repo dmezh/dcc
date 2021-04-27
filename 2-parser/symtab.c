@@ -52,7 +52,7 @@ st_entry* st_define_struct(char *ident, astn *decl_list, YYLTYPE context) {
     st_new_scope(SCOPE_MINI);
     while (decl_list) {
         //printf("attempting to install miniscope symbol\n");
-        begin_st_entry(list_data(decl_list), NS_MEMBERS, context);
+        begin_st_entry(list_data(decl_list), NS_MEMBERS, list_data(decl_list)->astn_decl.context);
         decl_list = list_next(decl_list);
     }    
     strunion->members=current_scope;
