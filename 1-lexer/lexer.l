@@ -13,6 +13,7 @@
 
 #include "../2-parser/ast.h"
 #include "../2-parser/parser.tab.h"
+#include "location.h"
 #include "charutil.h"
 #include "semval.h"
 #include "util.h"
@@ -23,7 +24,7 @@ static int process_real(enum int_types type);
 static unsigned char parse_char_safe(char* str, size_t* i);
 
 YYSTYPE yylval;
-struct context context = {NULL, 1};
+YYLTYPE context = {.lineno = 1, .filename = NULL};
 %}
 
 HEXSET  [0-9A-Fa-f]
@@ -97,7 +98,7 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
     /* Internal actions */
 "_perish"       { return _PERISH;   }
 "_examine"      { return _EXAMINE;  }
-
+"_dumpsymtab"   { return _DUMPSYMTAB; }
     /* in the order they appear in ISO 6.4.6 */
 ->              { return INDSEL;    }
 \+\+            { return PLUSPLUS;  }

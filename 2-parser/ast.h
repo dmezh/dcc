@@ -27,11 +27,25 @@ enum astn_types {
     ASTN_TYPESPEC,
     ASTN_TYPEQUAL,
     ASTN_STORSPEC,
-    ASTN_TYPE
+    ASTN_TYPE,
+    ASTN_DECL,
+};
+
+enum tagtypes {
+    t_UNION,
+    t_STRUCT
+};
+
+struct st_entry;
+
+// as described in parser.y @ decl
+struct astn_decl {
+    struct astn *specs, *type;
 };
 
 struct astn_type {
-    bool is_derived;
+    bool is_derived; // refactor these two into an enum
+    bool is_tagtype;
     union {
         struct {
             enum der_types type;
@@ -42,6 +56,10 @@ struct astn_type {
             enum scalar_types type;
             bool is_unsigned;
         } scalar;
+        struct {
+            enum tagtypes type;
+            struct st_entry *symbol;
+        } tagtype;
     };
     bool is_volatile;
     bool is_const;
@@ -49,13 +67,12 @@ struct astn_type {
     bool is_atomic;
 };
 
-struct astn_decl {
-    struct astn *init;
-    struct astn_type type;
-};
-
 struct astn_typespec {
-    enum typespec spec;
+    bool is_tagtype;
+    union {
+        enum typespec spec;
+        struct st_entry* symbol;
+    };
     struct astn *next;
 };
 
@@ -137,6 +154,7 @@ typedef struct astn {
         struct astn_typequal astn_typequal;
         struct astn_storspec astn_storspec;
         struct astn_type astn_type;
+        struct astn_decl astn_decl;
     };
 } astn;
 
@@ -149,10 +167,14 @@ astn *cassign_alloc(int op, astn *left, astn *right);
 unsigned list_measure(const astn *head);
 astn *list_alloc(astn* me);
 astn *list_append(astn *new, astn *head);
+astn *list_next(astn* cur);
+astn *list_data(astn* n);
 astn *typespec_alloc(enum typespec spec);
 astn *typequal_alloc(enum typequal spec);
 astn *storspec_alloc(enum storspec spec);
 astn *dtype_alloc(astn* target, enum der_types type);
+astn *decl_alloc(astn *specs, astn *type);
+astn *strunion_alloc(struct st_entry* symbol);
 astn* get_dtypechain_target(astn* top);
 void set_dtypechain_target(astn* top, astn* target);
 void reset_dtypechain_target(astn* top, astn* target);

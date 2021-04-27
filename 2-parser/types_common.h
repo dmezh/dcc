@@ -20,7 +20,7 @@ enum typespec {
     TS_SIGNED,
     TS_UNSIGNED,
     TS__BOOL,
-    TS__COMPLEX
+    TS__COMPLEX,
 };
 
 enum typequal {
@@ -61,8 +61,6 @@ enum der_types {
     t_PTR,
     t_ARRAY,
     t_FN,
-    t_STRUCT,
-    t_UNION
 };
 
 extern const char* storspec_str[];

@@ -147,19 +147,26 @@ void print_ast(const astn *n) {
             break;
 /**/    case ASTN_TYPESPEC:
             printf("TYPESPEC ");
-            switch (n->astn_typespec.spec) {
-                case TS_VOID:       printf("VOID");         break;
-                case TS_CHAR:       printf("CHAR");         break;
-                case TS_SHORT:      printf("SHORT");        break;
-                case TS_INT:        printf("INT");          break;
-                case TS_LONG:       printf("LONG");         break;
-                case TS_FLOAT:      printf("FLOAT");        break;
-                case TS_DOUBLE:     printf("DOUBLE");       break;
-                case TS_SIGNED:     printf("SIGNED");       break;
-                case TS_UNSIGNED:   printf("UNSIGNED");     break;
-                case TS__BOOL:      printf("_BOOL");        break;
-                case TS__COMPLEX:   printf("_COMPLEX");     break;
-                default:            die("invalid typespec");
+            if (n->astn_typespec.is_tagtype) {
+                tabs++;
+                    print_ast(NULL);
+                    st_dump_single(n->astn_typespec.symbol->members);
+                tabs--;
+            } else {
+                switch (n->astn_typespec.spec) {
+                    case TS_VOID:       printf("VOID");         break;
+                    case TS_CHAR:       printf("CHAR");         break;
+                    case TS_SHORT:      printf("SHORT");        break;
+                    case TS_INT:        printf("INT");          break;
+                    case TS_LONG:       printf("LONG");         break;
+                    case TS_FLOAT:      printf("FLOAT");        break;
+                    case TS_DOUBLE:     printf("DOUBLE");       break;
+                    case TS_SIGNED:     printf("SIGNED");       break;
+                    case TS_UNSIGNED:   printf("UNSIGNED");     break;
+                    case TS__BOOL:      printf("_BOOL");        break;
+                    case TS__COMPLEX:   printf("_COMPLEX");     break;
+                    default:            die("invalid typespec");
+                }
             }
             printf("\n");
             if (n->astn_typespec.next) {
@@ -236,8 +243,6 @@ void print_ast(const astn *n) {
                     switch (n->astn_type.derived.type) {
                         case t_PTR:     printf("PTR TO");       break;
                         case t_FN:      printf("FN RETURNING"); break;
-                        case t_STRUCT:  printf("STRUCT");       break;
-                        case t_UNION:   printf("UNION");        break;
                         default:        die("invalid derived type");
                     }
                     printf("\n");
@@ -249,6 +254,12 @@ void print_ast(const astn *n) {
                     tabs--;
                 }
                 //if (n->astn_type.derived.type == t_ARRAY) tabs--; // kludge!
+            } else if (n->astn_type.is_tagtype) {
+                if (n->astn_type.tagtype.symbol->members) {
+                    st_dump_struct(n->astn_type.tagtype.symbol);
+                } else {
+                    printf("forward decl\n");
+                }
             } else {
                 if (n->astn_type.scalar.is_unsigned) printf("UNSIGNED ");
                 switch (n->astn_type.scalar.type) {
@@ -270,6 +281,22 @@ void print_ast(const astn *n) {
                 printf("\n");
             }
             break;
+
+ /**/   case ASTN_DECL:
+            printf("DECL:\n");
+            tabs++;
+                print_ast(NULL);
+                printf("SPECS:\n");
+                tabs++;
+                    print_ast(n->astn_decl.specs);
+                tabs--;
+                print_ast(NULL);
+                printf("TYPE (with ident):\n");
+                tabs++;
+                    print_ast(n->astn_decl.type);
+                tabs--;
+            tabs--;
+
         default:
             die("Unhandled AST node type");
     }
@@ -339,6 +366,20 @@ astn *list_append(astn* new, astn *head) {
 }
 
 /*
+ *  get next node of list
+ */
+astn *list_next(astn* cur) {
+    return cur->astn_list.next;
+}
+
+/*
+ *  get current data element
+ */
+astn *list_data(astn* n) {
+    return n->astn_list.me;
+}
+
+/*
  * return length of AST list starting at head
  */
 unsigned list_measure(const astn *head) {
@@ -390,6 +431,27 @@ astn *dtype_alloc(astn *target, enum der_types type) {
     n->astn_type.derived.target = target;
     //printf("ALLOCATED DTYPE %p OF TYPE %s WITH TARGET %p\n",
     //        (void*)n, der_types_str[n->astn_type.derived.type], (void*)n->astn_type.derived.target);
+    return n;
+}
+
+/*
+ * allocate decl type node
+ */
+astn *decl_alloc(astn *specs, astn *type) {
+    astn *n=astn_alloc(ASTN_DECL);
+    n->astn_decl.specs=specs;
+    n->astn_decl.type=type;
+    return n;
+}
+
+/*
+ * allocate strunion variant of astn_typespec
+ */
+astn *strunion_alloc(struct st_entry* symbol) {
+    astn *n=astn_alloc(ASTN_TYPESPEC);
+    n->astn_typespec.is_tagtype = true;
+    n->astn_typespec.symbol = symbol;
+    n->astn_typespec.next = NULL;
     return n;
 }
 

@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+#include "location.h"
+
 #define FRIENDLYFN context.filename ? context.filename : "<stdin>"
 
 int yylex();
@@ -13,6 +15,6 @@ struct context {
     int lineno;
 };
 
-extern struct context context;
+extern YYLTYPE context;
 
 #endif

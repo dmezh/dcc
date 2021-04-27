@@ -10,10 +10,12 @@
 #include <stdbool.h>
 
 #include "ast.h"
+#include "location.h"
 #include "semval.h"
 #include "types_common.h"
 
 enum scope_types {
+    SCOPE_MINI,
     SCOPE_FILE,
     SCOPE_FUNCTION,
     SCOPE_BLOCK,
@@ -34,11 +36,13 @@ enum namespaces {
 typedef struct st_entry {
     char *ident;
     enum namespaces ns;
-    
-    struct astn *type;
 
+    bool is_strunion_def;
+    bool is_union;
+    struct symtab *members; // tag type is complete when this is non-null
+
+    struct astn *type;
     enum storspec storspec;
-    
     bool has_init;
     union { // yeah we'll just copy initializers - avoids entangling us with the AST
         struct number numinit;
@@ -46,6 +50,7 @@ typedef struct st_entry {
     };
     
     struct st_entry *next;
+    YYLTYPE decl_context, def_context; // only some will have the latter
 } st_entry;
 
 /*
@@ -90,16 +95,21 @@ typedef struct symtab {
 
 extern symtab* current_scope;
 
+st_entry *st_declare_struct(char* ident, bool strict,  YYLTYPE context);
+st_entry *st_define_struct(char *ident, astn *decl_list,  YYLTYPE context);
 st_entry* st_lookup(const char* ident);
 bool st_insert(char* ident);
 void st_new_scope(enum scope_types scope_type);
 void st_pop_scope();
 void st_destroy(symtab* target);
 void st_dump_single();
+void st_dump_struct();
 st_entry* stentry_alloc(char *ident);
-void begin_st_entry(astn *spec, astn *decl_list);
+void begin_st_entry(astn *decl, enum namespaces ns,  YYLTYPE context);
 bool st_insert_given(st_entry *new);
 astn* get_dtypechain_target(astn* top);
 enum storspec describe_type(astn *spec, struct astn_type *t);
+st_entry* st_lookup_ns(const char* ident, enum namespaces ns);
+void st_examine(char* ident);
 
 #endif

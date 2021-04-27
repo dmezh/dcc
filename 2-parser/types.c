@@ -23,9 +23,7 @@ const char* storspec_str[] = {
 const char* der_types_str[] = {
     [t_PTR] = "PTR",
     [t_ARRAY] = "ARRAY",
-    [t_FN] = "FN",
-    [t_STRUCT] = "STRUCT",
-    [t_UNION] = "UNION"
+    [t_FN] = "FN"
 };
 
 static astn *qualify_single(astn *qual, struct astn_type *t);
@@ -34,31 +32,42 @@ static astn *qualify_single(astn *qual, struct astn_type *t);
 enum storspec describe_type(astn *spec, struct astn_type *t) {
     unsigned VOIDs=0, CHARs=0, SHORTs=0, INTs=0, LONGs=0, FLOATs=0;
     unsigned DOUBLEs=0, SIGNEDs=0, UNSIGNEDs=0, BOOLs=0, COMPLEXs=0;
+    unsigned tagtypes=0;
     unsigned total_typespecs = 0;
 
+    //print_ast(spec);
     enum storspec storspec = SS_AUTO;
     bool storspec_set = false;
 
     while (spec) { // we'll do more validation later of the typespecs later
         if (spec->type == ASTN_TYPESPEC) {
-            switch (spec->astn_typespec.spec) {
-                case TS_VOID:       VOIDs++;        break;
-                case TS_CHAR:       CHARs++;        break;
-                case TS_SHORT:      SHORTs++;       break;
-                case TS_INT:        INTs++;         break;
-                case TS_LONG:       LONGs++;        break;
-                case TS_FLOAT:      FLOATs++;       break;
-                case TS_DOUBLE:     DOUBLEs++;      break;
-                case TS_SIGNED:     SIGNEDs++;      break;
-                case TS_UNSIGNED:   UNSIGNEDs++;    break;
-                case TS__BOOL:      BOOLs++;        break;
-                case TS__COMPLEX:   COMPLEXs++;     break;
-                default:    die("invalid typespec");
+            if (spec->astn_typespec.is_tagtype) {
+                t->is_tagtype = true;
+                t->tagtype.symbol = spec->astn_typespec.symbol;
+                astn *old = spec;
+                spec = spec->astn_typespec.next;
+                free(old);
+                tagtypes++;
+            } else {
+                switch (spec->astn_typespec.spec) {
+                    case TS_VOID:       VOIDs++;        break;
+                    case TS_CHAR:       CHARs++;        break;
+                    case TS_SHORT:      SHORTs++;       break;
+                    case TS_INT:        INTs++;         break;
+                    case TS_LONG:       LONGs++;        break;
+                    case TS_FLOAT:      FLOATs++;       break;
+                    case TS_DOUBLE:     DOUBLEs++;      break;
+                    case TS_SIGNED:     SIGNEDs++;      break;
+                    case TS_UNSIGNED:   UNSIGNEDs++;    break;
+                    case TS__BOOL:      BOOLs++;        break;
+                    case TS__COMPLEX:   COMPLEXs++;     break;
+                    default:    die("invalid typespec");
+                }
+                total_typespecs++;
+                astn* old = spec;
+                spec = spec->astn_typespec.next;
+                free(old); // maybe a little memory management
             }
-            total_typespecs++;
-            astn* old = spec;
-            spec = spec->astn_typespec.next;
-            free(old); // maybe a little memory management
         } else if (spec->type == ASTN_TYPEQUAL) { // specifying multiple times is valid
             spec = qualify_single(spec, t);
         } else if (spec->type == ASTN_STORSPEC) {
@@ -77,6 +86,17 @@ enum storspec describe_type(astn *spec, struct astn_type *t) {
     }
 
     // validate and parse type specifiers into a single type + signedness
+    if (tagtypes) {
+        if (tagtypes > 1) {
+            st_error("cannot specify struct/union/enum more than once\n");
+        } else {
+            if (total_typespecs) {
+                st_error("cannot combine struct/union/enum with other type specifiers\n");
+            }
+        }
+        return storspec;
+    }
+
     if (UNSIGNEDs > 1 || SIGNEDs > 1) {
         st_error("cannot specify 'signed' or 'unsigned' more than once\n");
     }

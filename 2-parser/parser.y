@@ -10,15 +10,16 @@
     #include "symtab.h"
     #include "types.h"
     #include "util.h"
+    #include "location.h"
 }
 
-%{
+%define parse.trace
+
+%code {
     #include <stdio.h>
     int yylex(void);
-    void yyerror (const char *s) { fprintf(stderr, "o! %s\n", s);}
-%}
-
-%define parse.trace
+    void yyerror (const char *s) { fprintf(stderr, "o! %s\n", s); }
+}
 
 %union
 {
@@ -33,7 +34,7 @@
 %token OREQ XOREQ AUTO BREAK CASE CHAR CONST CONTINUE DEFAULT DO DOUBLE ELSE ENUM EXTERN
 %token FLOAT FOR GOTO IF INLINE INT LONG REGISTER RESTRICT RETURN SHORT SIGNED SIZEOF
 %token STATIC STRUCT SWITCH TYPEDEF UNION UNSIGNED VOID VOLATILE WHILE _BOOL _COMPLEX _IMAGINARY
-%token _PERISH _EXAMINE
+%token _PERISH _EXAMINE _DUMPSYMTAB
 
 %type<astn_p> statement expr expr_stmt
 
@@ -76,9 +77,10 @@ expr_stmt:
 
 // ----------------------------------------------------------------------------
 // Internal actions
-internal:
+internal:                           // sometimes you really do want to murder the thing
     _PERISH                     {   die("You asked me to die!");    }
-|   _EXAMINE                    {   fprintf(stderr, "_examine not yet implemented\n");  }
+|   _EXAMINE ident              {   st_examine($2->astn_ident.ident);  }
+|   _DUMPSYMTAB                 {   printf("dumping current scope: "); st_dump_single();  }
 ;
 
 // ----------------------------------------------------------------------------
@@ -297,7 +299,8 @@ expr:
 // ----------------------------------------------------------------------------
 // 6.7 Declarations
 decln:
-    decln_spec init_decl_list ';'   {   begin_st_entry($1, $2);     }
+    decln_spec ';'                  {   /* check for idiot user not actually declaring anything */ }
+|   decln_spec init_decl_list ';'   {   begin_st_entry(decl_alloc($1, $2), NS_MISC, @$);     }
 // no static_assert stuff
 ;
 
@@ -410,6 +413,7 @@ arr_size:
 |   assign
 ;
 
+// qualifiers: yes
 pointer:
     '*'                             {   $$=dtype_alloc(NULL, t_PTR);    } // root of the (potential) chain
 |   '*' type_qual_list              {   $$=dtype_alloc(NULL, t_PTR);
@@ -454,14 +458,14 @@ type_spec:
 |   UNSIGNED            {   $$=typespec_alloc(TS_UNSIGNED);     }
 |   _BOOL               {   $$=typespec_alloc(TS__BOOL);        }
 |   _COMPLEX            {   $$=typespec_alloc(TS__COMPLEX);     }
-|   strunion_spec       {   print_ast($1);    }
+|   strunion_spec       {   $$=$1;  }
 ;
 
-// the struct becomes defined right after the '{' (Standard)
+// the struct becomes defined right after the '}' (Standard)
 strunion_spec:
-    str_or_union ident '{' struct_decl_list '}' {$$=$4;}
-|   str_or_union '{' struct_decl_list '}' {}
-|   str_or_union ident  {   /* shtufffffffff */                 }
+    str_or_union ident '{' struct_decl_list '}'         {   $$=strunion_alloc(st_define_struct($2->astn_ident.ident, $4, @$));     }
+|   str_or_union '{' struct_decl_list '}'               {   yyerror("unnamed structs/unions are not yet supported");           }
+|   str_or_union ident                                  {   $$=strunion_alloc(st_declare_struct($2->astn_ident.ident, false, @$)); }
 ;
 
 // not an astn_p
@@ -472,30 +476,26 @@ str_or_union:
 // list of members - should this be a list of st_entry? does it even really need
 // to have any semantic actions / touch the ast? I think we should synthesize a list
 // of st_entry here and attempt to install them into a mini-scope symtab.
+
+// update: made it a list of astn_decl! better not to screw around with the symtab here
+// for no reason.
 struct_decl_list:
-    struct_decl                     {   $$=list_alloc($1);  }
-|   struct_decl_list struct_decl    {   list_append($2, $1);
-                                        $$=$1;
-                                    }
+    struct_decl                     {   $$=list_alloc($1);          }
+|   struct_decl_list struct_decl    {   list_append($2, $1); $$=$1; }
 ;
 
 // this is equivalent 6.7 decln, where we have the specs/quals and are ready
 // to install.
 struct_decl:
-    spec_qual_list struct_decltr_list ';' { printf("I see member with specs:\n"); print_ast($1); 
-                                            printf("with decltr list:\n"); print_ast($2); }
+    spec_qual_list struct_decltr_list ';' { $$=decl_alloc($1, $2); }
 ;
 
 // this is for the members
 spec_qual_list:
     type_spec
 |   type_qual
-|   type_spec spec_qual_list {  $$=$1;
-                                $$->astn_typespec.next = $2;
-                             }
-|   type_qual spec_qual_list {  $$=$1;
-                                $$->astn_typequal.next = $2;
-                             }
+|   type_spec spec_qual_list {  $$=$1; $$->astn_typespec.next = $2; }
+|   type_qual spec_qual_list {  $$=$1; $$->astn_typequal.next = $2; }
 ;
 
 // no ident lists at the moment
