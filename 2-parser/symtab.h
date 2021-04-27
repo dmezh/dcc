@@ -21,6 +21,7 @@ enum scope_types {
     SCOPE_BLOCK,
     SCOPE_PROTOTYPE
 };
+extern const char* scope_types_str[];
 
 enum namespaces {
     NS_TAGS,
@@ -51,6 +52,7 @@ typedef struct st_entry {
     };
     
     struct st_entry *next;
+    struct symtab* scope;
     YYLTYPE decl_context, def_context; // only some will have the latter
 } st_entry;
 
@@ -90,6 +92,7 @@ typedef struct st_entry {
  */
 typedef struct symtab {
     enum scope_types scope_type;
+    YYLTYPE context; // when the scope started
     struct symtab *parent;
     struct st_entry *first, *last;
 } symtab;
@@ -98,7 +101,7 @@ extern symtab* current_scope;
 
 
 st_entry *st_declare_struct(char* ident, bool strict,  YYLTYPE context);
-st_entry *st_define_struct(char *ident, astn *decl_list,  YYLTYPE context);
+st_entry *st_define_struct(char *ident, astn *decl_list, YYLTYPE context, YYLTYPE openbrace_context);
 
 void begin_st_entry(astn *decl, enum namespaces ns,  YYLTYPE context);
 st_entry* stentry_alloc(char *ident);
@@ -109,7 +112,7 @@ st_entry* st_lookup_fq(const char* ident, symtab* s, enum namespaces ns);
 
 bool st_insert_given(st_entry *new);
 
-void st_new_scope(enum scope_types scope_type);
+void st_new_scope(enum scope_types scope_type, YYLTYPE openbrace_context);
 void st_pop_scope();
 void st_destroy(symtab* target);
 

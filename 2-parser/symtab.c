@@ -16,6 +16,14 @@
 #include "types.h"
 #include "util.h"
 
+const char* scope_types_str[] = {
+    [SCOPE_MINI] = "MINI",
+    [SCOPE_FILE] = "GLOBAL",
+    [SCOPE_FUNCTION] = "FUNCTION",
+    [SCOPE_BLOCK] = "BLOCK",
+    [SCOPE_PROTOTYPE] = "PROTOTYPE"
+};
+
 const char* namespaces_str[] = {
     [NS_TAGS] = "TAGS",
     [NS_LABELS] = "LABELS",
@@ -28,7 +36,8 @@ symtab root_symtab = {
     .scope_type = SCOPE_FILE,
     .parent     = NULL,
     .first      = NULL,
-    .last       = NULL
+    .last       = NULL,
+    .context    = {0} // must set with %initial-action
 };
 symtab *current_scope = &root_symtab;
 
@@ -50,6 +59,7 @@ st_entry *st_declare_struct(char* ident, bool strict, YYLTYPE context) {
         new->is_strunion_def = true;
         new->is_union = false;
         new->decl_context = context;
+        new->scope = current_scope;
         st_insert_given(new);
         return new;
     }
@@ -58,16 +68,18 @@ st_entry *st_declare_struct(char* ident, bool strict, YYLTYPE context) {
 /*
  *  Declare and define a struct in the current scope.
  */
-st_entry* st_define_struct(char *ident, astn *decl_list, YYLTYPE context) {
+st_entry* st_define_struct(char *ident, astn *decl_list, YYLTYPE context,  YYLTYPE openbrace_context) {
     st_entry *strunion;
     if (ident)
         strunion = st_declare_struct(ident, true, context); // strict bc we're about to define!
-    st_new_scope(SCOPE_MINI);
+   // printf("creating mini at %s:%d\n", openbrace_context.filename, openbrace_context.lineno);
+    st_new_scope(SCOPE_MINI, openbrace_context);
+    strunion->members=current_scope; // mini-scope
     while (decl_list) {
         begin_st_entry(list_data(decl_list), NS_MEMBERS, list_data(decl_list)->astn_decl.context);
         decl_list = list_next(decl_list);
-    }    
-    strunion->members=current_scope;
+    }
+    
     strunion->def_context=context;
     st_pop_scope();
     return strunion;
@@ -99,7 +111,8 @@ void begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
     struct astn_type *t = &new->type->astn_type;
     new->storspec = describe_type(spec, t);
     new->decl_context = context;
-    
+    new->scope = current_scope;
+
     reset_dtypechain_target(decl_list, new->type); // end of chain is now the type instead of ident
     if (decl_list->type == ASTN_TYPE && decl_list->astn_type.is_derived) {
         new->type = decl_list; // because otherwise it's just an IDENT
@@ -178,10 +191,11 @@ bool st_insert_given(st_entry *new) {
 /*
  *  Create new scope/symtab and set it as current
  */
-void st_new_scope(enum scope_types scope_type) {
+void st_new_scope(enum scope_types scope_type, YYLTYPE context) {
     symtab *new = safe_malloc(sizeof(symtab));
     *new = (symtab){
         .scope_type = scope_type,
+        .context    = context,
         .parent     = current_scope,
         .first      = NULL,
         .last       = NULL
@@ -227,15 +241,16 @@ void st_destroy(symtab* target) {
  */
 void st_dump_entry(const st_entry* e) {
     if (!e) return;
-    printf("sym<%s><ns:%s>", e->ident, namespaces_str[e->ns]);
+    printf("sym<%s> <ns:%s> <scope:%s @ %s:%d>", e->ident, namespaces_str[e->ns], scope_types_str[e->scope->scope_type],
+            e->scope->context.filename, e->scope->context.lineno);
     if (e->ns == NS_TAGS) {
-        printf("%s", e->members ? "(DEFINED)" : "(FWD-DECL)");
+        printf("%s", e->members ? " (DEFINED)" : " (FWD-DECL)");
     }
     if (e->decl_context.filename) {
-        printf("<decl %s:%d>", e->decl_context.filename, e->decl_context.lineno);
+        printf(" <decl %s:%d>", e->decl_context.filename, e->decl_context.lineno);
     }
     if (e->def_context.filename) {
-        printf("<def %s:%d>", e->def_context.filename, e->def_context.lineno);
+        printf(" <def %s:%d>", e->def_context.filename, e->def_context.lineno);
     }
     printf("\n");
 }

@@ -21,6 +21,13 @@
     void yyerror (const char *s) { fprintf(stderr, "o! %s\n", s); }
 }
 
+// this is broken (always sets stdin)
+%initial-action
+{
+    YYLLOC_DEFAULT(current_scope->context, NULL, NULL);
+    printf("set context to %s:%d\n", current_scope->context.filename, current_scope->context.lineno);
+};
+
 %union
 {
     struct number number;
@@ -73,6 +80,13 @@ statement:
 expr_stmt:
     expr ';'                     {   $$=$1;   }
 |   ';'                          {   $$=NULL;   }
+;
+
+lbrace:
+    '{'
+;
+rbrace:
+    '}'
 ;
 
 // ----------------------------------------------------------------------------
@@ -458,9 +472,9 @@ type_spec:
 
 // the struct becomes defined right after the '}' (Standard)
 strunion_spec:
-    str_or_union ident '{' struct_decl_list '}'     {   $$=strunion_alloc(st_define_struct($2->astn_ident.ident, $4, @$));      }
-|   str_or_union '{' struct_decl_list '}'           {   yyerror("unnamed structs/unions are not yet supported");                }
-|   str_or_union ident                              {   $$=strunion_alloc(st_declare_struct($2->astn_ident.ident, false, @$));  }
+    str_or_union ident lbrace struct_decl_list rbrace   {   $$=strunion_alloc(st_define_struct($2->astn_ident.ident, $4, @$, @3));  }
+|   str_or_union lbrace struct_decl_list rbrace         {   yyerror("unnamed structs/unions are not yet supported");                }
+|   str_or_union ident                                  {   $$=strunion_alloc(st_declare_struct($2->astn_ident.ident, false, @$));  }
 ;
 
 // not an astn_p
@@ -482,7 +496,7 @@ struct_decl_list:
 // this is equivalent 6.7 decln, where we have the specs/quals and are ready
 // to install.
 struct_decl:
-    spec_qual_list struct_decltr_list ';' { $$=decl_alloc($1, $2, @$); }
+    spec_qual_list struct_decltr_list ';'   {     $$=decl_alloc($1, $2, @$);      }
 ;
 
 // this is for the members
