@@ -63,6 +63,11 @@ enum der_types {
     t_FN,
 };
 
+enum tagtypes {
+    t_UNION,
+    t_STRUCT
+};
+
 extern const char* storspec_str[];
 extern const char* der_types_str[];
 

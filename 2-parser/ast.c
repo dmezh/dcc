@@ -145,6 +145,7 @@ void print_ast(const astn *n) {
                 }
             tabs--;
             break;
+            
 /**/    case ASTN_TYPESPEC:
             printf("TYPESPEC ");
             if (n->astn_typespec.is_tagtype) {
@@ -209,11 +210,8 @@ void print_ast(const astn *n) {
             }
             break;
 
-/**/    case ASTN_TYPE: // this ain't great
-            //prints++;
-            //printf("DBG: I type am %p\n", (void*)n);
-            //printf("%d print time %s TYPE: ", prints, n->astn_type.is_derived ? "DERIVED" : "SCALAR");
-            printf("%s TYPE: ", n->astn_type.is_derived ? "DERIVED" : "SCALAR");
+/**/    case ASTN_TYPE:
+            // if if if if if if if if if if
             if (n->astn_type.is_const) printf("CONST ");
             if (n->astn_type.is_restrict) printf("RESTRICT ");
             if (n->astn_type.is_volatile) printf("VOLATILE ");
@@ -255,11 +253,10 @@ void print_ast(const astn *n) {
                 }
                 //if (n->astn_type.derived.type == t_ARRAY) tabs--; // kludge!
             } else if (n->astn_type.is_tagtype) {
-                if (n->astn_type.tagtype.symbol->members) {
-                    st_dump_struct(n->astn_type.tagtype.symbol);
-                } else {
-                    printf("forward decl\n");
-                }
+                if (n->astn_type.tagtype.symbol->ident) // I really wanted to use the GNU :? here but I felt bad
+                    printf("struct %s", n->astn_type.tagtype.symbol->ident);
+                else
+                    printf("struct (unnamed)\n");
             } else {
                 if (n->astn_type.scalar.is_unsigned) printf("UNSIGNED ");
                 switch (n->astn_type.scalar.type) {

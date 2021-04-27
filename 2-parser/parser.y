@@ -6,11 +6,11 @@
 
 %code requires {
     #include "ast.h"
+    #include "location.h"
     #include "semval.h"
     #include "symtab.h"
     #include "types.h"
     #include "util.h"
-    #include "location.h"
 }
 
 %define parse.trace
@@ -137,7 +137,7 @@ fncall:
                                     $$->astn_fncall.argcount=0;
                                     $$->astn_fncall.args=NULL;
                                 }
-|   postfix_expr '(' arg_list ')'   {   $$=astn_alloc(ASTN_FNCALL);
+|   postfix_expr '('arg_list')' {   $$=astn_alloc(ASTN_FNCALL);
                                     $$->astn_fncall.fn=$1;
                                     $$->astn_fncall.args=$3;
                                     $$->astn_fncall.argcount=list_measure($$->astn_fncall.args);
@@ -145,12 +145,12 @@ fncall:
 ;
 
 arg_list:
-    assign                      {   $$=list_alloc($1);          }
-|   arg_list ',' assign         {   $$=$1; list_append($3, $1); }
+    assign                      {   $$=list_alloc($1);              }
+|   arg_list ',' assign         {   $$=$1; list_append($3, $1);     }
+;
 
 select:
-    postfix_expr '.' ident      {
-                                    $$=astn_alloc(ASTN_SELECT);
+    postfix_expr '.' ident      {   $$=astn_alloc(ASTN_SELECT);
                                     $$->astn_select.parent = $1;
                                     $$->astn_select.member = $3;
                                 }
@@ -214,43 +214,43 @@ cast_expr:
 // 6.5.5-14 Binary (two-arg) operators
 mult_expr:
     cast_expr
-|   mult_expr '*' cast_expr     {   $$=binop_alloc('*', $1, $3);    }
-|   mult_expr '/' cast_expr     {   $$=binop_alloc('/', $1, $3);    }
-|   mult_expr '%' cast_expr     {   $$=binop_alloc('%', $1, $3);    }
+|   mult_expr '*' cast_expr         {   $$=binop_alloc('*', $1, $3);    }
+|   mult_expr '/' cast_expr         {   $$=binop_alloc('/', $1, $3);    }
+|   mult_expr '%' cast_expr         {   $$=binop_alloc('%', $1, $3);    }
 ;
 addit_expr:
     mult_expr
-|   addit_expr '+' mult_expr    {   $$=binop_alloc('+', $1, $3);    }
-|   addit_expr '-' mult_expr    {   $$=binop_alloc('-', $1, $3);    }
+|   addit_expr '+' mult_expr        {   $$=binop_alloc('+', $1, $3);    }
+|   addit_expr '-' mult_expr        {   $$=binop_alloc('-', $1, $3);    }
 ;
 shift_expr:
     addit_expr
-|   shift_expr SHL addit_expr   {   $$=binop_alloc(SHL, $1, $3);    }
-|   shift_expr SHR addit_expr   {   $$=binop_alloc(SHR, $1, $3);    }
+|   shift_expr SHL addit_expr       {   $$=binop_alloc(SHL, $1, $3);    }
+|   shift_expr SHR addit_expr       {   $$=binop_alloc(SHR, $1, $3);    }
 ;
 relat_expr:
     shift_expr
-|   relat_expr '<' shift_expr   {   $$=binop_alloc('<', $1, $3);    }
-|   relat_expr '>' shift_expr   {   $$=binop_alloc('>', $1, $3);    }
-|   relat_expr LTEQ shift_expr  {   $$=binop_alloc(LTEQ, $1, $3);   }
-|   relat_expr GTEQ shift_expr  {   $$=binop_alloc(GTEQ, $1, $3);   }
+|   relat_expr '<' shift_expr       {   $$=binop_alloc('<', $1, $3);    }
+|   relat_expr '>' shift_expr       {   $$=binop_alloc('>', $1, $3);    }
+|   relat_expr LTEQ shift_expr      {   $$=binop_alloc(LTEQ, $1, $3);   }
+|   relat_expr GTEQ shift_expr      {   $$=binop_alloc(GTEQ, $1, $3);   }
 ;
 eqlty_expr:
     relat_expr
-|   eqlty_expr EQEQ relat_expr  {   $$=binop_alloc(EQEQ, $1, $3);   }
-|   eqlty_expr NOTEQ relat_expr {   $$=binop_alloc(NOTEQ, $1, $3);  }
+|   eqlty_expr EQEQ relat_expr      {   $$=binop_alloc(EQEQ, $1, $3);   }
+|   eqlty_expr NOTEQ relat_expr     {   $$=binop_alloc(NOTEQ, $1, $3);  }
 ;
 bwand_expr:
     eqlty_expr
-|   bwand_expr '&' eqlty_expr   {   $$=binop_alloc('&', $1, $3);    }
+|   bwand_expr '&' eqlty_expr       {   $$=binop_alloc('&', $1, $3);    }
 ;
 bwxor_expr:
     bwand_expr
-|   bwxor_expr '^' bwand_expr   {   $$=binop_alloc('^', $1, $3);    }
+|   bwxor_expr '^' bwand_expr       {   $$=binop_alloc('^', $1, $3);    }
 ;
 bwor_expr:
     bwxor_expr
-|   bwor_expr '|' bwxor_expr    {   $$=binop_alloc('|', $1, $3);    }
+|   bwor_expr '|' bwxor_expr        {   $$=binop_alloc('|', $1, $3);    }
 ;
 logand_expr:
     bwor_expr
@@ -300,7 +300,7 @@ expr:
 // ----------------------------------------------------------------------------
 // 6.7 Declarations
 decln:
-    decln_spec ';'                  {   /* check for idiot user not actually declaring anything */ }
+    decln_spec ';'                  { /* check for idiot user not actually declaring anything */ }
 |   decln_spec init_decl_list ';'   {   begin_st_entry(decl_alloc($1, $2, @$), NS_MISC, @$);     }
 // no static_assert stuff
 ;
@@ -310,15 +310,9 @@ decln_spec:
     type_spec
 |   type_qual
 |   stor_spec
-|   decln_spec type_spec            {   $$=$2;
-                                        $$->astn_typespec.next = $1;
-                                    }
-|   decln_spec type_qual            {   $$=$2;
-                                        $$->astn_typequal.next = $1;
-                                    }
-|   decln_spec stor_spec            {   $$=$2;
-                                        $$->astn_storspec.next = $1;
-                                    }
+|   decln_spec type_spec            {   $$=$2; $$->astn_typespec.next = $1;     }
+|   decln_spec type_qual            {   $$=$2; $$->astn_typequal.next = $1;     }
+|   decln_spec stor_spec            {   $$=$2; $$->astn_storspec.next = $1;     }
 ;
 
 // for now just single, but it will be easy to add the full functionality
@@ -464,9 +458,9 @@ type_spec:
 
 // the struct becomes defined right after the '}' (Standard)
 strunion_spec:
-    str_or_union ident '{' struct_decl_list '}'         {   $$=strunion_alloc(st_define_struct($2->astn_ident.ident, $4, @$));     }
-|   str_or_union '{' struct_decl_list '}'               {   yyerror("unnamed structs/unions are not yet supported");           }
-|   str_or_union ident                                  {   $$=strunion_alloc(st_declare_struct($2->astn_ident.ident, false, @$)); }
+    str_or_union ident '{' struct_decl_list '}'     {   $$=strunion_alloc(st_define_struct($2->astn_ident.ident, $4, @$));      }
+|   str_or_union '{' struct_decl_list '}'           {   yyerror("unnamed structs/unions are not yet supported");                }
+|   str_or_union ident                              {   $$=strunion_alloc(st_declare_struct($2->astn_ident.ident, false, @$));  }
 ;
 
 // not an astn_p
@@ -481,8 +475,8 @@ str_or_union:
 // update: made it a list of astn_decl! better not to screw around with the symtab here
 // for no reason.
 struct_decl_list:
-    struct_decl                     {   $$=list_alloc($1);          }
-|   struct_decl_list struct_decl    {   list_append($2, $1); $$=$1; }
+    struct_decl                     {   $$=list_alloc($1);              }
+|   struct_decl_list struct_decl    {   list_append($2, $1); $$=$1;     }
 ;
 
 // this is equivalent 6.7 decln, where we have the specs/quals and are ready
@@ -495,8 +489,8 @@ struct_decl:
 spec_qual_list:
     type_spec
 |   type_qual
-|   type_spec spec_qual_list {  $$=$1; $$->astn_typespec.next = $2; }
-|   type_qual spec_qual_list {  $$=$1; $$->astn_typequal.next = $2; }
+|   type_spec spec_qual_list    {  $$=$1; $$->astn_typespec.next = $2;  }
+|   type_qual spec_qual_list    {  $$=$1; $$->astn_typequal.next = $2;  }
 ;
 
 // no ident lists at the moment

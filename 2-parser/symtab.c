@@ -16,6 +16,13 @@
 #include "types.h"
 #include "util.h"
 
+const char* namespaces_str[] = {
+    [NS_TAGS] = "TAGS",
+    [NS_LABELS] = "LABELS",
+    [NS_MEMBERS] = "MEMBERS",
+    [NS_MISC] = "MISC"
+};
+
 // symtab for this translation unit
 symtab root_symtab = {
     .scope_type = SCOPE_FILE,
@@ -25,18 +32,21 @@ symtab root_symtab = {
 };
 symtab *current_scope = &root_symtab;
 
-// redeclaration is allowed while it's incomplete!
+/*
+ *  Declare (optionally permissively) a struct in the current scope without defining.
+ */
 st_entry *st_declare_struct(char* ident, bool strict, YYLTYPE context) {
     st_entry *n = st_lookup_ns(ident, NS_TAGS);
     if (n) {
         if (strict && n->members) {
-            fprintf(stderr, "Error: attempted redeclaration of tag");
+            fprintf(stderr, "Error: attempted redeclaration of complete tag");
             exit(-5);
         } else {
             return n; // "redeclared"
         }
     } else {
         st_entry *new = stentry_alloc(ident);
+        new->ns = NS_TAGS;
         new->is_strunion_def = true;
         new->is_union = false;
         new->decl_context = context;
@@ -45,13 +55,15 @@ st_entry *st_declare_struct(char* ident, bool strict, YYLTYPE context) {
     }
 }
 
+/*
+ *  Declare and define a struct in the current scope.
+ */
 st_entry* st_define_struct(char *ident, astn *decl_list, YYLTYPE context) {
     st_entry *strunion;
     if (ident)
-        strunion = st_declare_struct(ident, true, context);
+        strunion = st_declare_struct(ident, true, context); // strict bc we're about to define!
     st_new_scope(SCOPE_MINI);
     while (decl_list) {
-        //printf("attempting to install miniscope symbol\n");
         begin_st_entry(list_data(decl_list), NS_MEMBERS, list_data(decl_list)->astn_decl.context);
         decl_list = list_next(decl_list);
     }    
@@ -66,13 +78,13 @@ void st_make_union() {
 }
 
 /*
- * Synthesize a new st_entry, qualify and specify it, and attempt to install it
- * into the current scope.
+ *  Synthesize a new st_entry, qualify and specify it, and attempt to install it
+ *  into the current scope.
  * 
- * TODO: decl_list is not yet a list
+ *  TODO: decl_list is not yet a list
  * 
- * Note: It would introduce safety at compile-time to make the parameter an astn_decl,
- * but I am taking the route of preferring all interfaces to the parser be plain astn* 's.
+ *  Note: It would introduce safety at compile-time to make the parameter an astn_decl,
+ *  but I am taking the route of preferring all interfaces to the parser be plain astn* 's.
  */
 void begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
     if (decl->type != ASTN_DECL)
@@ -80,7 +92,7 @@ void begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
 
     astn *spec = decl->astn_decl.specs;
     astn *decl_list = decl->astn_decl.type;
-    // the below will need revising for lists, and also some error checking
+
     st_entry *new = stentry_alloc(get_dtypechain_target(decl_list)->astn_ident.ident);
     new->ns = ns;
 
@@ -93,17 +105,13 @@ void begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
         new->type = decl_list; // because otherwise it's just an IDENT
     }
 
-    //printf("Installing symbol <%s> into symbol table, storage class <%s>, with below type:\n", \
-    //        new->ident, storspec_str[new->storspec]);
-    //print_ast(new->type);
-
     if (!st_insert_given(new)) {
         st_error("attempted redeclaration of symbol %s\n", new->ident);
     }
 }
 
 /* 
- * Just allocate; we're not checking any kind of context for redeclarations, etc
+ *  Just allocate; we're not checking any kind of context for redeclarations, etc
  */
 st_entry* stentry_alloc(char *ident) {
     st_entry *n = safe_calloc(1, sizeof(st_entry));
@@ -127,14 +135,19 @@ st_entry* st_lookup(const char* ident) {
     return NULL;
 }
 
+/*
+ *  Lookup in current_scope, with namespace
+ */
 st_entry* st_lookup_ns(const char* ident, enum namespaces ns) {
     return st_lookup_fq(ident, current_scope, ns);
 }
 
-// fully-qualified lookup; give me symtab to check and namespace
+/*
+ *  Fully-qualified lookup; give me symtab to check and namespace
+ */
 st_entry* st_lookup_fq(const char* ident, symtab* s, enum namespaces ns) {
     st_entry* cur = s->first;
-    while (cur) {   // works fine for first being NULL / empty symtab
+    while (cur) {
         if (cur->ns == ns && !strcmp(ident, cur->ident))
             return cur;
         cur = cur->next;
@@ -160,19 +173,6 @@ bool st_insert_given(st_entry *new) {
         current_scope->last = new;
     }
     return true;
-}
-
-/*
- *  Insert new symbol in current scope
- *  return:
- *          true  - success
- *          false - ident already in current symtab
- *  //todo: set type, namespace, initializer stuff
- */
-bool st_insert(char* ident) {
-    st_entry *new = safe_malloc(sizeof(st_entry));
-    new->ident = ident;
-    return st_insert_given(new);
 }
 
 /*
@@ -222,13 +222,9 @@ void st_destroy(symtab* target) {
     }
 }
 
-const char* namespaces_str[] = {
-    [NS_TAGS] = "TAGS",
-    [NS_LABELS] = "LABELS",
-    [NS_MEMBERS] = "MEMBERS",
-    [NS_MISC] = "MISC"
-};
-
+/*
+ *  Dump a single st_entry.
+ */
 void st_dump_entry(const st_entry* e) {
     if (!e) return;
     printf("sym<%s><ns:%s>", e->ident, namespaces_str[e->ns]);
@@ -245,7 +241,7 @@ void st_dump_entry(const st_entry* e) {
 }
 
 /*
- *  Dump a single symbol table
+ *  Dump a single symbol table (the current_scope)
  */
 void st_dump_single() {
     printf("Dumping symbol table!\n");
@@ -256,6 +252,9 @@ void st_dump_single() {
     }
 }
 
+/*
+ *  Dump a struct with members
+ */
 void st_dump_struct(st_entry* s) {
     printf("Dumping tag-type mini scope of tag <%s>!\n", s->ident);
     st_entry* cur = s->members->first;
@@ -265,6 +264,9 @@ void st_dump_struct(st_entry* s) {
     }
 }
 
+/*
+ *  Search for an ident across all the namespaces and output st_entry info.
+ */
 void st_examine(char* ident) {
     st_entry *e;
     int count = 0;
@@ -286,6 +288,9 @@ void st_examine(char* ident) {
     printf("\n");
 }
 
+/*
+ *  Search for a member of a tag and output st_entry info.
+ */
 void st_examine_member(char* tag, char* child) {
     st_entry *e = st_lookup_ns(tag, NS_TAGS);
     if (!e) {
@@ -311,4 +316,3 @@ void st_examine_member(char* tag, char* child) {
     printf("\n");
     return;
 }
-// currently only a single scope!!

@@ -28,6 +28,7 @@ enum namespaces {
     NS_MEMBERS, // I think this would be implied just by being in a struct/union def scope
     NS_MISC
 };
+extern const char* namespaces_str[];
 
 /*
  * These will be directly pointed to by the AST.
@@ -38,7 +39,7 @@ typedef struct st_entry {
     enum namespaces ns;
 
     bool is_strunion_def;
-    bool is_union;
+    bool is_union; // tbd
     struct symtab *members; // tag type is complete when this is non-null
 
     struct astn *type;
@@ -95,23 +96,28 @@ typedef struct symtab {
 
 extern symtab* current_scope;
 
+
 st_entry *st_declare_struct(char* ident, bool strict,  YYLTYPE context);
 st_entry *st_define_struct(char *ident, astn *decl_list,  YYLTYPE context);
+
+void begin_st_entry(astn *decl, enum namespaces ns,  YYLTYPE context);
+st_entry* stentry_alloc(char *ident);
+
 st_entry* st_lookup(const char* ident);
-bool st_insert(char* ident);
+st_entry* st_lookup_ns(const char* ident, enum namespaces ns);
+st_entry* st_lookup_fq(const char* ident, symtab* s, enum namespaces ns);
+
+bool st_insert_given(st_entry *new);
+
 void st_new_scope(enum scope_types scope_type);
 void st_pop_scope();
 void st_destroy(symtab* target);
+
+void st_dump_entry(const st_entry* e);
 void st_dump_single();
-void st_dump_struct();
-st_entry* stentry_alloc(char *ident);
-void begin_st_entry(astn *decl, enum namespaces ns,  YYLTYPE context);
-bool st_insert_given(st_entry *new);
-astn* get_dtypechain_target(astn* top);
-enum storspec describe_type(astn *spec, struct astn_type *t);
-st_entry* st_lookup_ns(const char* ident, enum namespaces ns);
+void st_dump_struct(st_entry* s);
+
 void st_examine(char* ident);
-st_entry* st_lookup_fq(const char* ident, symtab* s, enum namespaces ns);
 void st_examine_member(char* tag, char* child);
 
 #endif

@@ -32,62 +32,6 @@ enum astn_types {
     ASTN_DECL,
 };
 
-enum tagtypes {
-    t_UNION,
-    t_STRUCT
-};
-
-struct st_entry;
-
-// as described in parser.y @ decl
-struct astn_decl {
-    YYLTYPE context;
-    struct astn *specs, *type;
-};
-
-struct astn_type {
-    bool is_derived; // refactor these two into an enum
-    bool is_tagtype;
-    union {
-        struct {
-            enum der_types type;
-            struct astn *target;
-            struct astn *size; // rename?
-        } derived;
-        struct {
-            enum scalar_types type;
-            bool is_unsigned;
-        } scalar;
-        struct {
-            enum tagtypes type;
-            struct st_entry *symbol;
-        } tagtype;
-    };
-    bool is_volatile;
-    bool is_const;
-    bool is_restrict;
-    bool is_atomic;
-};
-
-struct astn_typespec {
-    bool is_tagtype;
-    union {
-        enum typespec spec;
-        struct st_entry* symbol;
-    };
-    struct astn *next;
-};
-
-struct astn_typequal {
-    enum typequal qual;
-    struct astn *next;
-};
-
-struct astn_storspec {
-    enum storspec spec;
-    struct astn *next;
-};
-
 struct astn_assign { // could have been binop but separated for clarity
     // struct astn* left, *right;
     struct astn *left, *right;
@@ -138,6 +82,56 @@ struct astn_list {
     struct astn *me, *next;
 };
 
+struct astn_typespec {
+    bool is_tagtype;
+    union {
+        enum typespec spec;
+        struct st_entry* symbol;
+    };
+    struct astn *next;
+};
+
+struct astn_typequal {
+    enum typequal qual;
+    struct astn *next;
+};
+
+struct astn_storspec {
+    enum storspec spec;
+    struct astn *next;
+};
+
+struct st_entry;
+struct astn_type {
+    bool is_derived; // refactor these two into an enum
+    bool is_tagtype;
+    union {
+        struct {
+            enum der_types type;
+            struct astn *target;
+            struct astn *size; // rename?
+        } derived;
+        struct {
+            enum scalar_types type;
+            bool is_unsigned;
+        } scalar;
+        struct {
+            enum tagtypes type;
+            struct st_entry *symbol;
+        } tagtype;
+    };
+    bool is_volatile;
+    bool is_const;
+    bool is_restrict;
+    bool is_atomic;
+};
+
+// as described in parser.y @ decl
+struct astn_decl {
+    YYLTYPE context;
+    struct astn *specs, *type;
+};
+
 typedef struct astn {
     enum astn_types type;
     union {
@@ -163,23 +157,29 @@ typedef struct astn {
 astn* astn_alloc(enum astn_types type);
 void print_ast(const astn *n);
 
-astn *unop_alloc(int op, astn *target);
-astn *binop_alloc(int op, astn *left, astn *right);
 astn *cassign_alloc(int op, astn *left, astn *right);
-unsigned list_measure(const astn *head);
+astn *binop_alloc(int op, astn *left, astn *right);
+astn *unop_alloc(int op, astn *target);
+
 astn *list_alloc(astn* me);
 astn *list_append(astn *new, astn *head);
+
+astn *list_alloc(astn* me);
 astn *list_next(astn* cur);
 astn *list_data(astn* n);
+unsigned list_measure(const astn *head);
+
 astn *typespec_alloc(enum typespec spec);
 astn *typequal_alloc(enum typequal spec);
 astn *storspec_alloc(enum storspec spec);
 astn *dtype_alloc(astn* target, enum der_types type);
+
 astn *decl_alloc(astn *specs, astn *type, YYLTYPE context);
 astn *strunion_alloc(struct st_entry* symbol);
-astn* get_dtypechain_target(astn* top);
 void set_dtypechain_target(astn* top, astn* target);
 void reset_dtypechain_target(astn* top, astn* target);
 void merge_dtypechains(astn *parent, astn *child);
+astn* get_dtypechain_target(astn* top);
+
 
 #endif
