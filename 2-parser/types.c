@@ -13,6 +13,8 @@
 #include "util.h"
 
 const char* storspec_str[] = {
+    [SS_UNDEF] = "UNDEF!",
+    [SS_NONE] = "NONE",
     [SS_AUTO] = "auto",
     [SS_EXTERN] = "extern",
     [SS_STATIC] = "static",
@@ -36,7 +38,7 @@ enum storspec describe_type(astn *spec, struct astn_type *t) {
     unsigned total_typespecs = 0;
 
     //print_ast(spec);
-    enum storspec storspec = SS_AUTO;
+    enum storspec storspec = SS_UNDEF;
     bool storspec_set = false;
 
     while (spec) { // we'll do more validation later of the typespecs later

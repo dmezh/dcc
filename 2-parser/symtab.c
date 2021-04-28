@@ -16,6 +16,8 @@
 #include "types.h"
 #include "util.h"
 
+static void st_check_linkage(st_entry* e);
+
 const char* scope_types_str[] = {
     [SCOPE_MINI] = "MINI",
     [SCOPE_FILE] = "GLOBAL",
@@ -31,6 +33,20 @@ const char* namespaces_str[] = {
     [NS_MISC] = "MISC"
 };
 
+const char* st_entry_types_str[] = {
+    [STE_UNDEF] = "UNDEF!",
+    [STE_VAR] = "var",
+    [STE_STRUNION_DEF] = "s_u",
+    [STE_FN_DEF] = "fnc"
+};
+
+const char* linkage_str[] = {
+    [L_UNDEF] = "UNDEF!",
+    [L_NONE] = "NONE",
+    [L_INTERNAL] = "INTERNAL",
+    [L_EXTERNAL] = "EXTERNAL"
+};
+
 // symtab for this translation unit
 symtab root_symtab = {
     .scope_type = SCOPE_FILE,
@@ -39,7 +55,44 @@ symtab root_symtab = {
     .last       = NULL,
     .context    = {0} // must set with %initial-action
 };
+
 symtab *current_scope = &root_symtab;
+
+st_entry *st_define_function(astn* fndef, YYLTYPE openbrace_context) {
+    //printf("attempting declaration of function, DUMPING AST\n");
+    //print_ast(fndef);
+    //printf("made it back to here\n");
+
+    /*
+    struct astn* f = get_dtypechain_target(fndef->astn_decl.type);
+    print_ast(f);
+    */
+
+    struct astn_fndef f2 = (get_dtypechain_target(fndef->astn_decl.type))->astn_fndef;
+    char* name = f2.decl->astn_ident.ident;
+    st_entry *n = st_lookup_ns(name, NS_MISC);
+    //printf("printing result %p\n", get_dtypechain_target(fndef->astn_decl.type));
+    //print_ast(get_dtypechain_target(fndef->astn_decl.type));
+    if (n) {
+        fprintf(stderr, "Error: attempted redefinition of symbol %s\n", name);
+        exit(-5);
+    } else {
+        // following actions leak an astn_fndef
+        if (fndef->astn_decl.type->type == ASTN_TYPE) { // necessarily a derived type
+            reset_dtypechain_target(fndef->astn_decl.type, f2.decl);
+        } else {
+            fndef->astn_decl.type = fndef->astn_decl.type->astn_fndef.decl;
+        }
+        //print_ast(fndef);
+        st_entry *fn = begin_st_entry(fndef, NS_MISC, fndef->astn_decl.context);
+        //printf("back from install honey\n");
+        //print_ast(fn->type);
+        fn->entry_type = STE_FN_DEF;
+        fn->storspec = SS_NONE;
+        fn->def_context = openbrace_context; // this probably isn't consistent with structs, whatever
+        return fn;
+    }
+}
 
 /*
  *  Declare (optionally permissively) a struct in the current scope without defining.
@@ -56,9 +109,11 @@ st_entry *st_declare_struct(char* ident, bool strict, YYLTYPE context) {
     } else {
         st_entry *new = stentry_alloc(ident);
         new->ns = NS_TAGS;
-        new->is_strunion_def = true;
+        new->entry_type = STE_STRUNION_DEF;
         new->is_union = false;
         new->decl_context = context;
+        new->linkage = L_NONE;
+        new->storspec = SS_NONE;
         new->scope = current_scope;
         st_insert_given(new);
         return new;
@@ -67,20 +122,25 @@ st_entry *st_declare_struct(char* ident, bool strict, YYLTYPE context) {
 
 /*
  *  Declare and define a struct in the current scope.
+ *
+ *  Note: changes would need to be made to support unnamed structs.
  */
-st_entry* st_define_struct(char *ident, astn *decl_list, YYLTYPE context,  YYLTYPE openbrace_context) {
+st_entry* st_define_struct(char *ident, astn *decl_list,
+                           YYLTYPE name_context, YYLTYPE closebrace_context, YYLTYPE openbrace_context) {
     st_entry *strunion;
-    if (ident)
-        strunion = st_declare_struct(ident, true, context); // strict bc we're about to define!
-   // printf("creating mini at %s:%d\n", openbrace_context.filename, openbrace_context.lineno);
+    strunion = st_declare_struct(ident, true, name_context); // strict bc we're about to define!
+
+    //printf("creating mini at %s:%d\n", openbrace_context.filename, openbrace_context.lineno);
     st_new_scope(SCOPE_MINI, openbrace_context);
-    strunion->members=current_scope; // mini-scope
+    strunion->members = current_scope; // mini-scope
+    st_entry *member;
     while (decl_list) {
-        begin_st_entry(list_data(decl_list), NS_MEMBERS, list_data(decl_list)->astn_decl.context);
+        member = begin_st_entry(list_data(decl_list), NS_MEMBERS, list_data(decl_list)->astn_decl.context);
+        member->linkage = L_NONE;
+        member->storspec = SS_NONE;
         decl_list = list_next(decl_list);
     }
-    
-    strunion->def_context=context;
+    strunion->def_context = closebrace_context;
     st_pop_scope();
     return strunion;
 }
@@ -89,16 +149,38 @@ void st_make_union() {
 
 }
 
+// kludge up the linkage and storage specs for globals
+static void st_check_linkage(st_entry* e) {
+    if (e->scope == &root_symtab) {
+        if (e->storspec == SS_UNDEF) { // plain declaration in global scope
+            if (e->type->astn_type.is_const)// top level type
+                e->linkage = L_INTERNAL;
+            else
+                e->linkage = L_EXTERNAL;
+            e->storspec = SS_STATIC;
+        } else if (e->storspec == SS_EXTERN) { // extern declaration in global scope
+            e->linkage = L_EXTERNAL; // why does this make sense?
+            e->storspec = SS_EXTERN;
+        } else if (e->storspec == SS_STATIC) {
+            e->linkage = L_INTERNAL;
+            e->storspec = SS_STATIC;
+        } else {
+            st_error("Only 'static' and 'extern' are valid storage/linkage specifiers for top-level declarations!\n");
+        }
+    }
+}
+
+
 /*
  *  Synthesize a new st_entry, qualify and specify it, and attempt to install it
- *  into the current scope.
+ *  into the current scope. Sets entry_type to STE_VAR by default.
  * 
- *  TODO: decl_list is not yet a list
+ *  TODO: decl is not yet a list
  * 
  *  Note: It would introduce safety at compile-time to make the parameter an astn_decl,
  *  but I am taking the route of preferring all interfaces to the parser be plain astn* 's.
  */
-void begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
+st_entry* begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
     if (decl->type != ASTN_DECL)
         die("Invalid astn for begin_st_entry() (astn_decl was expected)");
 
@@ -110,8 +192,12 @@ void begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
 
     struct astn_type *t = &new->type->astn_type;
     new->storspec = describe_type(spec, t);
+
     new->decl_context = context;
     new->scope = current_scope;
+    new->entry_type = STE_VAR; // default; override from caller when needed!
+//    st_check_tentative(new);
+    st_check_linkage(new);
 
     reset_dtypechain_target(decl_list, new->type); // end of chain is now the type instead of ident
     if (decl_list->type == ASTN_TYPE && decl_list->astn_type.is_derived) {
@@ -119,8 +205,27 @@ void begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
     }
 
     if (!st_insert_given(new)) {
+        if (new->scope == &root_symtab) {
+            st_entry* prev = st_lookup(new->ident, new->ns);
+            // is previous extern? if so, completely replace it.
+            // this logic and behavior is total shit, please fix this some day
+            // this whole problem can only be described as disgusting
+            // #1 the standard (6.9.2) is nearly incomprehensible on this point
+            // #2 it seems like that rule is not always applied evenly across compilers.
+            // H&S 4.8.5 was extremely useful on this. I'll try to follow a C++ -like model,
+            // in which the only tentative definition is one that's 'extern', and those cannot have initializers.
+            if (prev->storspec == SS_EXTERN && new->storspec != SS_EXTERN) {
+                *prev = *new;
+                return prev;
+            } else if (prev->storspec == SS_STATIC && new->storspec == SS_EXTERN) {
+                return prev;
+            } else if (prev->storspec == SS_EXTERN && new->storspec == SS_EXTERN) {
+                return prev;
+            }
+        }
         st_error("attempted redeclaration of symbol %s\n", new->ident);
     }
+    return new;
 }
 
 /* 
@@ -135,15 +240,16 @@ st_entry* stentry_alloc(char *ident) {
 
 /*
  *  Look up the symbol and return it if found, NULL otherwise
- *  //todo: walk the scope stack, not just current scope (when needed)
- *  //todo: namespace stuff (a.k.a properly check conflicts)
+ *  // I'm not convinced this is all that's needed yet
  */
-st_entry* st_lookup(const char* ident) {
-    st_entry* cur = current_scope->first;
-    while (cur) {   // works fine for first being NULL / empty symtab
-        if (!strcmp(ident, cur->ident))
-            return cur;
-        cur = cur->next;
+st_entry* st_lookup(const char* ident, enum namespaces ns) {
+    symtab *cur = current_scope;
+    st_entry* match;
+    while (cur) {
+        if ((match = st_lookup_fq(ident, cur, ns)))
+            return match;
+        else
+            cur = cur->parent;
     }
     return NULL;
 }
@@ -174,9 +280,8 @@ st_entry* st_lookup_fq(const char* ident, symtab* s, enum namespaces ns) {
  *          true - success
  *          false - ident already in symtab
  */
-
 bool st_insert_given(st_entry *new) {
-    if (st_lookup(new->ident)) return false;
+    if (st_lookup(new->ident, new->ns)) return false;
     new->next = NULL;
     if (!current_scope->first) { // currently-empty symtab
         current_scope->first = new;
@@ -237,26 +342,7 @@ void st_destroy(symtab* target) {
 }
 
 /*
- *  Dump a single st_entry.
- */
-void st_dump_entry(const st_entry* e) {
-    if (!e) return;
-    printf("sym<%s> <ns:%s> <scope:%s @ %s:%d>", e->ident, namespaces_str[e->ns], scope_types_str[e->scope->scope_type],
-            e->scope->context.filename, e->scope->context.lineno);
-    if (e->ns == NS_TAGS) {
-        printf("%s", e->members ? " (DEFINED)" : " (FWD-DECL)");
-    }
-    if (e->decl_context.filename) {
-        printf(" <decl %s:%d>", e->decl_context.filename, e->decl_context.lineno);
-    }
-    if (e->def_context.filename) {
-        printf(" <def %s:%d>", e->def_context.filename, e->def_context.lineno);
-    }
-    printf("\n");
-}
-
-/*
- *  Dump a single symbol table (the current_scope)
+ *  Dump a single symbol table (the current_scope) with basic list
  */
 void st_dump_single() {
     printf("Dumping symbol table!\n");
@@ -268,14 +354,60 @@ void st_dump_single() {
 }
 
 /*
- *  Dump a struct with members
+ *  Dump a single st_entry with one-line info.
  */
-void st_dump_struct(st_entry* s) {
-    printf("Dumping tag-type mini scope of tag <%s>!\n", s->ident);
-    st_entry* cur = s->members->first;
-    while (cur) {
-        st_dump_entry(cur);
-        cur = cur->next;
+void st_dump_entry(const st_entry* e) {
+    if (!e) return;
+    printf("%s<%s> <ns:%s> <stor:%s> <scope:%s @ %s:%d>",
+            st_entry_types_str[e->entry_type],
+            e->ident,
+            namespaces_str[e->ns],
+            storspec_str[e->storspec],
+            scope_types_str[e->scope->scope_type],
+            e->scope->context.filename,
+            e->scope->context.lineno
+    );
+    if (e->scope == &root_symtab && e->linkage && e->linkage != L_NONE) {
+        printf(" <linkage:%s>", linkage_str[e->linkage]);
+    }
+    if (e->decl_context.filename) {
+        printf(" <decl %s:%d>", e->decl_context.filename, e->decl_context.lineno);
+    }
+    if (e->ns == NS_TAGS && !e->members) {
+        printf(" (FWD-DECL)");
+    }
+    if (e->def_context.filename) {
+        printf(" <def %s:%d>", e->def_context.filename, e->def_context.lineno);
+    }
+    printf("\n");
+}
+
+/*
+ *  Output in-depth info for given st_entry based on entry_type.
+ *  Call st_dump_entry() first if you want to get the symbol info line.
+ */
+void st_examine_given(st_entry* e) {
+    if (e->entry_type == STE_FN_DEF) {
+        printf("FUNCTION RETURNING:\n");
+        print_ast(e->type);
+        if (e->param_list) {
+            printf("AND TAKING PARAMS:\n");
+            print_ast(e->param_list);
+        } else {
+            printf("TAKING NO PARAMETERS\n");
+        }
+
+    }
+    if (e->entry_type != STE_FN_DEF && (e->ns == NS_MEMBERS || e->ns == NS_MISC)) {
+        print_ast(e->type);
+    }
+    if (e->entry_type == STE_STRUNION_DEF && e->members) {
+        printf("Dumping tag-type mini scope of tag <%s>!\n", e->ident);
+        st_entry* cur = e->members->first;
+        while (cur) {
+            st_dump_entry(cur);
+            cur = cur->next;
+        }
     }
 }
 
@@ -284,17 +416,12 @@ void st_dump_struct(st_entry* s) {
  */
 void st_examine(char* ident) {
     st_entry *e;
-    int count = 0;
+    int count = 0;       // yeah, weird way of getting the enum size
     for (unsigned i=0; i<sizeof(namespaces_str)/sizeof(char*); i++) {
         if ((e = st_lookup_ns(ident, i))) {
             count++;
-            printf("> found <%s>, here is the entry (and type if member or misc):\n", ident);
-            st_dump_entry(e);
-            if (i == NS_MEMBERS || i == NS_MISC)
-                print_ast(e->type);
-            if (e->is_strunion_def && e->members) {
-                st_dump_struct(e);
-            }
+            printf("> found <%s>, here is the entry (and type if applicable):\n", ident);
+            st_examine_given(e);
         }
     }
     if (!count) {
@@ -302,6 +429,7 @@ void st_examine(char* ident) {
     }
     printf("\n");
 }
+
 
 /*
  *  Search for a member of a tag and output st_entry info.
@@ -328,6 +456,17 @@ void st_examine_member(char* tag, char* child) {
     printf("> Found <%s> -> <%s>:\n", tag, child);
     st_dump_entry(m);
     print_ast(m->type);
-    printf("\n");
     return;
+}
+
+// kind of fake at the moment
+void st_dump_recursive() {
+    printf("_- symtab dump for translation unit: -_\n");
+    st_entry *e = current_scope->first;
+    while (e) {
+        st_dump_entry(e);
+        st_examine_given(e);
+        printf("\n");
+        e = e->next;
+    }
 }

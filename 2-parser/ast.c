@@ -237,10 +237,11 @@ void print_ast(const astn *n) {
                             print_ast(n->astn_type.derived.target);
                         tabs--;
                     tabs--;
+                    printf("\n");
                 } else {
                     switch (n->astn_type.derived.type) {
                         case t_PTR:     printf("PTR TO");       break;
-                        case t_FN:      printf("FN RETURNING"); break;
+                        case t_FN:      printf("FN RETURNING"); break; // dead code at the moment
                         default:        die("invalid derived type");
                     }
                     printf("\n");
@@ -254,7 +255,7 @@ void print_ast(const astn *n) {
                 //if (n->astn_type.derived.type == t_ARRAY) tabs--; // kludge!
             } else if (n->astn_type.is_tagtype) {
                 if (n->astn_type.tagtype.symbol->ident) // I really wanted to use the GNU :? here but I felt bad
-                    printf("struct %s", n->astn_type.tagtype.symbol->ident);
+                    printf("struct %s\n", n->astn_type.tagtype.symbol->ident);
                 else
                     printf("struct (unnamed)\n");
             } else {
@@ -293,6 +294,22 @@ void print_ast(const astn *n) {
                     print_ast(n->astn_decl.type);
                 tabs--;
             tabs--;
+            break;
+
+/**/    case ASTN_FNDEF:
+            printf("FNDEF of\n");
+            tabs++;
+                print_ast(n->astn_fndef.decl); // should just be the name!
+            tabs--;
+            if (n->astn_fndef.param_list) {
+                printf(" with param list:\n");
+                tabs++;
+                    print_ast(n->astn_fndef.param_list);
+                tabs--;
+            } else {
+                printf("with no params\n");
+            }
+            break;
 
         default:
             die("Unhandled AST node type");
@@ -450,6 +467,13 @@ astn *strunion_alloc(struct st_entry* symbol) {
     n->astn_typespec.is_tagtype = true;
     n->astn_typespec.symbol = symbol;
     n->astn_typespec.next = NULL;
+    return n;
+}
+
+astn *fndef_alloc(astn* decl, astn* param_list) {
+    astn *n=astn_alloc(ASTN_FNDEF);
+    n->astn_fndef.decl = decl;
+    n->astn_fndef.param_list = param_list;
     return n;
 }
 

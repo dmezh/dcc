@@ -30,11 +30,13 @@ enum typequal {
 };
 
 enum storspec {
-    SS_AUTO = 0,
+    SS_UNDEF = 0, // this should never be seen in a completed st_entry
+    SS_NONE,
+    SS_AUTO,
     SS_TYPEDEF, // we're not doing typedefs, just ignore, plus this probably shouldn't be here
     SS_EXTERN,
     SS_STATIC,
-    SS_REGISTER
+    SS_REGISTER,
 };
 
 // standard defines "scalar types" differently, I don't care;

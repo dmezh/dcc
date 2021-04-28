@@ -17,16 +17,12 @@
 
 %code {
     #include <stdio.h>
+    #include <stdlib.h>
     int yylex(void);
-    void yyerror (const char *s) { fprintf(stderr, "o! %s\n", s); }
+    void yyerror (const char *s) { fprintf(stderr, "o! %s\n", s); exit(-10); }
 }
 
-// this is broken (always sets stdin)
-%initial-action
-{
-    YYLLOC_DEFAULT(current_scope->context, NULL, NULL);
-    printf("set context to %s:%d\n", current_scope->context.filename, current_scope->context.lineno);
-};
+%initial-action {   YYLLOC_DEFAULT(current_scope->context, NULL, NULL);     };
 
 %union
 {
@@ -34,6 +30,7 @@
     struct strlit strlit;
     char* ident;
     astn* astn_p;
+    st_entry* st_entry;
 }
 
 %token INDSEL PLUSPLUS MINUSMINUS SHL SHR LTEQ GTEQ EQEQ
@@ -62,15 +59,31 @@
 %type<astn_p> pointer type_qual_list direct_decl_arr arr_size
 
 %type<astn_p> strunion_spec struct_decl_list struct_decl spec_qual_list
+%type<astn_p> param_t_list param_list param_decl
 %type<astn_p> struct_decltr_list struct_decltr
+
+%type<st_entry> decln external_decln fn_def
 
 %%
 
-fulltree:
-    %empty
-|   fulltree statement
-|   fulltree decln
-|   fulltree internal ';'
+done:
+    translation_unit                    {   st_dump_recursive();     }
+;
+
+// maybe make quads here one day if you dont mind that would be good no rush
+translation_unit:
+    external_decln
+|   translation_unit external_decln
+;
+
+external_decln:
+    decln
+|   fn_def
+|   internal ';'                        {   $$=(st_entry*)NULL;   }
+;
+
+fn_def:
+    decln_spec decl lbrace '#' rbrace         {     $$=st_define_function(decl_alloc($1, $2, @2), @3);   }
 ;
 
 statement:
@@ -313,9 +326,10 @@ expr:
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 // 6.7 Declarations
+// the below needs a little logic in the first case for proper struct fwd declaration behavior
 decln:
     decln_spec ';'                  { /* check for idiot user not actually declaring anything */ }
-|   decln_spec init_decl_list ';'   {   begin_st_entry(decl_alloc($1, $2, @$), NS_MISC, @$);     }
+|   decln_spec init_decl_list ';'   {  $$=begin_st_entry(decl_alloc($1, $2, @$), NS_MISC, @$);     }
 // no static_assert stuff
 ;
 
@@ -398,6 +412,29 @@ direct_decl:
     ident                           {   $$=$1;  }
 |   '(' decl ')'                    {   $$=$2;  }
 |   direct_decl_arr
+|   direct_decl '(' param_t_list ')'{   $$=fndef_alloc($1, $3); @$=@1;                  }
+|   direct_decl '(' ident_list ')'  {   yyerror("not handling K&R syntax"); exit(-5);   }
+|   direct_decl '(' ')'             {   $$=fndef_alloc($1, NULL); @$=@1;                }
+;
+
+param_t_list:
+    param_list
+|   param_list ',' ELLIPSIS         {   yyerror("not handling variadic fn\n");  }
+;
+
+param_list:
+    param_decl                      {   $$=list_alloc($1);              }
+|   param_list ',' param_decl       {   list_append($3, $1); $$=$1;     }
+;
+
+param_decl:
+    decln_spec decl                 {   $$=decl_alloc($1, $2, @2);  }
+;
+
+// we don't care about the value because no K&R syntax
+ident_list:
+    ident
+|   ident_list ',' ident
 ;
 
 // departing from the Standard's grammar here a bit
@@ -471,8 +508,10 @@ type_spec:
 ;
 
 // the struct becomes defined right after the '}' (Standard)
+// note: currently forward-declares structs when it in fact should error out
+// ex: struct z p; // where z has not been declared before.
 strunion_spec:
-    str_or_union ident lbrace struct_decl_list rbrace   {   $$=strunion_alloc(st_define_struct($2->astn_ident.ident, $4, @$, @3));  }
+    str_or_union ident lbrace struct_decl_list rbrace   {   $$=strunion_alloc(st_define_struct($2->astn_ident.ident, $4, @2, @5, @3));  }
 |   str_or_union lbrace struct_decl_list rbrace         {   yyerror("unnamed structs/unions are not yet supported");                }
 |   str_or_union ident                                  {   $$=strunion_alloc(st_declare_struct($2->astn_ident.ident, false, @$));  }
 ;

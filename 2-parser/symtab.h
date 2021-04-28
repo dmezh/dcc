@@ -31,6 +31,22 @@ enum namespaces {
 };
 extern const char* namespaces_str[];
 
+enum st_entry_types {
+    STE_UNDEF = 0,
+    STE_VAR,
+    STE_STRUNION_DEF,
+    STE_FN_DEF
+};
+extern const char* st_entry_types_str[];
+
+enum st_linkage {
+    L_UNDEF,
+    L_NONE,
+    L_INTERNAL,
+    L_EXTERNAL
+};
+extern const char* linkage_str[];
+
 /*
  * These will be directly pointed to by the AST.
  * The symbol table is a linked list of these.
@@ -39,21 +55,29 @@ typedef struct st_entry {
     char *ident;
     enum namespaces ns;
 
-    bool is_strunion_def;
-    bool is_union; // tbd
-    struct symtab *members; // tag type is complete when this is non-null
-
-    struct astn *type;
-    enum storspec storspec;
-    bool has_init;
-    union { // yeah we'll just copy initializers - avoids entangling us with the AST
-        struct number numinit;
-        struct strlit strinit;
+    enum st_entry_types entry_type;
+    struct { // struct/union
+        bool is_union;
+        struct symtab* members; // tag type is complete when this is non-null
     };
-    
+    struct { // var
+        enum storspec storspec;
+        bool has_init;
+        union { // yeah we'll just copy initializers - avoids entangling us with the AST
+            struct number numinit;
+            struct strlit strinit;
+        };
+    };
+    struct { // fn
+        astn* param_list;
+    };
+
+    bool is_tentative;
+    enum st_linkage linkage;
+    struct astn *type;
     struct st_entry *next;
     struct symtab* scope;
-    YYLTYPE decl_context, def_context; // only some will have the latter
+    YYLTYPE decl_context, def_context;
 } st_entry;
 
 /*
@@ -99,14 +123,16 @@ typedef struct symtab {
 
 extern symtab* current_scope;
 
+st_entry *st_define_function(astn* fndef, YYLTYPE context);
 
 st_entry *st_declare_struct(char* ident, bool strict,  YYLTYPE context);
-st_entry *st_define_struct(char *ident, astn *decl_list, YYLTYPE context, YYLTYPE openbrace_context);
+st_entry *st_define_struct(char *ident, astn *decl_list,
+                           YYLTYPE name_context, YYLTYPE closebrace_context, YYLTYPE openbrace_context);
 
-void begin_st_entry(astn *decl, enum namespaces ns,  YYLTYPE context);
+st_entry* begin_st_entry(astn *decl, enum namespaces ns,  YYLTYPE context);
 st_entry* stentry_alloc(char *ident);
 
-st_entry* st_lookup(const char* ident);
+st_entry* st_lookup(const char* ident, enum namespaces ns);
 st_entry* st_lookup_ns(const char* ident, enum namespaces ns);
 st_entry* st_lookup_fq(const char* ident, symtab* s, enum namespaces ns);
 
@@ -122,5 +148,7 @@ void st_dump_struct(st_entry* s);
 
 void st_examine(char* ident);
 void st_examine_member(char* tag, char* child);
+
+void st_dump_recursive(void);
 
 #endif

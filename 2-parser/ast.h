@@ -30,6 +30,7 @@ enum astn_types {
     ASTN_STORSPEC,
     ASTN_TYPE,
     ASTN_DECL,
+    ASTN_FNDEF
 };
 
 struct astn_assign { // could have been binop but separated for clarity
@@ -132,6 +133,11 @@ struct astn_decl {
     struct astn *specs, *type;
 };
 
+struct astn_fndef {
+    struct astn* decl;
+    struct astn* param_list;
+};
+
 typedef struct astn {
     enum astn_types type;
     union {
@@ -151,6 +157,7 @@ typedef struct astn {
         struct astn_storspec astn_storspec;
         struct astn_type astn_type;
         struct astn_decl astn_decl;
+        struct astn_fndef astn_fndef;
     };
 } astn;
 
@@ -176,6 +183,9 @@ astn *dtype_alloc(astn* target, enum der_types type);
 
 astn *decl_alloc(astn *specs, astn *type, YYLTYPE context);
 astn *strunion_alloc(struct st_entry* symbol);
+
+astn *fndef_alloc(astn* decl, astn* param_list);
+
 void set_dtypechain_target(astn* top, astn* target);
 void reset_dtypechain_target(astn* top, astn* target);
 void merge_dtypechains(astn *parent, astn *child);
