@@ -223,7 +223,9 @@ st_entry* begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
             // H&S 4.8.5 was extremely useful on this. I'll try to follow a C++ -like model,
             // in which the only tentative definition is one that's 'extern', and those cannot have initializers.
             if (prev->storspec == SS_EXTERN && new->storspec != SS_EXTERN) {
+                st_entry *next = prev->next;
                 *prev = *new;
+                prev->next = next;
                 return prev;
             } else if (prev->storspec == SS_STATIC && new->storspec == SS_EXTERN) {
                 return prev;
