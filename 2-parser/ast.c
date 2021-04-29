@@ -310,6 +310,14 @@ void print_ast(const astn *n) {
                 printf("with no params\n");
             }
             break;
+/**/    case ASTN_DECLREC:
+            printf("(declaration of symbol <%s>)\n", n->astn_declrec.e->ident);
+            break;
+
+/**/    case ASTN_SYMPTR:
+            printf("symbol ");
+            st_dump_entry(n->astn_symptr.e);
+            break;
 
         default:
             die("Unhandled AST node type");
@@ -470,10 +478,23 @@ astn *strunion_alloc(struct st_entry* symbol) {
     return n;
 }
 
-astn *fndef_alloc(astn* decl, astn* param_list) {
+astn *fndef_alloc(astn* decl, astn* param_list, symtab* scope) {
     astn *n=astn_alloc(ASTN_FNDEF);
     n->astn_fndef.decl = decl;
     n->astn_fndef.param_list = param_list;
+    n->astn_fndef.scope = scope;
+    return n;
+}
+
+astn *declrec_alloc(st_entry* e) {
+    astn *n=astn_alloc(ASTN_DECLREC);
+    n->astn_declrec.e = e;
+    return n;
+}
+
+astn *symptr_alloc(st_entry* e) {
+    astn *n=astn_alloc(ASTN_SYMPTR);
+    n->astn_symptr.e = e;
     return n;
 }
 

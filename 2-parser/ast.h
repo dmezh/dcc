@@ -31,7 +31,9 @@ enum astn_types {
     ASTN_TYPE,
     ASTN_DECL,
     ASTN_FNDEF,
-    ASTN_COMPOUNDSTMT
+    ASTN_COMPOUNDSTMT,
+    ASTN_DECLREC,
+    ASTN_SYMPTR
 };
 
 struct astn_assign { // could have been binop but separated for clarity
@@ -137,6 +139,7 @@ struct astn_decl {
 struct astn_fndef {
     struct astn* decl;
     struct astn* param_list;
+    struct symtab* scope;
 };
 
 struct astn_compoundstmt {
@@ -146,6 +149,12 @@ struct astn_compoundstmt {
 
 // record of a declaration having occurred
 struct astn_declrec {
+    struct st_entry* e;
+};
+
+// st_entry pointer from resolved idents
+// similar above but separated for clarity
+struct astn_symptr {
     struct st_entry* e;
 };
 
@@ -170,6 +179,8 @@ typedef struct astn {
         struct astn_decl astn_decl;
         struct astn_fndef astn_fndef;
         struct astn_compoundstmt astn_compoundstmt;
+        struct astn_declrec astn_declrec;
+        struct astn_symptr astn_symptr;
     };
 } astn;
 
@@ -196,7 +207,9 @@ astn *dtype_alloc(astn* target, enum der_types type);
 astn *decl_alloc(astn *specs, astn *type, YYLTYPE context);
 astn *strunion_alloc(struct st_entry* symbol);
 
-astn *fndef_alloc(astn* decl, astn* param_list);
+astn *fndef_alloc(astn* decl, astn* param_list, struct symtab* scope);
+astn *declrec_alloc(struct st_entry *e);
+astn *symptr_alloc(struct st_entry* e);
 
 void set_dtypechain_target(astn* top, astn* target);
 void reset_dtypechain_target(astn* top, astn* target);

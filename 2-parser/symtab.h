@@ -52,28 +52,28 @@ extern const char* linkage_str[];
  * The symbol table is a linked list of these.
 */
 typedef struct st_entry {
+    enum st_entry_types entry_type;
+
+    // struct/union
+    bool is_union;
+    struct symtab* members; // tag type is complete when this is non-null
+
+    // var
+    enum storspec storspec;
+    bool is_param;
+    bool has_init;
+    union { // yeah we'll just copy initializers - avoids entangling us with the AST
+        struct number numinit;
+        struct strlit strinit;
+    };
+
+    // fn
+    astn* param_list;
+    struct symtab* fn_scope;
+    astn* body;
+
     char *ident;
     enum namespaces ns;
-
-    enum st_entry_types entry_type;
-    struct { // struct/union
-        bool is_union;
-        struct symtab* members; // tag type is complete when this is non-null
-    };
-    struct { // var
-        enum storspec storspec;
-        bool has_init;
-        union { // yeah we'll just copy initializers - avoids entangling us with the AST
-            struct number numinit;
-            struct strlit strinit;
-        };
-    };
-    struct { // fn
-        astn* param_list;
-        astn* fn_scope;
-    };
-
-    bool is_tentative;
     enum st_linkage linkage;
     struct astn *type;
     struct st_entry *next;
@@ -124,7 +124,7 @@ typedef struct symtab {
 
 extern symtab* current_scope;
 
-st_entry *st_define_function(astn* fndef, YYLTYPE context);
+st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context);
 
 st_entry *st_declare_struct(char* ident, bool strict,  YYLTYPE context);
 st_entry *st_define_struct(char *ident, astn *decl_list,

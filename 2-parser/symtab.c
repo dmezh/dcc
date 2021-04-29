@@ -17,6 +17,7 @@
 #include "util.h"
 
 static void st_check_linkage(st_entry* e);
+void st_dump_single_given(symtab* s);
 
 const char* scope_types_str[] = {
     [SCOPE_MINI] = "MINI",
@@ -58,39 +59,29 @@ symtab root_symtab = {
 
 symtab *current_scope = &root_symtab;
 
-//void st_playback_function()
 
-st_entry *st_define_function(astn* fndef, YYLTYPE openbrace_context) {
-    //printf("attempting declaration of function, DUMPING AST\n");
-    //print_ast(fndef);
-    //printf("made it back to here\n");
-
-    /*
-    struct astn* f = get_dtypechain_target(fndef->astn_decl.type);
-    print_ast(f);
-    */
-
+st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context) {
+    symtab *fn_scope = current_scope;
+    st_pop_scope();
     struct astn_fndef f2 = (get_dtypechain_target(fndef->astn_decl.type))->astn_fndef;
     char* name = f2.decl->astn_ident.ident;
     st_entry *n = st_lookup_ns(name, NS_MISC);
-    //printf("printing result %p\n", get_dtypechain_target(fndef->astn_decl.type));
-    //print_ast(get_dtypechain_target(fndef->astn_decl.type));
     if (n) {
         fprintf(stderr, "Error: attempted redefinition of symbol %s\n", name);
         exit(-5);
     } else {
         // following actions leak an astn_fndef
-        if (fndef->astn_decl.type->type == ASTN_TYPE) { // necessarily a derived type
+        if (fndef->astn_decl.type->type == ASTN_TYPE) // necessarily a derived type
             reset_dtypechain_target(fndef->astn_decl.type, f2.decl);
-        } else {
+        else
             fndef->astn_decl.type = fndef->astn_decl.type->astn_fndef.decl;
-        }
-        //print_ast(fndef);
+
         st_entry *fn = begin_st_entry(fndef, NS_MISC, fndef->astn_decl.context);
         //printf("back from install honey\n");
-        //print_ast(fn->type);
+        fn->body = block;
+        fn->param_list = f2.param_list;
         fn->entry_type = STE_FN_DEF;
-        //fn->param_list = f2.param_list;
+        fn->fn_scope = fn_scope;
         fn->storspec = SS_NONE;
         fn->def_context = openbrace_context; // this probably isn't consistent with structs, whatever
         return fn;
@@ -101,7 +92,7 @@ st_entry *st_define_function(astn* fndef, YYLTYPE openbrace_context) {
  *  Declare (optionally permissively) a struct in the current scope without defining.
  */
 st_entry *st_declare_struct(char* ident, bool strict, YYLTYPE context) {
-    st_entry *n = st_lookup_ns(ident, NS_TAGS);
+    st_entry *n = st_lookup(ident, NS_TAGS);
     if (n) {
         if (strict && n->members) {
             fprintf(stderr, "Error: attempted redeclaration of complete tag");
@@ -204,6 +195,8 @@ st_entry* begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
     new->decl_context = context;
     new->scope = current_scope;
     new->entry_type = STE_VAR; // default; override from caller when needed!
+    if (current_scope->scope_type == SCOPE_FUNCTION && !new->storspec)
+        new->storspec = SS_AUTO;
 //    st_check_tentative(new);
     st_check_linkage(new);
 
@@ -214,7 +207,7 @@ st_entry* begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
 
     if (!st_insert_given(new)) {
         if (new->scope == &root_symtab) {
-            st_entry* prev = st_lookup(new->ident, new->ns);
+            st_entry* prev = st_lookup_ns(new->ident, new->ns);
             // is previous extern? if so, completely replace it.
             // this logic and behavior is total shit, please fix this some day
             // this whole problem can only be described as disgusting
@@ -291,7 +284,7 @@ st_entry* st_lookup_fq(const char* ident, symtab* s, enum namespaces ns) {
  *          false - ident already in symtab
  */
 bool st_insert_given(st_entry *new) {
-    if (st_lookup(new->ident, new->ns)) return false;
+    if (st_lookup_ns(new->ident, new->ns)) return false;
     new->next = NULL;
     if (!current_scope->first) { // currently-empty symtab
         current_scope->first = new;
@@ -351,16 +344,25 @@ void st_destroy(symtab* target) {
     }
 }
 
-/*
- *  Dump a single symbol table (the current_scope) with basic list
- */
-void st_dump_single() {
-    printf("Dumping symbol table!\n");
-    st_entry* cur = current_scope->first;
+void st_dump_single_given(symtab* s) {
+    //printf("Dumping symbol table!\n");
+    st_entry* cur = s->first;
     while (cur) {
         st_dump_entry(cur);
         cur = cur->next;
     }
+}
+
+//
+//
+//
+//
+
+/*
+ *  Dump a single symbol table (the current_scope) with basic list
+ */
+void st_dump_single() {
+    st_dump_single_given(current_scope);
 }
 
 /*
@@ -368,11 +370,12 @@ void st_dump_single() {
  */
 void st_dump_entry(const st_entry* e) {
     if (!e) return;
-    printf("%s<%s> <ns:%s> <stor:%s> <scope:%s @ %s:%d>",
+    printf("%s<%s> <ns:%s> <stor:%s%s> <scope:%s @ %s:%d>",
             st_entry_types_str[e->entry_type],
             e->ident,
             namespaces_str[e->ns],
             storspec_str[e->storspec],
+            e->is_param ? "*" : "",
             scope_types_str[e->scope->scope_type],
             e->scope->context.filename,
             e->scope->context.lineno
@@ -406,6 +409,10 @@ void st_examine_given(st_entry* e) {
         } else {
             printf("TAKING NO PARAMETERS\n");
         }
+        printf("DUMPING FUNCTION SYMTAB:\n");
+        st_dump_single_given(e->fn_scope);
+        printf("DUMPING FUNCTION AST:\n");
+        print_ast(e->body);
 
     }
     if (e->entry_type != STE_FN_DEF && (e->ns == NS_MEMBERS || e->ns == NS_MISC)) {
@@ -429,7 +436,7 @@ void st_examine(char* ident) {
     st_entry *e;
     int count = 0;       // yeah, weird way of getting the enum size
     for (unsigned i=0; i<sizeof(namespaces_str)/sizeof(char*); i++) {
-        if ((e = st_lookup_ns(ident, i))) {
+        if ((e = st_lookup(ident, i))) {
             count++;
             printf("> found <%s>, here is the entry (and type if applicable):\n", ident);
             st_dump_entry(e);
@@ -447,7 +454,7 @@ void st_examine(char* ident) {
  *  Search for a member of a tag and output st_entry info.
  */
 void st_examine_member(char* tag, char* child) {
-    st_entry *e = st_lookup_ns(tag, NS_TAGS);
+    st_entry *e = st_lookup(tag, NS_TAGS);
     if (!e) {
         printf("> I was not able to find tag <%s>.\n\n", tag);
         return;

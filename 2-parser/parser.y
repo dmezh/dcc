@@ -19,9 +19,16 @@
     #include <stdio.h>
     #include <stdlib.h>
     int yylex(void);
+    #define ps_error(context, ...) do { \
+        fprintf(stderr, "Error near %s:%d: ", context.filename, context.lineno); \
+        fprintf(stderr, __VA_ARGS__); \
+        fprintf(stderr, "\n"); \
+        exit(-1); \
+    } while(0)
     void yyerror (const char *s) { fprintf(stderr, "o! %s\n", s); exit(-10); }
 }
 
+// this trash broken for the global scope, whatever
 %initial-action {   YYLLOC_DEFAULT(current_scope->context, NULL, NULL);     };
 
 %union
@@ -62,6 +69,8 @@
 %type<astn_p> param_t_list param_list param_decl
 %type<astn_p> struct_decltr_list struct_decltr
 
+%type<astn_p> block_item block_item_list
+
 %type<st_entry> external_decln fn_def
 
 %%
@@ -83,7 +92,7 @@ external_decln:                             // kludge ish for structs/unions
 ;
 
 fn_def:
-    decln_spec decl lbrace block_item_list rbrace         {     $$=st_define_function(decl_alloc($1, $2, @2), @3);   }
+    decln_spec decl lbrace block_item_list rbrace         {  $$=st_define_function(decl_alloc($1, $2, @2), $4, @3);   }
 ;
 
 // 6.8.2
@@ -92,17 +101,17 @@ compound_statement:
 ;
 
 block_item_list:
-    block_item
-|   block_item_list block_item
+    block_item                      {   $$=list_alloc($1);  }
+|   block_item_list block_item      {   $$=list_append($2, $1); $$=$1; }
 ;
 
 block_item:
-    decln
+    decln                       {   if($1->type == ASTN_DECL) $$=declrec_alloc(begin_st_entry($1, NS_MISC, $1->astn_decl.context));     }
 |   statement
 ;
 
 statement:
-    expr_stmt                    {   print_ast($1); printf("\n");    }
+    expr_stmt                    {    }
 ;
 
 expr_stmt:
@@ -129,7 +138,13 @@ internal:                           // sometimes you really do want to murder th
 // ----------------------------------------------------------------------------
 // 6.5.1 Primary expressions
 primary_expr:
-    ident
+    ident                       {   st_entry *e = st_lookup($1->astn_ident.ident, NS_MISC);
+                                    if (!e) {
+                                        ps_error(@1, "'%s' undefined", $1->astn_ident.ident);
+                                    } else {
+                                        $$=symptr_alloc(e);
+                                    }
+                                }
 |   constant
 |   stringlit
 |   '(' expr ')'                {   $$=$2;   }
@@ -427,20 +442,36 @@ direct_decl:
     ident                           {   $$=$1;  }
 |   '(' decl ')'                    {   $$=$2;  }
 |   direct_decl_arr
-|   direct_decl '(' param_t_list ')'{   $$=fndef_alloc($1, $3); @$=@1;                  }
-|   direct_decl '(' ident_list ')'  {   yyerror("not handling K&R syntax"); exit(-5);   }
-|   direct_decl '(' ')'             {   $$=fndef_alloc($1, NULL); @$=@1;                }
+|   direct_decl '(' param_t_list ')'{   $$=fndef_alloc($1, $3, current_scope); @$=@1;    }
+|   direct_decl '(' ident_list ')'  {   ps_error(@3, "not handling K&R syntax");   }
+|   direct_decl '(' ')'             {   st_new_scope(SCOPE_FUNCTION, @1); $$=fndef_alloc($1, NULL, current_scope); @$=@1;  }
 ;
 
 param_t_list:
     param_list
-|   param_list ',' ELLIPSIS         {   yyerror("not handling variadic fn\n");  }
+|   param_list ',' ELLIPSIS         {  ps_error(@1, "not handling variadic fn");  }
 ;
 
+
+param_list:
+    param_decl                      {   st_new_scope(SCOPE_FUNCTION, @1);
+                                        $$=declrec_alloc(begin_st_entry($1, NS_MISC, $1->astn_decl.context));
+                                        $$->astn_declrec.e->is_param = true;
+                                        $$=list_alloc($$);
+                                    }
+|   param_list ',' param_decl       {   $$=declrec_alloc(begin_st_entry($3, NS_MISC, $3->astn_decl.context));
+                                        $$->astn_declrec.e->is_param = true;
+                                        list_append($$, $1);
+                                        $$=$1;
+                                    }
+;
+
+/*
 param_list:
     param_decl                      {   $$=list_alloc($1);              }
 |   param_list ',' param_decl       {   list_append($3, $1); $$=$1;     }
 ;
+*/
 
 param_decl:
     decln_spec decl                 {   $$=decl_alloc($1, $2, @2);  }
@@ -528,7 +559,7 @@ type_spec:
 // there is zero chance this is correct for all the scoping rules.
 strunion_spec:
     str_or_union ident lbrace struct_decl_list rbrace   {   $$=strunion_alloc(st_define_struct($2->astn_ident.ident, $4, @2, @5, @3));  }
-|   str_or_union lbrace struct_decl_list rbrace         {   yyerror("unnamed structs/unions are not yet supported");                }
+|   str_or_union lbrace struct_decl_list rbrace         {   ps_error(@2, "unnamed structs/unions are not yet supported");                }
 |   str_or_union ident                                  {   $$=strunion_alloc(st_declare_struct($2->astn_ident.ident, false, @$));  }
 ;
 

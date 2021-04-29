@@ -87,6 +87,8 @@ enum storspec describe_type(astn *spec, struct astn_type *t) {
         }
     }
 
+    // I am unsure if this is ugly and bad or not, but it works
+
     // validate and parse type specifiers into a single type + signedness
     if (tagtypes) {
         if (tagtypes > 1) {
@@ -109,6 +111,9 @@ enum storspec describe_type(astn *spec, struct astn_type *t) {
         st_error("cannot specify base type more than once\n");
     }
 
+    if (t->is_const) {
+        t->scalar.type = t_INT; // may change if more specifiers
+    }
     if (UNSIGNEDs) {
         t->scalar.is_unsigned = true;
         t->scalar.type = t_INT; // may change if more specifiers
