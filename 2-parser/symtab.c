@@ -82,6 +82,7 @@ st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context
         fn->param_list = f2.param_list;
         fn->entry_type = STE_FN_DEF;
         fn->fn_scope = fn_scope;
+        fn->fn_scope->context = openbrace_context; // kludge up from grammar
         fn->storspec = SS_NONE;
         fn->def_context = openbrace_context; // this probably isn't consistent with structs, whatever
         return fn;
