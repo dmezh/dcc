@@ -58,6 +58,8 @@ symtab root_symtab = {
 
 symtab *current_scope = &root_symtab;
 
+//void st_playback_function()
+
 st_entry *st_define_function(astn* fndef, YYLTYPE openbrace_context) {
     //printf("attempting declaration of function, DUMPING AST\n");
     //print_ast(fndef);
@@ -88,6 +90,7 @@ st_entry *st_define_function(astn* fndef, YYLTYPE openbrace_context) {
         //printf("back from install honey\n");
         //print_ast(fn->type);
         fn->entry_type = STE_FN_DEF;
+        //fn->param_list = f2.param_list;
         fn->storspec = SS_NONE;
         fn->def_context = openbrace_context; // this probably isn't consistent with structs, whatever
         return fn;
@@ -114,7 +117,12 @@ st_entry *st_declare_struct(char* ident, bool strict, YYLTYPE context) {
         new->decl_context = context;
         new->linkage = L_NONE;
         new->storspec = SS_NONE;
+        // get up to the closest scope in the stack that's not a mini-scope
+        symtab* save = current_scope;
+        while (current_scope == SCOPE_MINI)
+            st_pop_scope();
         new->scope = current_scope;
+        current_scope = save; // restore scope stack
         st_insert_given(new);
         return new;
     }
@@ -406,6 +414,7 @@ void st_examine_given(st_entry* e) {
         st_entry* cur = e->members->first;
         while (cur) {
             st_dump_entry(cur);
+            st_examine_given(cur);
             cur = cur->next;
         }
     }
@@ -421,6 +430,7 @@ void st_examine(char* ident) {
         if ((e = st_lookup_ns(ident, i))) {
             count++;
             printf("> found <%s>, here is the entry (and type if applicable):\n", ident);
+            st_dump_entry(e);
             st_examine_given(e);
         }
     }

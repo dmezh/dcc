@@ -55,14 +55,14 @@
 %type<astn_p> tern_expr
 %type<astn_p> assign
 
-%type<astn_p> decln_spec init_decl_list init_decl decl direct_decl type_spec type_qual stor_spec
+%type<astn_p> decln decln_spec init_decl_list init_decl decl direct_decl type_spec type_qual stor_spec
 %type<astn_p> pointer type_qual_list direct_decl_arr arr_size
 
 %type<astn_p> strunion_spec struct_decl_list struct_decl spec_qual_list
 %type<astn_p> param_t_list param_list param_decl
 %type<astn_p> struct_decltr_list struct_decltr
 
-%type<st_entry> decln external_decln fn_def
+%type<st_entry> external_decln fn_def
 
 %%
 
@@ -76,14 +76,29 @@ translation_unit:
 |   translation_unit external_decln
 ;
 
-external_decln:
-    decln
+external_decln:                             // kludge ish for structs/unions
+    decln                               {   if($1->type == ASTN_DECL) $$=begin_st_entry($1, NS_MISC, $1->astn_decl.context);     }
 |   fn_def
 |   internal ';'                        {   $$=(st_entry*)NULL;   }
 ;
 
 fn_def:
-    decln_spec decl lbrace '#' rbrace         {     $$=st_define_function(decl_alloc($1, $2, @2), @3);   }
+    decln_spec decl lbrace block_item_list rbrace         {     $$=st_define_function(decl_alloc($1, $2, @2), @3);   }
+;
+
+// 6.8.2
+compound_statement:
+    lbrace block_item_list rbrace
+;
+
+block_item_list:
+    block_item
+|   block_item_list block_item
+;
+
+block_item:
+    decln
+|   statement
 ;
 
 statement:
@@ -329,7 +344,7 @@ expr:
 // the below needs a little logic in the first case for proper struct fwd declaration behavior
 decln:
     decln_spec ';'                  { /* check for idiot user not actually declaring anything */ }
-|   decln_spec init_decl_list ';'   {  $$=begin_st_entry(decl_alloc($1, $2, @$), NS_MISC, @$);     }
+|   decln_spec init_decl_list ';'   {   $$=decl_alloc($1, $2, @$);  }
 // no static_assert stuff
 ;
 
@@ -510,6 +525,7 @@ type_spec:
 // the struct becomes defined right after the '}' (Standard)
 // note: currently forward-declares structs when it in fact should error out
 // ex: struct z p; // where z has not been declared before.
+// there is zero chance this is correct for all the scoping rules.
 strunion_spec:
     str_or_union ident lbrace struct_decl_list rbrace   {   $$=strunion_alloc(st_define_struct($2->astn_ident.ident, $4, @2, @5, @3));  }
 |   str_or_union lbrace struct_decl_list rbrace         {   yyerror("unnamed structs/unions are not yet supported");                }

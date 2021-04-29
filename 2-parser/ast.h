@@ -30,7 +30,8 @@ enum astn_types {
     ASTN_STORSPEC,
     ASTN_TYPE,
     ASTN_DECL,
-    ASTN_FNDEF
+    ASTN_FNDEF,
+    ASTN_COMPOUNDSTMT
 };
 
 struct astn_assign { // could have been binop but separated for clarity
@@ -138,6 +139,16 @@ struct astn_fndef {
     struct astn* param_list;
 };
 
+struct astn_compoundstmt {
+    YYLTYPE begin, end;
+    struct astn *list;
+};
+
+// record of a declaration having occurred
+struct astn_declrec {
+    struct st_entry* e;
+};
+
 typedef struct astn {
     enum astn_types type;
     union {
@@ -158,6 +169,7 @@ typedef struct astn {
         struct astn_type astn_type;
         struct astn_decl astn_decl;
         struct astn_fndef astn_fndef;
+        struct astn_compoundstmt astn_compoundstmt;
     };
 } astn;
 

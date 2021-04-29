@@ -70,6 +70,7 @@ typedef struct st_entry {
     };
     struct { // fn
         astn* param_list;
+        astn* fn_scope;
     };
 
     bool is_tentative;
