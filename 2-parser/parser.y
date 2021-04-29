@@ -100,9 +100,11 @@ compound_statement:
     lbrace block_item_list rbrace
 ;
 
+// just don't call an internal right at the start; it won't work
 block_item_list:
     block_item                      {   $$=list_alloc($1);  }
 |   block_item_list block_item      {   $$=list_append($2, $1); $$=$1; }
+|   block_item_list internal ';'    {   $$=$1;  }
 ;
 
 block_item:
