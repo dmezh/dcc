@@ -35,7 +35,7 @@ enum st_entry_types {
     STE_UNDEF = 0,
     STE_VAR,
     STE_STRUNION_DEF,
-    STE_FN_DEF
+    STE_FN
 };
 extern const char* st_entry_types_str[];
 
@@ -71,6 +71,7 @@ typedef struct st_entry {
     astn* param_list;
     struct symtab* fn_scope;
     astn* body;
+    bool fn_defined;
 
     char *ident;
     enum namespaces ns;

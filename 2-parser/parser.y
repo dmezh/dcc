@@ -25,7 +25,7 @@
         fprintf(stderr, "\n"); \
         exit(-1); \
     } while(0)
-    void yyerror (const char *s) { fprintf(stderr, "o! %s\n", s); exit(-10); }
+    void yyerror (const char *s) { fprintf(stderr, "Parser error: %s\n", s); exit(-10); }
 }
 
 // this trash broken for the global scope, whatever
@@ -361,7 +361,7 @@ expr:
 // the below needs a little logic in the first case for proper struct fwd declaration behavior
 decln:
     decln_spec ';'                  { /* check for idiot user not actually declaring anything */ }
-|   decln_spec init_decl_list ';'   {   $$=decl_alloc($1, $2, @$);  }
+|   decln_spec init_decl_list ';'   {   $$=decl_alloc($1, $2, @$); }
 // no static_assert stuff
 ;
 

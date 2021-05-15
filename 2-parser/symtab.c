@@ -38,7 +38,7 @@ const char* st_entry_types_str[] = {
     [STE_UNDEF] = "UNDEF!",
     [STE_VAR] = "var",
     [STE_STRUNION_DEF] = "s_u",
-    [STE_FN_DEF] = "fnc"
+    [STE_FN] = "fnc"
 };
 
 const char* linkage_str[] = {
@@ -59,7 +59,7 @@ symtab root_symtab = {
 
 symtab *current_scope = &root_symtab;
 
-
+// currently doesn't support actually defining already-declared functions
 st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context) {
     symtab *fn_scope = current_scope;
     st_pop_scope();
@@ -80,11 +80,12 @@ st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context
         //printf("back from install honey\n");
         fn->body = block;
         fn->param_list = f2.param_list;
-        fn->entry_type = STE_FN_DEF;
+        fn->entry_type = STE_FN;
         fn->fn_scope = fn_scope;
         fn->fn_scope->context = openbrace_context; // kludge up from grammar
         fn->storspec = SS_NONE;
         fn->def_context = openbrace_context; // this probably isn't consistent with structs, whatever
+        fn->fn_defined = true;
         return fn;
     }
 }
@@ -187,7 +188,15 @@ st_entry* begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
     astn *spec = decl->astn_decl.specs;
     astn *decl_list = decl->astn_decl.type;
 
-    st_entry *new = stentry_alloc(get_dtypechain_target(decl_list)->astn_ident.ident);
+    st_entry *new;
+    if (decl->astn_decl.type->type == ASTN_FNDEF) { // GIGA kludge for function declarations
+        st_entry *newfn = st_define_function(decl, NULL, context);
+        newfn->fn_defined = false;
+        newfn->def_context = (YYLTYPE){NULL, 0}; // it's not defined
+        return newfn;
+    }
+
+    new = stentry_alloc(get_dtypechain_target(decl_list)->astn_ident.ident);
     new->ns = ns;
 
     struct astn_type *t = &new->type->astn_type;
@@ -342,6 +351,7 @@ void st_destroy(symtab* target) {
         target->last = NULL;
     } else {
         free(target);
+        free(target++);
     }
 }
 
@@ -387,7 +397,7 @@ void st_dump_entry(const st_entry* e) {
     if (e->decl_context.filename) {
         printf(" <decl %s:%d>", e->decl_context.filename, e->decl_context.lineno);
     }
-    if (e->ns == NS_TAGS && !e->members) {
+    if ((e->ns == NS_TAGS && !e->members) || (e->entry_type == STE_FN && !e->fn_defined)) {
         printf(" (FWD-DECL)");
     }
     if (e->def_context.filename) {
@@ -401,22 +411,23 @@ void st_dump_entry(const st_entry* e) {
  *  Call st_dump_entry() first if you want to get the symbol info line.
  */
 void st_examine_given(st_entry* e) {
-    if (e->entry_type == STE_FN_DEF) {
+    if (e->entry_type == STE_FN) {
         printf("FUNCTION RETURNING:\n");
         print_ast(e->type);
-        if (e->param_list) {
-            printf("AND TAKING PARAMS:\n");
-            print_ast(e->param_list);
-        } else {
-            printf("TAKING NO PARAMETERS\n");
+        if (e->fn_defined) {
+            if (e->param_list) {
+                printf("AND TAKING PARAMS:\n");
+                print_ast(e->param_list);
+            } else {
+                printf("TAKING NO PARAMETERS\n");
+            }
+            printf("DUMPING FUNCTION SYMTAB:\n");
+            st_dump_single_given(e->fn_scope);
+            printf("DUMPING FUNCTION AST:\n");
+            print_ast(e->body);
         }
-        printf("DUMPING FUNCTION SYMTAB:\n");
-        st_dump_single_given(e->fn_scope);
-        printf("DUMPING FUNCTION AST:\n");
-        print_ast(e->body);
-
     }
-    if (e->entry_type != STE_FN_DEF && (e->ns == NS_MEMBERS || e->ns == NS_MISC)) {
+    if (e->entry_type != STE_FN && (e->ns == NS_MEMBERS || e->ns == NS_MISC)) {
         print_ast(e->type);
     }
     if (e->entry_type == STE_STRUNION_DEF && e->members) {
