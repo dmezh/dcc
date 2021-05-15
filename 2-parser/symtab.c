@@ -414,13 +414,13 @@ void st_examine_given(st_entry* e) {
     if (e->entry_type == STE_FN) {
         printf("FUNCTION RETURNING:\n");
         print_ast(e->type);
+        if (e->param_list) {
+            printf("AND TAKING PARAMS:\n");
+            print_ast(e->param_list);
+        } else {
+            printf("TAKING UNKNOWN/NO PARAMETERS\n");
+        }
         if (e->fn_defined) {
-            if (e->param_list) {
-                printf("AND TAKING PARAMS:\n");
-                print_ast(e->param_list);
-            } else {
-                printf("TAKING NO PARAMETERS\n");
-            }
             printf("DUMPING FUNCTION SYMTAB:\n");
             st_dump_single_given(e->fn_scope);
             printf("DUMPING FUNCTION AST:\n");

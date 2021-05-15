@@ -69,7 +69,7 @@
 %type<astn_p> param_t_list param_list param_decl
 %type<astn_p> struct_decltr_list struct_decltr
 
-%type<astn_p> block_item block_item_list
+%type<astn_p> block_item block_item_list compound_statement
 
 %type<st_entry> external_decln fn_def
 
@@ -97,7 +97,7 @@ fn_def:
 
 // 6.8.2
 compound_statement:
-    lbrace block_item_list rbrace
+    lbrace block_item_list rbrace   {   $$=$2; @$=@1;   }
 ;
 
 // just don't call an internal right at the start; it won't work
@@ -114,6 +114,7 @@ block_item:
 
 statement:
     expr_stmt                    {    }
+|   compound_statement
 ;
 
 expr_stmt:
