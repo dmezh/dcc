@@ -66,10 +66,12 @@ typedef struct st_entry {
         struct number numinit;
         struct strlit strinit;
     };
+    int stack_offset;
 
     // fn
     astn* param_list;
     struct symtab* fn_scope;
+    int stack_size;
     astn* body;
     bool fn_defined;
 
@@ -120,6 +122,7 @@ typedef struct symtab {
     enum scope_types scope_type;
     YYLTYPE context; // when the scope started
     struct symtab *parent;
+    st_entry* parent_func;
     struct st_entry *first, *last;
 } symtab;
 

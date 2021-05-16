@@ -9,4 +9,6 @@
 enum storspec describe_type(struct astn *spec, struct astn_type *t);
 void strict_qualify_type(struct astn *qual, struct astn_type *t);
 
+int get_sizeof(astn* type);
+
 #endif

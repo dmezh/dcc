@@ -80,8 +80,16 @@ st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context
         //printf("back from install honey\n");
         fn->body = block;
         fn->param_list = f2.param_list;
+        astn* p = fn->param_list;
+        while (block && p) {
+            if (list_data(p)->type != ASTN_DECLREC) {
+                st_error("function parameter name omitted near %s:%d\n", fn_scope->context.filename, fn_scope->context.lineno);
+            }
+            p = list_next(p);
+        }
         fn->entry_type = STE_FN;
         fn->fn_scope = fn_scope;
+        fn->fn_scope->parent_func = fn;
         fn->fn_scope->context = openbrace_context; // kludge up from grammar
         fn->storspec = SS_NONE;
         fn->def_context = openbrace_context; // this probably isn't consistent with structs, whatever
@@ -150,6 +158,17 @@ void st_make_union() {
 
 }
 
+// ret function scope if in function, else NULL
+symtab* st_parent_function() {
+    symtab* cur = current_scope;
+    while (cur->scope_type == SCOPE_BLOCK)
+        cur = cur->parent;
+    if (cur->scope_type == SCOPE_FUNCTION)
+        return cur;
+    else
+        return NULL;
+}
+
 // kludge up the linkage and storage specs for globals
 static void st_check_linkage(st_entry* e) {
     if (e->scope == &root_symtab) {
@@ -205,13 +224,16 @@ st_entry* begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
     new->decl_context = context;
     new->scope = current_scope;
     new->entry_type = STE_VAR; // default; override from caller when needed!
-    if (current_scope->scope_type == SCOPE_FUNCTION && !new->storspec)
+    if ((st_parent_function() && !new->storspec) || new->storspec == SS_AUTO) {
         new->storspec = SS_AUTO;
+        //st_entry* func = st_parent_function()->parent_func;
+        // storage alloc
+    }
 //    st_check_tentative(new);
     st_check_linkage(new);
 
     reset_dtypechain_target(decl_list, new->type); // end of chain is now the type instead of ident
-    if (decl_list->type == ASTN_TYPE && decl_list->astn_type.is_derived) {
+    if (decl_list->type == ASTN_TYPE && decl_list->astn_type.is_derived) { // ALLOCATE HERE?
         new->type = decl_list; // because otherwise it's just an IDENT
     }
 

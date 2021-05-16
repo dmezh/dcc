@@ -5,6 +5,7 @@
  */
 
 #include "types.h"
+#include "target_x86_32.h"
 
 #include <stdlib.h>
 
@@ -27,6 +28,29 @@ const char* der_types_str[] = {
     [t_ARRAY] = "ARRAY",
     [t_FN] = "FN"
 };
+
+// sizeof!
+// currently, array sizes are hardcoded to only support regular numbers,
+// we need a bit more machinery, specifically a function to evaluate compile-time constants.
+int get_sizeof(astn* type) {
+    //print_ast(type);
+    if (type->type == ASTN_SYMPTR) return (get_sizeof(type->astn_symptr.e->type));
+    if (type->type != ASTN_TYPE) die("sizeof was given an non-type astn");
+    if (!type->astn_type.is_derived)
+        return target_size[type->astn_type.scalar.type];
+    else {
+        if (type->astn_type.derived.type == t_PTR) {
+            return target_size[t_PTR];
+        }
+        else {
+            if (type->astn_type.derived.size->type != ASTN_NUM) {
+                fprintf(stderr, "Sorry, can't yet evaluate compile-time constants other than plain numbers\n");
+            }
+            return type->astn_type.derived.size->astn_num.number.integer * get_sizeof(type->astn_type.derived.target);
+        }
+    }
+}
+
 
 static astn *qualify_single(astn *qual, struct astn_type *t);
 

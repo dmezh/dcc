@@ -20,7 +20,7 @@
  */
 void print_ast(const astn *n) {
     static int tabs = 0;     //     -> __ <- two spaces
-    for (int i=0; i<tabs; i++) printf("· ");
+    for (int i=0; i<tabs; i++) printf("  ");
     if (!n) return; // if we just want to print tabs, pass NULL
     switch (n->type) {
 
@@ -133,15 +133,16 @@ void print_ast(const astn *n) {
             tabs--; break;
 
 /**/    case ASTN_LIST:
-            printf("LIST:\n");
+            //printf("LIST:\n");
             tabs++;
                 while (n) {
-                    print_ast(NULL);
-                    printf("LIST ELEMENT:\n");
+                    //print_ast(NULL);
+                    //printf("LIST ELEMENT:\n");
                     tabs++;
                         print_ast(n->astn_list.me);
                     tabs--;
                     n = n->astn_list.next;
+                    printf("\n");
                 }
             tabs--;
             break;
@@ -249,7 +250,7 @@ void print_ast(const astn *n) {
                         if (n->astn_type.derived.target)
                             print_ast(n->astn_type.derived.target);
                         else
-                            printf("NULL");
+                            printf("NULL\n");
                     tabs--;
                 }
                 //if (n->astn_type.derived.type == t_ARRAY) tabs--; // kludge!
@@ -319,6 +320,96 @@ void print_ast(const astn *n) {
             st_dump_entry(n->astn_symptr.e);
             break;
 
+/**/    case ASTN_IFELSE:
+            printf("IF:\n");
+            tabs++;
+                print_ast(n->astn_ifelse.condition_s);
+            tabs--;
+            print_ast(NULL); printf("THEN:\n");
+            tabs++;
+                print_ast(n->astn_ifelse.then_s);
+            tabs--;
+            if (n->astn_ifelse.else_s) {
+                print_ast(NULL); printf("ELSE:\n");
+                tabs++;
+                    print_ast(n->astn_ifelse.else_s);
+                tabs--;
+            }
+            break;
+
+/**/    case ASTN_SWITCH:
+            printf("SWITCH:\n");
+            tabs++;
+                print_ast(NULL); printf("COND:\n");
+                tabs++;
+                    print_ast(n->astn_switch.condition);
+                tabs--;
+                print_ast(NULL); printf("BODY:\n");
+                tabs++;
+                    print_ast(n->astn_switch.body);
+                tabs--;
+            tabs--;
+            break;
+
+/**/    case ASTN_WHILELOOP:
+            if (n->astn_whileloop.is_dowhile) printf("DO ");
+            printf("WHILE:\n");
+            tabs++;
+                print_ast(n->astn_whileloop.condition);
+                print_ast(NULL); printf("BODY:\n");
+                print_ast(n->astn_whileloop.body);
+            tabs--;
+            break;
+
+/**/    case ASTN_FORLOOP:
+            printf("FOR:\n");
+            tabs++;
+                print_ast(NULL); printf("INIT:\n");
+                tabs++;
+                    print_ast(n->astn_forloop.init);
+                tabs--;
+                print_ast(NULL); printf("CONDITION:\n");
+                tabs++;
+                    print_ast(n->astn_forloop.condition);
+                tabs--;
+                print_ast(NULL); printf("ONEACH:\n");
+                tabs++;
+                    print_ast(n->astn_forloop.oneach);
+                tabs--;
+                print_ast(NULL); printf("BODY:\n");
+                tabs++;
+                    print_ast(n->astn_forloop.body);
+                tabs--;
+            tabs--;
+            break;
+
+/**/    case ASTN_GOTO:
+            printf("GOTO %s\n", n->astn_goto.ident->astn_ident.ident);
+            break;
+/**/    case ASTN_CONTINUE:
+            printf("CONTINUE\n");
+            break;
+/**/    case ASTN_BREAK:
+            printf("BREAK\n");
+            break;
+/**/    case ASTN_RETURN:
+            if (n->astn_return.ret) {
+                printf("RETURN");
+                tabs++; print_ast(n->astn_return.ret); tabs--;
+            } else
+                printf("RETURN;");
+            break;
+/**/    case ASTN_LABEL:
+            printf("LABEL %s:\n", n->astn_label.ident->astn_ident.ident);
+            print_ast(n->astn_label.statement);
+            break;
+/**/    case ASTN_CASE:
+            if (n->astn_case.case_expr) {
+                printf("CASE:"); print_ast(n->astn_case.case_expr);
+            } else
+                printf("DEFAULT:\n");
+            print_ast(n->astn_case.statement);
+            break;
         default:
             die("Unhandled AST node type");
     }
@@ -495,6 +586,38 @@ astn *declrec_alloc(st_entry* e) {
 astn *symptr_alloc(st_entry* e) {
     astn *n=astn_alloc(ASTN_SYMPTR);
     n->astn_symptr.e = e;
+    return n;
+}
+
+astn *ifelse_alloc(astn *cond_s, astn *then_s, astn *else_s) {
+    astn *n=astn_alloc(ASTN_IFELSE);
+    n->astn_ifelse.condition_s = cond_s;
+    n->astn_ifelse.then_s = then_s;
+    n->astn_ifelse.else_s = else_s;
+    return n;
+}
+
+astn *whileloop_alloc(astn* cond_s, astn* body_s, bool is_dowhile) {
+    astn *n=astn_alloc(ASTN_WHILELOOP);
+    n->astn_whileloop.is_dowhile = is_dowhile;
+    n->astn_whileloop.condition = cond_s;
+    n->astn_whileloop.body = body_s;
+    return n;
+}
+
+astn *forloop_alloc(astn *init, astn* condition, astn* oneach, astn* body) {
+    astn *n=astn_alloc(ASTN_FORLOOP);
+    n->astn_forloop.init = init;
+    n->astn_forloop.condition = condition;
+    n->astn_forloop.oneach = oneach;
+    n->astn_forloop.body = body;
+    return n;
+}
+
+astn *do_decl(astn *decl) {
+    astn *n = NULL;
+    if(decl->type == ASTN_DECL)
+        n = declrec_alloc(begin_st_entry(decl, NS_MISC, decl->astn_decl.context));
     return n;
 }
 

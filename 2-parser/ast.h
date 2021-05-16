@@ -33,7 +33,17 @@ enum astn_types {
     ASTN_FNDEF,
     ASTN_COMPOUNDSTMT,
     ASTN_DECLREC,
-    ASTN_SYMPTR
+    ASTN_SYMPTR,
+    ASTN_IFELSE,
+    ASTN_SWITCH,
+    ASTN_WHILELOOP,
+    ASTN_FORLOOP,
+    ASTN_GOTO,
+    ASTN_BREAK,
+    ASTN_CONTINUE,
+    ASTN_RETURN,
+    ASTN_LABEL,
+    ASTN_CASE
 };
 
 struct astn_assign { // could have been binop but separated for clarity
@@ -158,6 +168,47 @@ struct astn_symptr {
     struct st_entry* e;
 };
 
+struct astn_ifelse {
+    struct astn *condition_s, *then_s, *else_s;
+};
+
+struct astn_switch {
+    struct astn *condition, *body;
+};
+
+struct astn_whileloop {
+    bool is_dowhile;
+    struct astn *condition, *body;
+};
+
+struct astn_forloop {
+    struct astn *init, *condition, *oneach, *body;
+};
+
+struct astn_goto {
+    struct astn* ident;
+};
+
+struct astn_break {
+    struct astn* dummy;
+};
+
+struct astn_continue {
+    struct astn* dummy;
+};
+
+struct astn_return {
+    struct astn* ret;
+};
+
+struct astn_label {
+    struct astn* ident, *statement;
+};
+
+struct astn_case {
+    struct astn* case_expr, *statement;
+};
+
 typedef struct astn {
     enum astn_types type;
     union {
@@ -181,6 +232,14 @@ typedef struct astn {
         struct astn_compoundstmt astn_compoundstmt;
         struct astn_declrec astn_declrec;
         struct astn_symptr astn_symptr;
+        struct astn_ifelse astn_ifelse;
+        struct astn_switch astn_switch;
+        struct astn_whileloop astn_whileloop;
+        struct astn_forloop astn_forloop;
+        struct astn_goto astn_goto;
+        struct astn_return astn_return;
+        struct astn_label astn_label;
+        struct astn_case astn_case;
     };
 } astn;
 
@@ -210,6 +269,12 @@ astn *strunion_alloc(struct st_entry* symbol);
 astn *fndef_alloc(astn* decl, astn* param_list, struct symtab* scope);
 astn *declrec_alloc(struct st_entry *e);
 astn *symptr_alloc(struct st_entry* e);
+
+astn *ifelse_alloc(astn *cond_s, astn *then_s, astn *else_s);
+astn *whileloop_alloc(astn* cond_s, astn* body_s, bool is_dowhile);
+astn *forloop_alloc(astn *init, astn* condition, astn* oneach, astn* body);
+
+astn *do_decl(astn *decl);
 
 void set_dtypechain_target(astn* top, astn* target);
 void reset_dtypechain_target(astn* top, astn* target);

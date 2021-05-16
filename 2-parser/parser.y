@@ -42,10 +42,13 @@
 
 %token INDSEL PLUSPLUS MINUSMINUS SHL SHR LTEQ GTEQ EQEQ
 %token NOTEQ LOGAND LOGOR ELLIPSIS TIMESEQ DIVEQ MODEQ PLUSEQ MINUSEQ SHLEQ SHREQ ANDEQ
-%token OREQ XOREQ AUTO BREAK CASE CHAR CONST CONTINUE DEFAULT DO DOUBLE ELSE ENUM EXTERN
-%token FLOAT FOR GOTO IF INLINE INT LONG REGISTER RESTRICT RETURN SHORT SIGNED SIZEOF
+%token OREQ XOREQ AUTO BREAK CASE CHAR CONST CONTINUE DEFAULT DO DOUBLE ENUM EXTERN
+%token FLOAT FOR GOTO INLINE INT LONG REGISTER RESTRICT RETURN SHORT SIGNED SIZEOF
 %token STATIC STRUCT SWITCH TYPEDEF UNION UNSIGNED VOID VOLATILE WHILE _BOOL _COMPLEX _IMAGINARY
-%token _PERISH _EXAMINE _DUMPSYMTAB
+%token _PERISH _EXAMINE _DUMPSYMTAB IF
+
+%nonassoc THEN
+%nonassoc ELSE
 
 %type<astn_p> statement expr expr_stmt
 
@@ -59,7 +62,7 @@
 %type<astn_p> mult_expr addit_expr shift_expr
 %type<astn_p> relat_expr eqlty_expr
 %type<astn_p> bwand_expr bwxor_expr bwor_expr logand_expr logor_expr
-%type<astn_p> tern_expr
+%type<astn_p> tern_expr const_expr
 %type<astn_p> assign
 
 %type<astn_p> decln decln_spec init_decl_list init_decl decl direct_decl type_spec type_qual stor_spec
@@ -69,7 +72,10 @@
 %type<astn_p> param_t_list param_list param_decl
 %type<astn_p> struct_decltr_list struct_decltr
 
-%type<astn_p> block_item block_item_list compound_statement
+%type<astn_p> type_name 
+%type<astn_p> abstract_decl direct_abstract_decl
+
+%type<astn_p> block_item block_item_list compound_statement select_stmt iterat_stmt opt_expr jump_stmt labeled_stmt
 
 %type<st_entry> external_decln fn_def
 
@@ -97,7 +103,7 @@ fn_def:
 
 // 6.8.2
 compound_statement:
-    lbrace block_item_list rbrace   {   $$=$2; @$=@1;   }
+    lbrace { st_new_scope(SCOPE_BLOCK, @1); } block_item_list rbrace  {   $$=$3; @$=@1; st_pop_scope();  }
 ;
 
 // just don't call an internal right at the start; it won't work
@@ -108,25 +114,65 @@ block_item_list:
 ;
 
 block_item:
-    decln                       {   if($1->type == ASTN_DECL) $$=declrec_alloc(begin_st_entry($1, NS_MISC, $1->astn_decl.context));     }
+    decln                       {  $$=do_decl($1);  }
 |   statement
 ;
 
 statement:
     expr_stmt                    {    }
 |   compound_statement
+|   select_stmt
+|   iterat_stmt
+|   jump_stmt
+|   labeled_stmt
 ;
 
 expr_stmt:
     expr ';'                     {   $$=$1;   }
-|   ';'                          {   $$=NULL;   }
+|   semicolon                    {   $$=NULL; fprintf(stderr, "Warning: null statement near %s:%d\n", @1.filename, @1.lineno);  }
 ;
 
-lbrace:
-    '{'
+select_stmt:
+    IF '(' expr ')' statement       %prec THEN             { $$=ifelse_alloc($3, $5, NULL); }
+|   IF '(' expr ')' statement ELSE statement               { $$=ifelse_alloc($3, $5, $7); ; }
+|   SWITCH '(' expr ')' statement                          { $$=astn_alloc(ASTN_SWITCH); $$->astn_switch.condition=$3; $$->astn_switch.body=$5; }
 ;
-rbrace:
-    '}'
+
+iterat_stmt:
+    WHILE '(' expr ')' statement                                            { $$=whileloop_alloc($3, $5, false); }
+|   DO statement WHILE '(' expr ')' ';'                                     { $$=whileloop_alloc($5, $2, true); }
+|   FOR '(' opt_expr ';' opt_expr ';' opt_expr ')' statement                { $$=forloop_alloc($3, $5, $7, $9); }
+|   FOR lparen { st_new_scope(SCOPE_BLOCK, @2); } decln { $4=do_decl($4); } opt_expr ';' opt_expr rparen statement
+                                                                            { st_pop_scope(); $$=forloop_alloc($4, $6, $8, $10); }
+;
+
+jump_stmt:
+    GOTO ident ';'          { $$=astn_alloc(ASTN_GOTO); $$->astn_goto.ident=$2;     }
+|   CONTINUE ';'            { if (current_scope->scope_type != SCOPE_BLOCK) ps_error(@1, "fuck you"); $$=astn_alloc(ASTN_CONTINUE); }
+|   BREAK ';'               { if (current_scope->scope_type != SCOPE_BLOCK) ps_error(@1, "fuck you"); $$=astn_alloc(ASTN_BREAK);    }
+|   RETURN opt_expr ';'     { $$=astn_alloc(ASTN_RETURN); $$->astn_return.ret=$2;   }
+;
+
+labeled_stmt:
+    ident ':' statement                 { $$=astn_alloc(ASTN_LABEL); $$->astn_label.ident=$1; $$->astn_label.statement=$3;      }
+|   CASE const_expr ':' statement       { $$=astn_alloc(ASTN_CASE); $$->astn_case.case_expr=$2; $$->astn_case.statement=$4;     }
+|   DEFAULT ':' statement               { $$=astn_alloc(ASTN_CASE); $$->astn_case.case_expr=NULL; $$->astn_case.statement=$3;   }
+;
+
+opt_expr:
+    %empty      {   $$=NULL;    }
+|   expr
+;
+
+semicolon:  ';' 
+;
+lbrace:     '{'
+;
+rbrace:     '}'
+;
+lparen:     '('
+;
+rparen:     ')'
 ;
 
 // ----------------------------------------------------------------------------
@@ -142,11 +188,10 @@ internal:                           // sometimes you really do want to murder th
 // 6.5.1 Primary expressions
 primary_expr:
     ident                       {   st_entry *e = st_lookup($1->astn_ident.ident, NS_MISC);
-                                    if (!e) {
+                                    if (!e) 
                                         ps_error(@1, "'%s' undefined", $1->astn_ident.ident);
-                                    } else {
+                                    else
                                         $$=symptr_alloc(e);
-                                    }
                                 }
 |   constant
 |   stringlit
@@ -246,7 +291,6 @@ unary_expr:
                                 }
 // todo: casts
 |   sizeof
-// todo: _Alignof
 ;
 
 unops:
@@ -259,10 +303,11 @@ unops:
 ;
 
 sizeof:
-    SIZEOF unary_expr           {   $$=astn_alloc(ASTN_SIZEOF);
-                                    $$->astn_sizeof.target=$2;
+    SIZEOF unary_expr           {   $$=astn_alloc(ASTN_NUM); $$->astn_num.number.integer=get_sizeof($2); 
+                                    $$->astn_num.number.is_signed=false; $$->astn_num.number.aux_type=s_INT;
                                 }
-// todo: sizeof abstract types
+|   SIZEOF '(' type_name ')'    {   $$=astn_alloc(ASTN_NUM); $$->astn_num.number.integer=get_sizeof($3); 
+                                    $$->astn_num.number.is_signed=false; $$->astn_num.number.aux_type=s_INT; }
 ;
 // ----------------------------------------------------------------------------
 // 6.5.4 Cast operators
@@ -355,6 +400,12 @@ expr:
     assign
 |   expr ',' assign             {   $$=binop_alloc(',', $1, $3);    }
 ;
+
+// 6.6 const expr
+const_expr:
+    tern_expr
+;
+
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
@@ -439,6 +490,38 @@ decl:                                   // similar issue with arrays was dealt w
                                         }
                                     }
 |   direct_decl
+;
+
+// 6.7.7 Type names
+// limited support
+
+// this will be an astn_type, which may or may not be a derived type
+type_name:
+    spec_qual_list                 {    struct astn *n=astn_alloc(ASTN_TYPE);
+                                        describe_type($1, &n->astn_type);
+                                        $$=n;
+                                   }
+|   spec_qual_list abstract_decl   {    struct astn *n=astn_alloc(ASTN_TYPE);
+                                        describe_type($1, &n->astn_type);
+                                        set_dtypechain_target($2, n);
+                                        $$=$2;  }
+;
+
+// will be a dertype
+abstract_decl:
+    pointer                        //{ printf("single ptr:\n"); print_ast($1); }
+|   pointer direct_abstract_decl   { set_dtypechain_target($2, $1); $$=$2; }
+|   direct_abstract_decl           //{ printf("single abstract:\n"); print_ast($1); }
+;
+
+direct_abstract_decl:
+    '(' abstract_decl ')'                   { $$=$2; }
+|   '[' assign ']'                          { $$=dtype_alloc(NULL, t_ARRAY); $$->astn_type.derived.size = $2;}
+|   direct_abstract_decl '[' assign ']'     {   astn* n=dtype_alloc(NULL, t_ARRAY);
+                                                n->astn_type.derived.size = $3;
+                                                set_dtypechain_target($1, n);
+                                                $$=$1;
+                                            }
 ;
 
 direct_decl:

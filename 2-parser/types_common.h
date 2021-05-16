@@ -56,17 +56,19 @@ enum scalar_types {
     t_LONGDOUBLE,
     t_FLOATCPLX,
     t_DOUBLECPLX,
-    t_LONGDOUBLECPLX
+    t_LONGDOUBLECPLX,
+    t_LASTSCALAR
 };
 
 enum der_types {
-    t_PTR,
+    t_PTR = t_LASTSCALAR + 1,
     t_ARRAY,
     t_FN,
+    t_LASTDERIVED
 };
 
 enum tagtypes {
-    t_UNION,
+    t_UNION = t_LASTDERIVED + 1,
     t_STRUCT
 };
 
