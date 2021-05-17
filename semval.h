@@ -38,4 +38,6 @@ struct strlit {
     size_t len;
 };
 
+void print_number(const struct number *n);
+
 #endif

@@ -7,6 +7,7 @@
 %code requires {
     #include "ast.h"
     #include "location.h"
+    #include "../3-quads/quads.h"
     #include "semval.h"
     #include "symtab.h"
     #include "types.h"
@@ -115,7 +116,7 @@ block_item_list:
 
 block_item:
     decln                       {  $$=do_decl($1);  }
-|   statement
+|   statement                   {  gen_quads($1); }
 ;
 
 statement:
@@ -232,6 +233,9 @@ array_subscript:
     postfix_expr '[' expr ']'   {   $$=unop_alloc('*', astn_alloc(ASTN_BINOP));
                                     $$->astn_unop.target->astn_binop.op='+';
                                     $$->astn_unop.target->astn_binop.left=$1;
+                                    //astn *n = astn_alloc(ASTN_NUM);
+                                    //n->astn_num.number.integer = ($3->astn_num.number.integer) * get_sizeof(descend_array($1));
+                                    //n->astn_num.number.aux_type = s_INT;
                                     $$->astn_unop.target->astn_binop.right=$3;
                                 }
 ;

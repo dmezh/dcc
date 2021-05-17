@@ -13,6 +13,7 @@
 
 #include "charutil.h"
 #include "parser.tab.h"
+#include "../3-quads/quads_print.h"
 #include "util.h"
 
 /*
@@ -25,6 +26,7 @@ void print_ast(const astn *n) {
     switch (n->type) {
 
 /**/    case ASTN_NUM:
+/*
             if (n->astn_num.number.aux_type == s_CHARLIT) {
                 printf("CHARLIT: '");
                 emit_char(n->astn_num.number.integer);
@@ -40,6 +42,10 @@ void print_ast(const astn *n) {
                     printf("%Lg\n", n->astn_num.number.real);
                 break;
             }
+*/
+            print_number(&n->astn_num.number);
+            printf("\n");
+            break;
 
 /**/    case ASTN_ASSIGN:
             printf("ASSIGNMENT\n");
@@ -409,6 +415,9 @@ void print_ast(const astn *n) {
             } else
                 printf("DEFAULT:\n");
             print_ast(n->astn_case.statement);
+            break;
+/**/    case ASTN_QTEMP:
+            print_node(n);
             break;
         default:
             die("Unhandled AST node type");

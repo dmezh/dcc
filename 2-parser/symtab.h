@@ -24,6 +24,7 @@ enum scope_types {
 extern const char* scope_types_str[];
 
 enum namespaces {
+    NS_TEMP_INTERNAL,
     NS_TAGS,
     NS_LABELS,
     NS_MEMBERS, // I think this would be implied just by being in a struct/union def scope

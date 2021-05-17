@@ -33,6 +33,7 @@ const char* der_types_str[] = {
 // currently, array sizes are hardcoded to only support regular numbers,
 // we need a bit more machinery, specifically a function to evaluate compile-time constants.
 int get_sizeof(astn* type) {
+    //printf("getting size of:\n");
     //print_ast(type);
     if (type->type == ASTN_SYMPTR) return (get_sizeof(type->astn_symptr.e->type));
     if (type->type != ASTN_TYPE) die("sizeof was given an non-type astn");
@@ -51,6 +52,22 @@ int get_sizeof(astn* type) {
     }
 }
 
+// get the first target of an array
+// please only call this from the grammar for array_subscript, as it makes assumptions!
+astn *descend_array(astn *type) {
+    printf("dumping TYPE in start\n"); print_ast(type);
+    if (type->type == ASTN_SYMPTR) return descend_array(type->astn_symptr.e->type);
+    if (type->type == ASTN_UNOP && type->astn_unop.op == '*') {
+        type = type->astn_unop.target->astn_binop.left->astn_symptr.e->type->astn_type.derived.target;
+    }
+    if (type->type == ASTN_TYPE) {
+        if (!type->astn_type.is_derived || type->astn_type.derived.type != t_ARRAY)
+            die("Passed a non-array to array-specific function");
+        return type->astn_type.derived.target;
+    }
+    die("Passed invalid astn to descend_array");
+    return NULL;
+}
 
 static astn *qualify_single(astn *qual, struct astn_type *t);
 

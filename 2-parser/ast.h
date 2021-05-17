@@ -43,7 +43,8 @@ enum astn_types {
     ASTN_CONTINUE,
     ASTN_RETURN,
     ASTN_LABEL,
-    ASTN_CASE
+    ASTN_CASE,
+    ASTN_QTEMP
 };
 
 struct astn_assign { // could have been binop but separated for clarity
@@ -209,6 +210,10 @@ struct astn_case {
     struct astn* case_expr, *statement;
 };
 
+struct astn_qtemp {
+    unsigned tempno, size;
+};
+
 typedef struct astn {
     enum astn_types type;
     union {
@@ -240,6 +245,7 @@ typedef struct astn {
         struct astn_return astn_return;
         struct astn_label astn_label;
         struct astn_case astn_case;
+        struct astn_qtemp astn_qtemp;
     };
 } astn;
 
