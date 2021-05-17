@@ -107,6 +107,13 @@ void todo(const char* msg) {
 
 void cond_rvalue(astn *n, astn* left, astn* right, astn* target);
 
+// emit args in reverse
+void put_args(astn *head) {
+    if (!head) return;
+    put_args(list_next(head));
+    emit(Q_ARG, gen_rvalue(list_data(head), NULL), NULL, NULL);
+}
+
 astn* gen_rvalue(astn* node, astn* target) {
     astn* temp;
     if (node->type == ASTN_FNCALL) {
@@ -114,10 +121,14 @@ astn* gen_rvalue(astn* node, astn* target) {
 
         emit(Q_ARGBEGIN, NULL, NULL, NULL);
         astn *arg = node->astn_fncall.args;
+
+        put_args(arg);
+        /*
         while (arg) {
             emit(Q_ARG, gen_rvalue(list_data(arg), NULL), NULL, NULL);
             arg = list_next(arg);
         }
+        */
 
         if (!target) target = qtemp_alloc(4);
         emit(Q_CALL, fn, NULL, target);

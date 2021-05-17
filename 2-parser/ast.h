@@ -269,6 +269,7 @@ astn *list_append(astn *new, astn *head);
 astn *list_alloc(astn* me);
 astn *list_next(astn* cur);
 astn *list_data(astn* n);
+void list_reverse(astn **l);
 unsigned list_measure(const astn *head);
 
 astn *typespec_alloc(enum typespec spec);
