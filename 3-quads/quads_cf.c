@@ -14,7 +14,7 @@ unsigned bb_count = 0;
 
 BBL bb_root = {0};
 
-struct cursor cursor;
+struct cursor cursor = {0};
 
 BB* bb_alloc() {
     BB *n = safe_calloc(1, sizeof(BB));
@@ -134,6 +134,26 @@ void gen_if(astn* ifnode) {
     }
 
     current_bb = Bn;
+}
+
+void gen_while(astn* wn) {
+    struct astn_whileloop *w = &wn->astn_whileloop;
+    BB* cond = bb_alloc();
+    BB* body = bb_alloc();
+    BB* next = bb_alloc();
+
+    uncond_branch(cond);
+
+    current_bb = cond;
+    gen_condexpr(w->condition, body, next);
+
+    current_bb = body;
+    cursor.brk = next;
+    cursor.cont = cond;
+    gen_quads(w->body);
+    uncond_branch(cond);
+
+    current_bb = next;
 }
 
 /*

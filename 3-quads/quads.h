@@ -26,7 +26,11 @@ enum quad_op {
     Q_BRLE,
     Q_BRGT,
     Q_BRGE,
-    Q_BR
+    Q_BR,
+    Q_RET,
+    Q_ARGBEGIN,
+    Q_ARG,
+    Q_CALL
 };
 
 enum qnode_types {

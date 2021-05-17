@@ -5,9 +5,11 @@
 
 struct cursor {
     char* fn;
+    BB *brk, *cont;
 };
 
 void gen_if(astn* ifnode);
+void gen_while(astn* wn);
 BBL* bbl_next(BBL* cur);
 BB* bbl_data(BBL* n);
 void bbl_append(BB* bb);

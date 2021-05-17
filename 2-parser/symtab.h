@@ -46,6 +46,7 @@ enum st_linkage {
     L_INTERNAL,
     L_EXTERNAL
 };
+
 extern const char* linkage_str[];
 
 /*

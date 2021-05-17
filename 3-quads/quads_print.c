@@ -29,7 +29,11 @@ char* quad_op_str[] = {
     [Q_BRLE] = "BRLE",
     [Q_BRGT] = "BRGT",
     [Q_BRGE] = "BRGE",
-    [Q_BR] = "BR"
+    [Q_BR] = "BR",
+    [Q_RET] = "RET",
+    [Q_ARGBEGIN] = "ARGBEGIN",
+    [Q_ARG] = "ARG",
+    [Q_CALL] = "CALL"
 };
 
 void print_node(const astn* qn) {
@@ -39,6 +43,7 @@ void print_node(const astn* qn) {
         case ASTN_STRLIT:   printf("(strlit)\"%s\"", qn->astn_strlit.strlit.str); return;
         case ASTN_QTEMP:    printf("%%T%05d", qn->astn_qtemp.tempno); return;
         case ASTN_QBBNO:    printf("BB.%s.%d", qn->astn_qbbno.bb->fn, qn->astn_qbbno.bb->bbno); return;
+        case ASTN_IDENT:    printf("%s", qn->astn_ident.ident); return;
         default: die("eh");
     }
 }

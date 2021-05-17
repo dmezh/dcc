@@ -82,6 +82,10 @@ bool isarr(astn* n) {
     return (n->type == ASTN_TYPE && n->astn_type.is_derived && n->astn_type.derived.type == t_ARRAY);
 }
 
+bool isfn(astn *n) {
+    return (n->type == ASTN_SYMPTR && n->astn_symptr.e->entry_type == STE_FN);
+}
+
 static astn* const_alloc(int num) {
     astn* n=astn_alloc(ASTN_NUM);
     n->astn_num.number.integer = num;
@@ -105,6 +109,20 @@ void cond_rvalue(astn *n, astn* left, astn* right, astn* target);
 
 astn* gen_rvalue(astn* node, astn* target) {
     astn* temp;
+    if (node->type == ASTN_FNCALL) {
+        astn *fn = gen_rvalue(node->astn_fncall.fn, NULL);
+
+        emit(Q_ARGBEGIN, NULL, NULL, NULL);
+        astn *arg = node->astn_fncall.args;
+        while (arg) {
+            emit(Q_ARG, gen_rvalue(list_data(arg), NULL), NULL, NULL);
+            arg = list_next(arg);
+        }
+
+        if (!target) target = qtemp_alloc(4);
+        emit(Q_CALL, fn, NULL, target);
+        return target;
+    }
     if (node->type == ASTN_SYMPTR) {
         //struct astn_type *type = &node->astn_symptr.e->type->astn_type;
         //if (type->is_derived && type->derived.type == t_ARRAY) {
@@ -112,7 +130,13 @@ astn* gen_rvalue(astn* node, astn* target) {
             astn *temp = qtemp_alloc(4); // address type
             emit(Q_LEA, node, NULL, temp);
             return temp;
-        } else {
+        }
+        else if (isfn(node)) {
+            astn *temp = astn_alloc(ASTN_IDENT);
+            temp->astn_ident.ident = node->astn_symptr.e->ident;
+            return temp;
+        }
+        else {
             target = qtemp_alloc(4); // hardcoded
             emit(Q_MOV, node, NULL, target);
             return target;
@@ -127,11 +151,11 @@ astn* gen_rvalue(astn* node, astn* target) {
         bool l_isptr = isptr(left);
         bool r_isptr = isptr(right);       
 
-        decay_array(left);
-        decay_array(right);
+        //decay_array(left);
+        //decay_array(right);
 
         if (l_isptr && r_isptr)
-            quad_error("can't add two pointers!\n"); // add context
+            quad_error("can't add two pointers!\n"); // check for subtraction!!
 
         if (r_isptr) { // swap them if needed
             temp = right;
@@ -168,13 +192,13 @@ astn* gen_rvalue(astn* node, astn* target) {
 
         switch (node->astn_unop.op) {
             case '*':
-                //printf("dumping utarget\n"); print_ast(utarget);
+                printf("dumping utarget\n"); print_ast(utarget);
 
                 // multidim arrays: needs fixing
-                //if (isarr(utarget))
-                //{   printf("yup\n");
-                //    return gen_rvalue(ptr_target(utarget), target);
-                //}
+                if (isarr(utarget))
+                {   printf("yup\n");
+                    return gen_rvalue(ptr_target(utarget), target);
+                }
                 ;
                 astn* addr = gen_rvalue(utarget, NULL);
 
@@ -288,14 +312,43 @@ void gen_quads(astn *n) {
             }
             break;
         case ASTN_ASSIGN:
-            //printf("detected assign!\n");
             gen_assign(n);
-            //gen_rvalue(n->astn_assign.right, NULL);
             break;
         case ASTN_IFELSE:
             gen_if(n);
             break;
-        case ASTN_DECLREC: break;
+        case ASTN_DECLREC:
+            break;
+        case ASTN_WHILELOOP:
+            gen_while(n);
+            break;
+        case ASTN_CONTINUE:
+            uncond_branch(cursor.cont); // may leave behind unreachable code, optimizer would get rid of it
+            break;
+        case ASTN_BREAK:
+            uncond_branch(cursor.brk); // may leave behind unreachable code, optimizer would get rid of it
+            break;
+        case ASTN_SWITCH:
+            todo("switch statements");
+            break;
+        case ASTN_RETURN:
+            ;
+            st_entry *e = st_lookup(cursor.fn, NS_MISC);
+            bool non_void = (e->type->astn_type.is_derived || e->type->astn_type.scalar.type != t_VOID);
+            if (n->astn_return.ret) {
+                if (!non_void)
+                    printf("Warning: 'return' with a value in a void function\n");
+                emit(Q_RET, gen_rvalue(n->astn_return.ret, NULL), NULL, NULL);
+            }
+            else {
+                if (non_void)
+                    printf("Warning: 'return' without a value in a nonvoid function\n");
+                emit(Q_RET, NULL, NULL, NULL);
+            }
+            break;
+        case ASTN_FNCALL:
+            gen_rvalue(n, NULL);
+            break;
         default:
             printf("skipping unknown astn for quads %d\n", n->type);
     }
