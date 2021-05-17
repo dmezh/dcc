@@ -18,7 +18,15 @@ enum quad_op {
     Q_BWOR,
     Q_LOAD,
     Q_STORE,
-    Q_LEA
+    Q_LEA,
+    Q_CMP,
+    Q_BREQ,
+    Q_BRNE,
+    Q_BRLT,
+    Q_BRLE,
+    Q_BRGT,
+    Q_BRGE,
+    Q_BR
 };
 
 enum qnode_types {
@@ -44,13 +52,28 @@ typedef struct quad {
 typedef struct BB {
     struct BB *pred, *succ;
     quad *start, *cur;
+
+    unsigned bbno;
+    char* fn;
 } BB;
 
-extern unsigned temp_count;
+typedef struct BBL {
+    BB *me;
+    struct BBL *next;
+} BBL;
+
+extern unsigned bb_count; // number of BB in this function
+extern unsigned temp_count; // global temp var running count
 extern BB* current_bb;
 
+extern BBL bb_root;
+
+BB* bb_alloc();
+
 astn* qtemp_alloc(unsigned size);
+astn* gen_rvalue(astn* node, astn* target);
 void emit(enum quad_op op, astn* src1, astn* src2, astn* target);
+void gen_fn(st_entry *e);
 void gen_quads(astn *n);
 void todo(const char* msg);
 

@@ -44,7 +44,8 @@ enum astn_types {
     ASTN_RETURN,
     ASTN_LABEL,
     ASTN_CASE,
-    ASTN_QTEMP
+    ASTN_QTEMP,
+    ASTN_QBBNO
 };
 
 struct astn_assign { // could have been binop but separated for clarity
@@ -214,6 +215,11 @@ struct astn_qtemp {
     unsigned tempno, size;
 };
 
+struct BB;
+struct astn_qbbno {
+    struct BB* bb;
+};
+
 typedef struct astn {
     enum astn_types type;
     union {
@@ -246,6 +252,7 @@ typedef struct astn {
         struct astn_label astn_label;
         struct astn_case astn_case;
         struct astn_qtemp astn_qtemp;
+        struct astn_qbbno astn_qbbno;
     };
 } astn;
 

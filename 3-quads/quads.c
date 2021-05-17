@@ -2,6 +2,7 @@
 
 #include "ast.h"
 #include "parser.tab.h" // for token binop values
+#include "quads_cf.h"
 #include "quads_print.h"
 #include "util.h"
 #include "types.h"
@@ -10,13 +11,6 @@
 #include <stdlib.h>
 
 unsigned temp_count = 0;
-BB test_bb = {0};
-
-BB* current_bb = &test_bb;
-
-BB* bb_alloc() {
-    return safe_calloc(1, sizeof(BB));
-}
 
 // allocate temporary
 astn* qtemp_alloc(unsigned size) {
@@ -107,7 +101,10 @@ void todo(const char* msg) {
     exit(-1);
 }
 
+void cond_rvalue(astn *n, astn* left, astn* right, astn* target);
+
 astn* gen_rvalue(astn* node, astn* target) {
+    astn* temp;
     if (node->type == ASTN_SYMPTR) {
         //struct astn_type *type = &node->astn_symptr.e->type->astn_type;
         //if (type->is_derived && type->derived.type == t_ARRAY) {
@@ -122,6 +119,7 @@ astn* gen_rvalue(astn* node, astn* target) {
         }
     }
     if (node->type == ASTN_NUM) return node;
+    if (node->type == ASTN_STRLIT) return node;
     if (node->type == ASTN_BINOP) {
         astn* left = node->astn_binop.left;
         astn* right = node->astn_binop.right;
@@ -136,7 +134,7 @@ astn* gen_rvalue(astn* node, astn* target) {
             quad_error("can't add two pointers!\n"); // add context
 
         if (r_isptr) { // swap them if needed
-            astn* temp = right;
+            temp = right;
             right = left;
             left = temp;
             l_isptr = true; r_isptr = false;
@@ -147,13 +145,22 @@ astn* gen_rvalue(astn* node, astn* target) {
 
         if (node->astn_binop.op == '+') {
             if (l_isptr) { // ptr + int
-                emit(Q_MUL, rval_right, const_alloc(get_sizeof(ptr_target(left))), rval_right);
+                if (rval_right->type == ASTN_NUM) { // otherwise we'd emit a constant as an lvalue
+                    temp = qtemp_alloc(4);
+                    emit(Q_MUL, rval_right, const_alloc(get_sizeof(ptr_target(left))), temp);
+                    rval_right = temp;
+                }
+                else
+                    emit(Q_MUL, rval_right, const_alloc(get_sizeof(ptr_target(left))), rval_right);
             }
         }
 
         if (!target) target=qtemp_alloc(4); // hardcoded int!
 
-        emit(binop_to_quad_op(node->astn_binop.op), rval_left, rval_right, target);
+        if (node->astn_binop.op == '<') {
+            cond_rvalue(node, rval_left, rval_right, target);
+        } else
+            emit(binop_to_quad_op(node->astn_binop.op), rval_left, rval_right, target);
         return target;
     }
     if (node->type == ASTN_UNOP) {
@@ -199,11 +206,12 @@ astn* gen_lvalue(astn *node, enum addr_modes *mode) {
     return NULL;
 }
 
+
 void gen_assign(astn *node) {
     enum addr_modes destmode;
     astn *dest = gen_lvalue(node->astn_assign.left, &destmode);
     if (!dest) {
-        fprintf(stderr, "Error: not an lvalue: ");
+        fprintf(stderr, "Error: not an lvalue: "); die("test");
         print_ast(node->astn_assign.left);
         exit(-1);
     }
@@ -214,6 +222,31 @@ void gen_assign(astn *node) {
         astn *temp = gen_rvalue(node->astn_assign.right, NULL);
         emit(Q_STORE, temp, NULL, dest);
     }
+}
+
+void gen_mov_bb(astn* target, int val) {
+    astn *aval = const_alloc(val);
+    emit(Q_MOV, aval, NULL, target);
+}
+
+void cond_rvalue(astn *n, astn* left, astn* right, astn* target) {
+    BB* one = bb_alloc();
+    BB* zero = bb_alloc();
+
+    emit(Q_CMP, left, right, NULL);
+    emit_branch(n->astn_binop.op, one, zero);
+    
+    BB *future = bb_alloc();
+
+    current_bb = one;
+    gen_mov_bb(target, 1);
+    uncond_branch(future);
+    current_bb = zero;
+    gen_mov_bb(target, 0);
+    uncond_branch(future);
+
+    //astn *cond = astn_alloc(ASTN_BINOP);
+    current_bb = future;
 }
 
 void emit(enum quad_op op, astn* src1, astn* src2, astn* target) {
@@ -230,15 +263,40 @@ void emit(enum quad_op op, astn* src1, astn* src2, astn* target) {
         q->prev = current_bb->cur;
         current_bb->cur = q;
     }
-    print_quad(q);
+    //print_quad(q);
+}
+
+void gen_fn(st_entry *e) {
+    bb_count = 0;
+    cursor.fn = e->ident;
+
+    BB *f = bb_alloc();
+    current_bb = f;
+
+    astn* s = e->body;
+    gen_quads(s);
+
+    print_bbs();
 }
 
 void gen_quads(astn *n) {
-    if (n->type == ASTN_ASSIGN) {
-        //printf("detected assign!\n");
-        gen_assign(n);
-        //gen_rvalue(n->astn_assign.right, NULL);
-    } else {
-        printf("skipping non-assign astn\n");
+    switch (n->type) {
+        case ASTN_LIST:
+            while (n) {
+                gen_quads(list_data(n));
+                n = list_next(n);
+            }
+            break;
+        case ASTN_ASSIGN:
+            //printf("detected assign!\n");
+            gen_assign(n);
+            //gen_rvalue(n->astn_assign.right, NULL);
+            break;
+        case ASTN_IFELSE:
+            gen_if(n);
+            break;
+        case ASTN_DECLREC: break;
+        default:
+            printf("skipping unknown astn for quads %d\n", n->type);
     }
 }

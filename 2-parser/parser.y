@@ -94,7 +94,7 @@ translation_unit:
 
 external_decln:                             // kludge ish for structs/unions
     decln                               {   if($1->type == ASTN_DECL) $$=begin_st_entry($1, NS_MISC, $1->astn_decl.context);     }
-|   fn_def
+|   fn_def                              {   gen_fn($1);  }
 |   internal ';'                        {   $$=(st_entry*)NULL;   }
 ;
 
@@ -116,7 +116,7 @@ block_item_list:
 
 block_item:
     decln                       {  $$=do_decl($1);  }
-|   statement                   {  gen_quads($1); }
+|   statement
 ;
 
 statement:
