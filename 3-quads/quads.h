@@ -30,7 +30,8 @@ enum quad_op {
     Q_RET,
     Q_ARGBEGIN,
     Q_ARG,
-    Q_CALL
+    Q_CALL,
+    Q_FNSTART
 };
 
 enum qnode_types {

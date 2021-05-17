@@ -301,15 +301,28 @@ void emit(enum quad_op op, astn* src1, astn* src2, astn* target) {
     //print_quad(q);
 }
 
+quad* last_in_bb(BB* b) {
+    quad *q = b->start;
+    while (q->next)
+        q = q->next;
+    return q;
+}
+
 void gen_fn(st_entry *e) {
     bb_count = 0;
     cursor.fn = e->ident;
 
     BB *f = bb_alloc();
     current_bb = f;
+    emit(Q_FNSTART, NULL, NULL, NULL);
 
     astn* s = e->body;
     gen_quads(s);
+    if (last_in_bb(current_bb)->op != Q_RET) {
+        if (e->type->astn_type.is_derived || e->type->astn_type.scalar.type != t_VOID)
+            printf("WARNING: had to add a ret for you and fn is not void!\n");
+        emit(Q_RET, NULL, NULL, NULL);
+    }
 
     print_bbs();
 }

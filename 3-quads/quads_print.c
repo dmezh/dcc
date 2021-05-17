@@ -33,7 +33,8 @@ char* quad_op_str[] = {
     [Q_RET] = "RET",
     [Q_ARGBEGIN] = "ARGBEGIN",
     [Q_ARG] = "ARG",
-    [Q_CALL] = "CALL"
+    [Q_CALL] = "CALL",
+    [Q_FNSTART] = "FNSTART"
 };
 
 void print_node(const astn* qn) {

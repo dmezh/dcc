@@ -501,6 +501,19 @@ astn *list_data(astn* n) {
     return n->astn_list.me;
 }
 
+// DSA shit
+// https://www.geeksforgeeks.org/reverse-a-linked-list/
+void list_reverse(astn **l) {
+    struct astn *prev=NULL, *current=*l, *next=NULL;
+    while (current) {
+        next = list_next(current);
+        current->astn_list.next = prev;
+        prev = current;
+        current = next;
+    }
+    *l = prev;
+}
+
 /*
  * return length of AST list starting at head
  */
