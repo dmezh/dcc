@@ -9,8 +9,8 @@ enum quad_op {
     Q_ADD, // done
     Q_SUB, // done
     Q_MUL, // done
-    Q_DIV, // skip
-    Q_MOD, // skip
+    Q_DIV, // done
+    Q_MOD, // done
     Q_SHL, // skipq
     Q_SHR, // skipq
     Q_BWAND, // skipq
