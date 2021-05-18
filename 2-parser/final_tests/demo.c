@@ -124,7 +124,6 @@ int main(int argc, char** argv) {
 	printf("(a<b) evaluates to:%d\n", (a<b));
 	printf("(a==b) evaluates to:%d\n", (a==b));
 	printf("(a!=b) evaluates to:%d\n", (a!=b));
-	printf("(a!=b) evaluates to:%d\n", (a!=b));
 
 	printf("\nglobal arrays work too, even char[] if you're careful...\n");
 	strcpy(bye, "thanks and cya!");
