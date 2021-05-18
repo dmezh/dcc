@@ -109,6 +109,7 @@ st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context
         fn->entry_type = STE_FN;
         fn->fn_scope = fn_scope;
         fn->fn_scope->parent_func = fn;
+        //fn->fn_scope->stack_total = 0;
         fn->fn_scope->context = openbrace_context; // kludge up from grammar
         fn->storspec = SS_NONE;
         fn->def_context = openbrace_context; // this probably isn't consistent with structs, whatever
@@ -209,6 +210,25 @@ static void st_check_linkage(st_entry* e) {
     }
 }
 
+void st_reserve_stack(st_entry* e) {
+    if (e->storspec == SS_AUTO) {
+        int size;
+        if (e->type->astn_type.is_derived && e->type->astn_type.derived.type == t_ARRAY) { // only diff size for arrays
+            size = get_sizeof(e->type);
+            fprintf(stderr, "got arr size %d\n", size);
+        } else size = 4;
+        symtab *f = st_parent_function();
+        if (e->is_param) {
+            f->param_stack_total -= size;
+            e->stack_offset = f->param_stack_total;
+        } else {
+            f->stack_total += size;
+            e->stack_offset = f->stack_total;
+            //printf("inres stack total is now %d\n", f->stack_total);
+        }
+    }
+}
+
 
 /*
  *  Synthesize a new st_entry, qualify and specify it, and attempt to install it
@@ -243,7 +263,8 @@ st_entry* begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
     new->decl_context = context;
     new->scope = current_scope;
     new->entry_type = STE_VAR; // default; override from caller when needed!
-    if ((st_parent_function() && !new->storspec) || new->storspec == SS_AUTO) {
+    symtab* f = st_parent_function();
+    if ((f && !new->storspec) || new->storspec == SS_AUTO) {
         new->storspec = SS_AUTO;
         //st_entry* func = st_parent_function()->parent_func;
         // storage alloc
@@ -354,6 +375,8 @@ void st_new_scope(enum scope_types scope_type, YYLTYPE context) {
     symtab *new = safe_malloc(sizeof(symtab));
     *new = (symtab){
         .scope_type = scope_type,
+        .stack_total= 4, // crime
+        .param_stack_total = -4, // crime
         .context    = context,
         .parent     = current_scope,
         .first      = NULL,
@@ -422,7 +445,7 @@ void st_dump_single() {
  */
 void st_dump_entry(const st_entry* e) {
     if (!e) return;
-    printf("%s<%s> <ns:%s> <stor:%s%s> <scope:%s @ %s:%d>",
+    fprintf(stderr, "%s<%s> <ns:%s> <stor:%s%s> <scope:%s @ %s:%d>",
             st_entry_types_str[e->entry_type],
             e->ident,
             namespaces_str[e->ns],
@@ -433,18 +456,19 @@ void st_dump_entry(const st_entry* e) {
             e->scope->context.lineno
     );
     if (e->scope == &root_symtab && e->linkage && e->linkage != L_NONE) {
-        printf(" <linkage:%s>", linkage_str[e->linkage]);
+        fprintf(stderr, " <linkage:%s>", linkage_str[e->linkage]);
     }
     if (e->decl_context.filename) {
-        printf(" <decl %s:%d>", e->decl_context.filename, e->decl_context.lineno);
+        fprintf(stderr, " <decl %s:%d>", e->decl_context.filename, e->decl_context.lineno);
     }
     if ((e->ns == NS_TAGS && !e->members) || (e->entry_type == STE_FN && !e->fn_defined)) {
-        printf(" (FWD-DECL)");
+        fprintf(stderr, " (FWD-DECL)");
     }
     if (e->def_context.filename) {
-        printf(" <def %s:%d>", e->def_context.filename, e->def_context.lineno);
+        fprintf(stderr, " <def %s:%d>", e->def_context.filename, e->def_context.lineno);
     }
-    printf("\n");
+    fprintf(stderr, "STACK: %d", e->stack_offset);
+    fprintf(stderr, "\n");
 }
 
 /*
@@ -453,18 +477,18 @@ void st_dump_entry(const st_entry* e) {
  */
 void st_examine_given(st_entry* e) {
     if (e->entry_type == STE_FN) {
-        printf("FUNCTION RETURNING:\n");
+        fprintf(stderr, "FUNCTION RETURNING:\n");
         print_ast(e->type);
         if (e->param_list) {
-            printf("AND TAKING PARAMS:\n");
+            fprintf(stderr, "AND TAKING PARAMS:\n");
             print_ast(e->param_list);
         } else {
-            printf("TAKING UNKNOWN/NO PARAMETERS\n");
+            fprintf(stderr, "TAKING UNKNOWN/NO PARAMETERS\n");
         }
         if (e->fn_defined) {
-            printf("DUMPING FUNCTION SYMTAB:\n");
+            fprintf(stderr, "DUMPING FUNCTION SYMTAB:\n");
             st_dump_single_given(e->fn_scope);
-            printf("DUMPING FUNCTION AST:\n");
+            fprintf(stderr, "DUMPING FUNCTION AST:\n");
             print_ast(e->body);
         }
     }
@@ -472,7 +496,7 @@ void st_examine_given(st_entry* e) {
         print_ast(e->type);
     }
     if (e->entry_type == STE_STRUNION_DEF && e->members) {
-        printf("Dumping tag-type mini scope of tag <%s>!\n", e->ident);
+        fprintf(stderr, "Dumping tag-type mini scope of tag <%s>!\n", e->ident);
         st_entry* cur = e->members->first;
         while (cur) {
             st_dump_entry(cur);
@@ -533,12 +557,12 @@ void st_examine_member(char* tag, char* child) {
 
 // kind of fake at the moment
 void st_dump_recursive() {
-    printf("_- symtab dump for translation unit: -_\n");
+    fprintf(stderr, "_- symtab dump for translation unit: -_\n");
     st_entry *e = current_scope->first;
     while (e) {
         st_dump_entry(e);
         st_examine_given(e);
-        printf("\n");
+        fprintf(stderr, "\n");
         e = e->next;
     }
 }

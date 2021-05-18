@@ -1,9 +1,11 @@
 #include "quads.h"
 
 #include "ast.h"
+#include "asmgen.h"
 #include "parser.tab.h" // for token binop values
 #include "quads_cf.h"
 #include "quads_print.h"
+#include "symtab.h"
 #include "util.h"
 #include "types.h"
 
@@ -17,6 +19,10 @@ astn* qtemp_alloc(unsigned size) {
     astn* n = astn_alloc(ASTN_QTEMP);
     n->astn_qtemp.tempno = ++temp_count;
     n->astn_qtemp.size = size;
+    st_entry *f = st_lookup(cursor.fn, NS_MISC);
+    //printf("found fn: "); st_dump_entry(f);
+    f->fn_scope->stack_total += 4;
+    n->astn_qtemp.stack_offset = f->fn_scope->stack_total;
     return n;
 }
 
@@ -203,7 +209,7 @@ astn* gen_rvalue(astn* node, astn* target) {
 
         switch (node->astn_unop.op) {
             case '*':
-                printf("dumping utarget\n"); print_ast(utarget);
+                //printf("dumping utarget\n"); print_ast(utarget);
 
                 // multidim arrays: needs fixing
                 if (isarr(utarget))
@@ -324,7 +330,24 @@ void gen_fn(st_entry *e) {
         emit(Q_RET, NULL, NULL, NULL);
     }
 
-    print_bbs();
+    f->stack_offset_ez = e->fn_scope->stack_total; // sorry so ugly
+    //print_bbs();
+    asmgen();
+}
+
+void gen_ret(astn *n) {
+    st_entry *e = st_lookup_fq(cursor.fn, &root_symtab, NS_MISC);
+    bool non_void = (e->type->astn_type.is_derived || e->type->astn_type.scalar.type != t_VOID);
+    if (n->astn_return.ret) {
+        if (!non_void)
+            printf("Warning: 'return' with a value in a void function\n");
+        emit(Q_RET, gen_rvalue(n->astn_return.ret, NULL), NULL, NULL);
+    }
+    else {
+        if (non_void)
+            printf("Warning: 'return' without a value in a nonvoid function\n");
+        emit(Q_RET, NULL, NULL, NULL);
+    }
 }
 
 void gen_quads(astn *n) {
@@ -335,44 +358,28 @@ void gen_quads(astn *n) {
                 n = list_next(n);
             }
             break;
-        case ASTN_ASSIGN:
-            gen_assign(n);
-            break;
-        case ASTN_IFELSE:
-            gen_if(n);
-            break;
-        case ASTN_DECLREC:
-            break;
-        case ASTN_WHILELOOP:
-            gen_while(n);
-            break;
-        case ASTN_CONTINUE:
-            uncond_branch(cursor.cont); // may leave behind unreachable code, optimizer would get rid of it
-            break;
-        case ASTN_BREAK:
-            uncond_branch(cursor.brk); // may leave behind unreachable code, optimizer would get rid of it
-            break;
-        case ASTN_SWITCH:
-            todo("switch statements");
-            break;
-        case ASTN_RETURN:
-            ;
-            st_entry *e = st_lookup(cursor.fn, NS_MISC);
-            bool non_void = (e->type->astn_type.is_derived || e->type->astn_type.scalar.type != t_VOID);
-            if (n->astn_return.ret) {
-                if (!non_void)
-                    printf("Warning: 'return' with a value in a void function\n");
-                emit(Q_RET, gen_rvalue(n->astn_return.ret, NULL), NULL, NULL);
-            }
-            else {
-                if (non_void)
-                    printf("Warning: 'return' without a value in a nonvoid function\n");
-                emit(Q_RET, NULL, NULL, NULL);
-            }
-            break;
+        case ASTN_ASSIGN:       gen_assign(n);        break;
+        case ASTN_IFELSE:       gen_if(n);            break;
+        case ASTN_WHILELOOP:    gen_while(n);         break;
+        case ASTN_RETURN:       gen_ret(n);           break;
+        case ASTN_CONTINUE:     uncond_branch(cursor.cont); break; // may leave behind unreachable code, optimizer would get rid of it
+        case ASTN_BREAK:        uncond_branch(cursor.brk);  break;// may leave behind unreachable code, optimizer would get rid of it
+        case ASTN_SWITCH:       todo("switch statements");  break;
+        case ASTN_FORLOOP:      todo("for loops");          break;
+        case ASTN_DECLREC:      break;
+
         case ASTN_FNCALL:
+        case ASTN_UNOP:
+        case ASTN_BINOP:
             gen_rvalue(n, NULL);
             break;
+
+        case ASTN_NUM:
+        case ASTN_STRLIT:
+            printf("Warning: useless constant statement: ");
+            print_ast(n);
+            break;
+        
         default:
             printf("skipping unknown astn for quads %d\n", n->type);
     }

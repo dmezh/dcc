@@ -60,6 +60,7 @@ typedef struct BB {
 
     unsigned bbno;
     char* fn;
+    unsigned stack_offset_ez;
 } BB;
 
 typedef struct BBL {

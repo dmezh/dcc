@@ -138,6 +138,9 @@ void gen_if(astn* ifnode) {
 
 void gen_while(astn* wn) {
     struct astn_whileloop *w = &wn->astn_whileloop;
+
+    if (w->is_dowhile) todo("do-while loops");
+
     BB* cond = bb_alloc();
     BB* body = bb_alloc();
     BB* next = bb_alloc();

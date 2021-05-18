@@ -213,6 +213,7 @@ struct astn_case {
 
 struct astn_qtemp {
     unsigned tempno, size;
+    int stack_offset;
 };
 
 struct BB;

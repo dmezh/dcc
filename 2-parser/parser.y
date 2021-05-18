@@ -547,10 +547,12 @@ param_list:
     param_decl                      {   st_new_scope(SCOPE_FUNCTION, @1);
                                         $$=declrec_alloc(begin_st_entry($1, NS_MISC, $1->astn_decl.context));
                                         $$->astn_declrec.e->is_param = true;
+                                        st_reserve_stack($$->astn_declrec.e);
                                         $$=list_alloc($$);
                                     }
 |   param_list ',' param_decl       {   $$=declrec_alloc(begin_st_entry($3, NS_MISC, $3->astn_decl.context));
                                         $$->astn_declrec.e->is_param = true;
+                                        st_reserve_stack($$->astn_declrec.e);
                                         list_append($$, $1);
                                         $$=$1;
                                     }

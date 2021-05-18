@@ -39,5 +39,6 @@ struct strlit {
 };
 
 void print_number(const struct number *n);
+void print_number_e(const struct number *n);
 
 #endif

@@ -73,7 +73,6 @@ typedef struct st_entry {
     // fn
     astn* param_list;
     struct symtab* fn_scope;
-    int stack_size;
     astn* body;
     bool fn_defined;
 
@@ -122,13 +121,17 @@ typedef struct st_entry {
  */
 typedef struct symtab {
     enum scope_types scope_type;
+    int stack_total, param_stack_total;
     YYLTYPE context; // when the scope started
     struct symtab *parent;
     st_entry* parent_func;
     struct st_entry *first, *last;
 } symtab;
 
+extern symtab root_symtab;
 extern symtab* current_scope;
+
+void st_reserve_stack(st_entry* e);
 
 st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context);
 

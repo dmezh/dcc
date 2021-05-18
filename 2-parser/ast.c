@@ -21,7 +21,7 @@
  */
 void print_ast(const astn *n) {
     static int tabs = 0;     //     -> __ <- two spaces
-    for (int i=0; i<tabs; i++) printf("  ");
+    for (int i=0; i<tabs; i++) fprintf(stderr, "  ");
     if (!n) return; // if we just want to print tabs, pass NULL
     switch (n->type) {
 
@@ -30,55 +30,55 @@ void print_ast(const astn *n) {
             if (n->astn_num.number.aux_type == s_CHARLIT) {
                 printf("CHARLIT: '");
                 emit_char(n->astn_num.number.integer);
-                printf("'\n");
+                fprintf(stderr, "'\n");
                 break;
             } else {
-                printf("CONSTANT (");
-                if (!n->astn_num.number.is_signed) printf("UNSIGNED ");
-                printf("%s): ", int_types_str[n->astn_num.number.aux_type]);
+                fprintf(stderr, "CONSTANT (");
+                if (!n->astn_num.number.is_signed) fprintf(stderr, "UNSIGNED ");
+                fprintf(stderr, "%s): ", int_types_str[n->astn_num.number.aux_type]);
                 if (n->astn_num.number.aux_type < s_REAL)
-                    printf("%llu\n", n->astn_num.number.integer);
+                    fprintf(stderr, "%llu\n", n->astn_num.number.integer);
                 else
-                    printf("%Lg\n", n->astn_num.number.real);
+                    fprintf(stderr, "%Lg\n", n->astn_num.number.real);
                 break;
             }
 */
-            print_number(&n->astn_num.number);
-            printf("\n");
+            print_number_e(&n->astn_num.number);
+            fprintf(stderr, "\n");
             break;
 
 /**/    case ASTN_ASSIGN:
-            printf("ASSIGNMENT\n");
+            fprintf(stderr, "ASSIGNMENT\n");
             tabs++;
                 print_ast(n->astn_assign.left);
                 print_ast(n->astn_assign.right);
             tabs--; break;
 
 /**/    case ASTN_IDENT:
-            //printf("DBG: I ident am %p\n", (void*)n);
-            printf("IDENT: %s\n", n->astn_ident.ident);
+            //fprintf(stderr, "DBG: I ident am %p\n", (void*)n);
+            fprintf(stderr, "IDENT: %s\n", n->astn_ident.ident);
             break;
 
 /**/    case ASTN_STRLIT:
-            printf("STRING: \"");
+            fprintf(stderr, "STRING: \"");
             for (size_t i=0; i<n->astn_strlit.strlit.len; i++) {
                 emit_char(n->astn_strlit.strlit.str[i]);
             }
-            printf("\"\n");
+            fprintf(stderr, "\"\n");
             break;
 
 /**/    case ASTN_BINOP:
-            printf("BINARY OP ");
+            fprintf(stderr, "BINARY OP ");
             switch (n->astn_binop.op) {
-                case SHL:   printf("<<\n"); break;
-                case SHR:   printf(">>\n"); break;
-                case LTEQ:  printf("<=\n"); break;
-                case GTEQ:  printf(">=\n"); break;
-                case EQEQ:  printf("==\n"); break;
-                case NOTEQ: printf("!=\n"); break;
-                case LOGAND:printf("&&\n"); break;
-                case LOGOR: printf("||\n"); break;
-                default:    printf("%c\n", n->astn_binop.op); break;
+                case SHL:   fprintf(stderr, "<<\n"); break;
+                case SHR:   fprintf(stderr, ">>\n"); break;
+                case LTEQ:  fprintf(stderr, "<=\n"); break;
+                case GTEQ:  fprintf(stderr, ">=\n"); break;
+                case EQEQ:  fprintf(stderr, "==\n"); break;
+                case NOTEQ: fprintf(stderr, "!=\n"); break;
+                case LOGAND:fprintf(stderr, "&&\n"); break;
+                case LOGOR: fprintf(stderr, "||\n"); break;
+                default:    fprintf(stderr, "%c\n", n->astn_binop.op); break;
             }
             tabs++;
                 print_ast(n->astn_binop.left);
@@ -86,12 +86,12 @@ void print_ast(const astn *n) {
             tabs--; break;
 
 /**/     case ASTN_FNCALL: // wip
-            printf("FNCALL w/ %d args\n", n->astn_fncall.argcount);
+            fprintf(stderr, "FNCALL w/ %d args\n", n->astn_fncall.argcount);
             astn *arg = n->astn_fncall.args;
             tabs++;
                 print_ast(n->astn_fncall.fn);
                 for (int i=0; i<n->astn_fncall.argcount; i++) {
-                    print_ast(0); printf("ARG %d\n", i);
+                    print_ast(0); fprintf(stderr, "ARG %d\n", i);
                     tabs++;
                         print_ast(arg->astn_list.me);
                     tabs--;
@@ -100,61 +100,61 @@ void print_ast(const astn *n) {
             tabs--; break;
 
 /**/    case ASTN_SELECT:
-            printf("SELECT\n");
+            fprintf(stderr, "SELECT\n");
             tabs++;
                 print_ast(n->astn_select.parent);
                 print_ast(n->astn_select.member);
             tabs--; break;
 
 /**/    case ASTN_UNOP:
-            printf("UNOP ");
+            fprintf(stderr, "UNOP ");
             switch (n->astn_unop.op) {
-                case PLUSPLUS:      printf("POSTINC\n");                break;
-                case MINUSMINUS:    printf("POSTDEC\n");                break;
-                case '*':           printf("DEREF\n");                  break;
-                case '&':           printf("ADDRESSOF\n");              break;
-                default:            printf("%c\n", n->astn_unop.op);    break;
+                case PLUSPLUS:      fprintf(stderr, "POSTINC\n");                break;
+                case MINUSMINUS:    fprintf(stderr, "POSTDEC\n");                break;
+                case '*':           fprintf(stderr, "DEREF\n");                  break;
+                case '&':           fprintf(stderr, "ADDRESSOF\n");              break;
+                default:            fprintf(stderr, "%c\n", n->astn_unop.op);    break;
             }
             tabs++;
                 print_ast(n->astn_unop.target);
             tabs--; break;
 
 /**/    case ASTN_SIZEOF:
-            printf("SIZEOF\n");
+            fprintf(stderr, "SIZEOF\n");
             tabs++;
                 print_ast(n->astn_sizeof.target);
             tabs--; break;
 
 /**/    case ASTN_TERN:
-            printf("TERNARY\n");
+            fprintf(stderr, "TERNARY\n");
             tabs++;
-                print_ast(0); printf("IF:\n");
+                print_ast(0); fprintf(stderr, "IF:\n");
                 tabs++; print_ast(n->astn_tern.cond); tabs--;
 
-                print_ast(0); printf("THEN:\n");
+                print_ast(0); fprintf(stderr, "THEN:\n");
                 tabs++; print_ast(n->astn_tern.t_then); tabs--;
 
-                print_ast(0); printf("ELSE:\n");
+                print_ast(0); fprintf(stderr, "ELSE:\n");
                 tabs++; print_ast(n->astn_tern.t_else); tabs--;
             tabs--; break;
 
 /**/    case ASTN_LIST:
-            //printf("LIST:\n");
+            //fprintf(stderr, "LIST:\n");
             tabs++;
                 while (n) {
                     //print_ast(NULL);
-                    //printf("LIST ELEMENT:\n");
+                    //fprintf(stderr, "LIST ELEMENT:\n");
                     tabs++;
                         print_ast(n->astn_list.me);
                     tabs--;
                     n = n->astn_list.next;
-                    printf("\n");
+                    fprintf(stderr, "\n");
                 }
             tabs--;
             break;
             
 /**/    case ASTN_TYPESPEC:
-            printf("TYPESPEC ");
+            fprintf(stderr, "TYPESPEC ");
             if (n->astn_typespec.is_tagtype) {
                 tabs++;
                     print_ast(NULL);
@@ -162,21 +162,21 @@ void print_ast(const astn *n) {
                 tabs--;
             } else {
                 switch (n->astn_typespec.spec) {
-                    case TS_VOID:       printf("VOID");         break;
-                    case TS_CHAR:       printf("CHAR");         break;
-                    case TS_SHORT:      printf("SHORT");        break;
-                    case TS_INT:        printf("INT");          break;
-                    case TS_LONG:       printf("LONG");         break;
-                    case TS_FLOAT:      printf("FLOAT");        break;
-                    case TS_DOUBLE:     printf("DOUBLE");       break;
-                    case TS_SIGNED:     printf("SIGNED");       break;
-                    case TS_UNSIGNED:   printf("UNSIGNED");     break;
-                    case TS__BOOL:      printf("_BOOL");        break;
-                    case TS__COMPLEX:   printf("_COMPLEX");     break;
+                    case TS_VOID:       fprintf(stderr, "VOID");         break;
+                    case TS_CHAR:       fprintf(stderr, "CHAR");         break;
+                    case TS_SHORT:      fprintf(stderr, "SHORT");        break;
+                    case TS_INT:        fprintf(stderr, "INT");          break;
+                    case TS_LONG:       fprintf(stderr, "LONG");         break;
+                    case TS_FLOAT:      fprintf(stderr, "FLOAT");        break;
+                    case TS_DOUBLE:     fprintf(stderr, "DOUBLE");       break;
+                    case TS_SIGNED:     fprintf(stderr, "SIGNED");       break;
+                    case TS_UNSIGNED:   fprintf(stderr, "UNSIGNED");     break;
+                    case TS__BOOL:      fprintf(stderr, "_BOOL");        break;
+                    case TS__COMPLEX:   fprintf(stderr, "_COMPLEX");     break;
                     default:            die("invalid typespec");
                 }
             }
-            printf("\n");
+            fprintf(stderr, "\n");
             if (n->astn_typespec.next) {
                 tabs++;
                     print_ast(n->astn_typespec.next);
@@ -185,14 +185,14 @@ void print_ast(const astn *n) {
             break;
 
 /**/    case ASTN_TYPEQUAL:
-            printf("TYPEQUAL ");
+            fprintf(stderr, "TYPEQUAL ");
             switch (n->astn_typequal.qual) {
-                case TQ_CONST:      printf("CONST");        break;
-                case TQ_RESTRICT:   printf("RESTRICT");     break;
-                case TQ_VOLATILE:   printf("VOLATILE");     break;
+                case TQ_CONST:      fprintf(stderr, "CONST");        break;
+                case TQ_RESTRICT:   fprintf(stderr, "RESTRICT");     break;
+                case TQ_VOLATILE:   fprintf(stderr, "VOLATILE");     break;
                 default:            die("invalid typequal");
             }
-            printf("\n");
+            fprintf(stderr, "\n");
             if (n->astn_typequal.next) {
                 tabs++;
                     print_ast(n->astn_typequal.next);
@@ -201,15 +201,15 @@ void print_ast(const astn *n) {
             break;
 
 /**/    case ASTN_STORSPEC:
-            printf("STORAGESPEC ");
+            fprintf(stderr, "STORAGESPEC ");
             switch (n->astn_storspec.spec) {
-                case SS_EXTERN:     printf("EXTERN");       break;
-                case SS_STATIC:     printf("STATIC");       break;
-                case SS_AUTO:       printf("AUTO");         break;
-                case SS_REGISTER:   printf("REGISTER");     break;
+                case SS_EXTERN:     fprintf(stderr, "EXTERN");       break;
+                case SS_STATIC:     fprintf(stderr, "STATIC");       break;
+                case SS_AUTO:       fprintf(stderr, "AUTO");         break;
+                case SS_REGISTER:   fprintf(stderr, "REGISTER");     break;
                 default:            die("invalid storspec");
             }
-            printf("\n");
+            fprintf(stderr, "\n");
             if (n->astn_storspec.next) {
                 tabs++;
                     print_ast(n->astn_storspec.next);
@@ -219,84 +219,84 @@ void print_ast(const astn *n) {
 
 /**/    case ASTN_TYPE:
             // if if if if if if if if if if
-            if (n->astn_type.is_const) printf("CONST ");
-            if (n->astn_type.is_restrict) printf("RESTRICT ");
-            if (n->astn_type.is_volatile) printf("VOLATILE ");
-            if (n->astn_type.is_atomic)   printf("ATOMIC ");
+            if (n->astn_type.is_const) fprintf(stderr, "CONST ");
+            if (n->astn_type.is_restrict) fprintf(stderr, "RESTRICT ");
+            if (n->astn_type.is_volatile) fprintf(stderr, "VOLATILE ");
+            if (n->astn_type.is_atomic)   fprintf(stderr, "ATOMIC ");
             if (n->astn_type.is_derived) {
-                //printf("DBG: target is %p\n", (void*)n->astn_type.derived.target);
+                //fprintf(stderr, "DBG: target is %p\n", (void*)n->astn_type.derived.target);
                 if (n->astn_type.derived.type == t_ARRAY) {
-                    printf("ARRAY\n");
+                    fprintf(stderr, "ARRAY\n");
                     tabs++;
                         print_ast(NULL);
-                        printf("SIZE:");
+                        fprintf(stderr, "SIZE:");
                         if (n->astn_type.derived.size) {
-                            printf("\n");
+                            fprintf(stderr, "\n");
                             tabs++;
                                 print_ast(n->astn_type.derived.size);
                             tabs--;
                         } else {
-                            printf(" (NONE)\n");
+                            fprintf(stderr, " (NONE)\n");
                         }
                         print_ast(NULL);
-                        printf("OF:\n");
+                        fprintf(stderr, "OF:\n");
                         tabs++;
                             print_ast(n->astn_type.derived.target);
                         tabs--;
                     tabs--;
-                    printf("\n");
+                    fprintf(stderr, "\n");
                 } else {
                     switch (n->astn_type.derived.type) {
-                        case t_PTR:     printf("PTR TO");       break;
-                        case t_FN:      printf("FN RETURNING"); break; // dead code at the moment
+                        case t_PTR:     fprintf(stderr, "PTR TO");       break;
+                        case t_FN:      fprintf(stderr, "FN RETURNING"); break; // dead code at the moment
                         default:        die("invalid derived type");
                     }
-                    printf("\n");
+                    fprintf(stderr, "\n");
                     tabs++;
                         if (n->astn_type.derived.target)
                             print_ast(n->astn_type.derived.target);
                         else
-                            printf("NULL\n");
+                            fprintf(stderr, "NULL\n");
                     tabs--;
                 }
                 //if (n->astn_type.derived.type == t_ARRAY) tabs--; // kludge!
             } else if (n->astn_type.is_tagtype) {
                 if (n->astn_type.tagtype.symbol->ident) // I really wanted to use the GNU :? here but I felt bad
-                    printf("struct %s\n", n->astn_type.tagtype.symbol->ident);
+                    fprintf(stderr, "struct %s\n", n->astn_type.tagtype.symbol->ident);
                 else
-                    printf("struct (unnamed)\n");
+                    fprintf(stderr, "struct (unnamed)\n");
             } else {
-                if (n->astn_type.scalar.is_unsigned) printf("UNSIGNED ");
+                if (n->astn_type.scalar.is_unsigned) fprintf(stderr, "UNSIGNED ");
                 switch (n->astn_type.scalar.type) {
-                    case t_VOID:            printf("VOID");             break;
-                    case t_CHAR:            printf("CHAR");             break;
-                    case t_SHORT:           printf("SHORT");            break;
-                    case t_INT:             printf("INT");              break;
-                    case t_LONG:            printf("LONG");             break;
-                    case t_LONGLONG:        printf("LONGLONG");         break;
-                    case t_BOOL:            printf("BOOL");             break;
-                    case t_FLOAT:           printf("FLOAT");            break;
-                    case t_DOUBLE:          printf("DOUBLE");           break;
-                    case t_LONGDOUBLE:      printf("LONGDOUBLE");       break;
-                    case t_FLOATCPLX:       printf("FLOATCPLX");        break;
-                    case t_DOUBLECPLX:      printf("DOUBLECPLX");       break;
-                    case t_LONGDOUBLECPLX:  printf("LONGDOUBLECPLX");   break;
+                    case t_VOID:            fprintf(stderr, "VOID");             break;
+                    case t_CHAR:            fprintf(stderr, "CHAR");             break;
+                    case t_SHORT:           fprintf(stderr, "SHORT");            break;
+                    case t_INT:             fprintf(stderr, "INT");              break;
+                    case t_LONG:            fprintf(stderr, "LONG");             break;
+                    case t_LONGLONG:        fprintf(stderr, "LONGLONG");         break;
+                    case t_BOOL:            fprintf(stderr, "BOOL");             break;
+                    case t_FLOAT:           fprintf(stderr, "FLOAT");            break;
+                    case t_DOUBLE:          fprintf(stderr, "DOUBLE");           break;
+                    case t_LONGDOUBLE:      fprintf(stderr, "LONGDOUBLE");       break;
+                    case t_FLOATCPLX:       fprintf(stderr, "FLOATCPLX");        break;
+                    case t_DOUBLECPLX:      fprintf(stderr, "DOUBLECPLX");       break;
+                    case t_LONGDOUBLECPLX:  fprintf(stderr, "LONGDOUBLECPLX");   break;
                     default:                die("invalid scalar type");
                 }
-                printf("\n");
+                fprintf(stderr, "\n");
             }
             break;
 
  /**/   case ASTN_DECL:
-            printf("DECL:\n");
+            fprintf(stderr, "DECL:\n");
             tabs++;
                 print_ast(NULL);
-                printf("SPECS:\n");
+                fprintf(stderr, "SPECS:\n");
                 tabs++;
                     print_ast(n->astn_decl.specs);
                 tabs--;
                 print_ast(NULL);
-                printf("TYPE (with ident):\n");
+                fprintf(stderr, "TYPE (with ident):\n");
                 tabs++;
                     print_ast(n->astn_decl.type);
                 tabs--;
@@ -304,39 +304,39 @@ void print_ast(const astn *n) {
             break;
 
 /**/    case ASTN_FNDEF:
-            printf("FNDEF of\n");
+            fprintf(stderr, "FNDEF of\n");
             tabs++;
                 print_ast(n->astn_fndef.decl); // should just be the name!
             tabs--;
             if (n->astn_fndef.param_list) {
-                printf(" with param list:\n");
+                fprintf(stderr, " with param list:\n");
                 tabs++;
                     print_ast(n->astn_fndef.param_list);
                 tabs--;
             } else {
-                printf("with no params\n");
+                fprintf(stderr, "with no params\n");
             }
             break;
 /**/    case ASTN_DECLREC:
-            printf("(declaration of symbol <%s>)\n", n->astn_declrec.e->ident);
+            fprintf(stderr, "(declaration of symbol <%s>)\n", n->astn_declrec.e->ident);
             break;
 
 /**/    case ASTN_SYMPTR:
-            printf("symbol ");
+            fprintf(stderr, "symbol ");
             st_dump_entry(n->astn_symptr.e);
             break;
 
 /**/    case ASTN_IFELSE:
-            printf("IF:\n");
+            fprintf(stderr, "IF:\n");
             tabs++;
                 print_ast(n->astn_ifelse.condition_s);
             tabs--;
-            print_ast(NULL); printf("THEN:\n");
+            print_ast(NULL); fprintf(stderr, "THEN:\n");
             tabs++;
                 print_ast(n->astn_ifelse.then_s);
             tabs--;
             if (n->astn_ifelse.else_s) {
-                print_ast(NULL); printf("ELSE:\n");
+                print_ast(NULL); fprintf(stderr, "ELSE:\n");
                 tabs++;
                     print_ast(n->astn_ifelse.else_s);
                 tabs--;
@@ -344,13 +344,13 @@ void print_ast(const astn *n) {
             break;
 
 /**/    case ASTN_SWITCH:
-            printf("SWITCH:\n");
+            fprintf(stderr, "SWITCH:\n");
             tabs++;
-                print_ast(NULL); printf("COND:\n");
+                print_ast(NULL); fprintf(stderr, "COND:\n");
                 tabs++;
                     print_ast(n->astn_switch.condition);
                 tabs--;
-                print_ast(NULL); printf("BODY:\n");
+                print_ast(NULL); fprintf(stderr, "BODY:\n");
                 tabs++;
                     print_ast(n->astn_switch.body);
                 tabs--;
@@ -358,31 +358,31 @@ void print_ast(const astn *n) {
             break;
 
 /**/    case ASTN_WHILELOOP:
-            if (n->astn_whileloop.is_dowhile) printf("DO ");
-            printf("WHILE:\n");
+            if (n->astn_whileloop.is_dowhile) fprintf(stderr, "DO ");
+            fprintf(stderr, "WHILE:\n");
             tabs++;
                 print_ast(n->astn_whileloop.condition);
-                print_ast(NULL); printf("BODY:\n");
+                print_ast(NULL); fprintf(stderr, "BODY:\n");
                 print_ast(n->astn_whileloop.body);
             tabs--;
             break;
 
 /**/    case ASTN_FORLOOP:
-            printf("FOR:\n");
+            fprintf(stderr, "FOR:\n");
             tabs++;
-                print_ast(NULL); printf("INIT:\n");
+                print_ast(NULL); fprintf(stderr, "INIT:\n");
                 tabs++;
                     print_ast(n->astn_forloop.init);
                 tabs--;
-                print_ast(NULL); printf("CONDITION:\n");
+                print_ast(NULL); fprintf(stderr, "CONDITION:\n");
                 tabs++;
                     print_ast(n->astn_forloop.condition);
                 tabs--;
-                print_ast(NULL); printf("ONEACH:\n");
+                print_ast(NULL); fprintf(stderr, "ONEACH:\n");
                 tabs++;
                     print_ast(n->astn_forloop.oneach);
                 tabs--;
-                print_ast(NULL); printf("BODY:\n");
+                print_ast(NULL); fprintf(stderr, "BODY:\n");
                 tabs++;
                     print_ast(n->astn_forloop.body);
                 tabs--;
@@ -390,30 +390,30 @@ void print_ast(const astn *n) {
             break;
 
 /**/    case ASTN_GOTO:
-            printf("GOTO %s\n", n->astn_goto.ident->astn_ident.ident);
+            fprintf(stderr, "GOTO %s\n", n->astn_goto.ident->astn_ident.ident);
             break;
 /**/    case ASTN_CONTINUE:
-            printf("CONTINUE\n");
+            fprintf(stderr, "CONTINUE\n");
             break;
 /**/    case ASTN_BREAK:
-            printf("BREAK\n");
+            fprintf(stderr, "BREAK\n");
             break;
 /**/    case ASTN_RETURN:
             if (n->astn_return.ret) {
-                printf("RETURN");
+                fprintf(stderr, "RETURN");
                 tabs++; print_ast(n->astn_return.ret); tabs--;
             } else
-                printf("RETURN;");
+                fprintf(stderr, "RETURN;");
             break;
 /**/    case ASTN_LABEL:
-            printf("LABEL %s:\n", n->astn_label.ident->astn_ident.ident);
+            fprintf(stderr, "LABEL %s:\n", n->astn_label.ident->astn_ident.ident);
             print_ast(n->astn_label.statement);
             break;
 /**/    case ASTN_CASE:
             if (n->astn_case.case_expr) {
-                printf("CASE:"); print_ast(n->astn_case.case_expr);
+                fprintf(stderr, "CASE:"); print_ast(n->astn_case.case_expr);
             } else
-                printf("DEFAULT:\n");
+                fprintf(stderr, "DEFAULT:\n");
             print_ast(n->astn_case.statement);
             break;
 /**/    case ASTN_QTEMP:
@@ -532,7 +532,7 @@ astn *typespec_alloc(enum typespec spec) {
     astn *n=astn_alloc(ASTN_TYPESPEC);
     n->astn_typespec.spec = spec;
     n->astn_typespec.next = NULL;
-    //printf("ALLOCATED TSPEC\n");
+    //fprintf(stderr, "ALLOCATED TSPEC\n");
     return n;
 }
 
@@ -564,7 +564,7 @@ astn *dtype_alloc(astn *target, enum der_types type) {
     n->astn_type.is_derived = true;
     n->astn_type.derived.type = type;
     n->astn_type.derived.target = target;
-    //printf("ALLOCATED DTYPE %p OF TYPE %s WITH TARGET %p\n",
+    //fprintf(stderr, "ALLOCATED DTYPE %p OF TYPE %s WITH TARGET %p\n",
     //        (void*)n, der_types_str[n->astn_type.derived.type], (void*)n->astn_type.derived.target);
     return n;
 }
@@ -638,8 +638,10 @@ astn *forloop_alloc(astn *init, astn* condition, astn* oneach, astn* body) {
 
 astn *do_decl(astn *decl) {
     astn *n = NULL;
-    if(decl->type == ASTN_DECL)
+    if(decl->type == ASTN_DECL) {
         n = declrec_alloc(begin_st_entry(decl, NS_MISC, decl->astn_decl.context));
+        st_reserve_stack(n->astn_declrec.e);
+    }
     return n;
 }
 
@@ -651,7 +653,7 @@ void set_dtypechain_target(astn *top, astn *target) {
     while (top->astn_type.derived.target) {
         top = top->astn_type.derived.target;
     }
-    //printf("setting target to %p, I arrived at %p\n", (void*)target, (void*)top);
+    //ffprintf(stderr, stderr, "setting target to %p, I arrived at %p\n", (void*)target, (void*)top);
     top->astn_type.derived.target = target;
 }
 
@@ -664,7 +666,7 @@ void reset_dtypechain_target(astn *top, astn *target) {
         last = top;
         top = top->astn_type.derived.target;
     }
-    //printf("resetting target to %p, I arrived at %p\n\n", (void*)target, (void*)last);
+    //ffprintf(stderr, stderr, "resetting target to %p, I arrived at %p\n\n", (void*)target, (void*)last);
     last->astn_type.derived.target = target;
 }
 

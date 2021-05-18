@@ -1,6 +1,6 @@
 # build cli parser
   all: clean parser lexer
-	clang -fsanitize=undefined parser.tab.c ast.c symtab.c types.c ../1-lexer/lex.yy.c ../*.c -I../ ../3-quads/quad*c -I../3-quads/*.h -I./ -o parse -Wpedantic -Wall -Wextra -std=gnu17 -rdynamic -Wunused
+	clang -fsanitize=undefined -I../ -I../3-quads/*.h -I ../target_x86/ -I./ parser.tab.c ast.c symtab.c types.c ../1-lexer/lex.yy.c ../*.c  ../3-quads/quad*c ../target_x86/*.c -o parse -Wpedantic -Wall -Wextra -std=gnu2x -rdynamic -Wunused
 
   lexer: ../1-lexer/lexer.l
 	flex -o ../1-lexer/lex.yy.c ../1-lexer/lexer.l

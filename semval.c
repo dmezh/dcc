@@ -29,3 +29,17 @@ void print_number(const struct number *n) {
             printf("%Lg\n", n->real);
     }
 }
+
+void print_number_e(const struct number *n) {
+    if (n->aux_type == s_CHARLIT) {
+        fprintf(stderr, "CHARLIT: '"); emit_char(n->integer); fprintf(stderr, "'\n");
+    } else {
+        fprintf(stderr, "CONSTANT (");
+        if (!n->is_signed) fprintf(stderr, "UNSIGNED ");
+        fprintf(stderr, "%s): ", int_types_str[n->aux_type]);
+        if (n->aux_type < s_REAL)
+            fprintf(stderr, "%llu", n->integer);
+        else
+            fprintf(stderr, "%Lg\n", n->real);
+    }
+}
