@@ -62,7 +62,7 @@ void print_ast(const astn *n) {
 /**/    case ASTN_STRLIT:
             fprintf(stderr, "STRING: \"");
             for (size_t i=0; i<n->astn_strlit.strlit.len; i++) {
-                emit_char(n->astn_strlit.strlit.str[i]);
+                emit_char(n->astn_strlit.strlit.str[i], stderr);
             }
             fprintf(stderr, "\"\n");
             break;

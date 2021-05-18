@@ -213,7 +213,7 @@ astn* gen_rvalue(astn* node, astn* target) {
 
                 // multidim arrays: needs fixing
                 if (isarr(utarget))
-                {   printf("yup\n");
+                {   fprintf(stderr, "yup\n");
                     return gen_rvalue(ptr_target(utarget), target);
                 }
                 ;
@@ -233,6 +233,7 @@ astn* gen_rvalue(astn* node, astn* target) {
                 die("unhandled unop");
         }
     }
+    fprintf(stderr, "unhandled node type for gen_rvalue: %d\n", node->type);
     die("FUCK!");
     return NULL;
 }
@@ -309,8 +310,8 @@ void emit(enum quad_op op, astn* src1, astn* src2, astn* target) {
 
 quad* last_in_bb(BB* b) {
     quad *q = b->start;
-    while (q->next)
-        q = q->next;
+    if (!q) return NULL;
+    while (q->next) q=q->next;
     return q;
 }
 
@@ -324,9 +325,9 @@ void gen_fn(st_entry *e) {
 
     astn* s = e->body;
     gen_quads(s);
-    if (last_in_bb(current_bb)->op != Q_RET) {
+    if (!last_in_bb(current_bb) || last_in_bb(current_bb)->op != Q_RET) {
         if (e->type->astn_type.is_derived || e->type->astn_type.scalar.type != t_VOID)
-            printf("WARNING: had to add a ret for you and fn is not void!\n");
+            fprintf(stderr, "WARNING: had to add a ret for you and fn is not void!\n");
         emit(Q_RET, NULL, NULL, NULL);
     }
 
@@ -340,12 +341,12 @@ void gen_ret(astn *n) {
     bool non_void = (e->type->astn_type.is_derived || e->type->astn_type.scalar.type != t_VOID);
     if (n->astn_return.ret) {
         if (!non_void)
-            printf("Warning: 'return' with a value in a void function\n");
+            fprintf(stderr, "Warning: 'return' with a value in a void function\n");
         emit(Q_RET, gen_rvalue(n->astn_return.ret, NULL), NULL, NULL);
     }
     else {
         if (non_void)
-            printf("Warning: 'return' without a value in a nonvoid function\n");
+            fprintf(stderr, "Warning: 'return' without a value in a nonvoid function\n");
         emit(Q_RET, NULL, NULL, NULL);
     }
 }
@@ -376,11 +377,11 @@ void gen_quads(astn *n) {
 
         case ASTN_NUM:
         case ASTN_STRLIT:
-            printf("Warning: useless constant statement: ");
+            fprintf(stderr, "Warning: useless constant statement: ");
             print_ast(n);
             break;
         
         default:
-            printf("skipping unknown astn for quads %d\n", n->type);
+            fprintf(stderr, "skipping unknown astn for quads %d\n", n->type);
     }
 }

@@ -43,26 +43,26 @@ long long int parse_char(char* str, size_t* i, int* type) {
     }
 }
 
-void emit_char(unsigned char c) {
+void emit_char(unsigned char c, FILE* f) {
     switch (c)
     {
-            case '\'': printf("\\\'"); break;
-            case '\"': printf("\\\""); break;
-            case '\?': printf("?");    break;
-            case '\\': printf("\\\\"); break;
-            case '\0': printf("\\0");  break;
-            case '\a': printf("\\a");  break;
-            case '\b': printf("\\b");  break;
-            case '\f': printf("\\f");  break;
-            case '\n': printf("\\n");  break;
-            case '\r': printf("\\r");  break;
-            case '\t': printf("\\t");  break;
-            case '\v': printf("\\v");  break;
+            case '\'': fprintf(f, "\\\'"); break;
+            case '\"': fprintf(f, "\\\""); break;
+            case '\?': fprintf(f, "?");    break;
+            case '\\': fprintf(f, "\\\\"); break;
+            case '\0': fprintf(f, "\\0");  break;
+            case '\a': fprintf(f, "\\a");  break;
+            case '\b': fprintf(f, "\\b");  break;
+            case '\f': fprintf(f, "\\f");  break;
+            case '\n': fprintf(f, "\\n");  break;
+            case '\r': fprintf(f, "\\r");  break;
+            case '\t': fprintf(f, "\\t");  break;
+            case '\v': fprintf(f, "\\v");  break;
             default:
                 if (c >= 33 && c <= 126) {
-                    printf("%c", c);
+                    fprintf(f, "%c", c);
                 } else {
-                    printf("\\%03o", c);
+                    fprintf(f, "\\%03o", c);
                 }
     }
 }

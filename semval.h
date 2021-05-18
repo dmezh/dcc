@@ -9,6 +9,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 
 enum int_types {
     s_UNSPEC,
@@ -38,7 +39,7 @@ struct strlit {
     size_t len;
 };
 
-void print_number(const struct number *n);
+void print_number(const struct number *n, FILE* w);
 void print_number_e(const struct number *n);
 
 #endif

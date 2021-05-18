@@ -2,6 +2,7 @@
 #define CHARUTIL_H
 
 #include <stddef.h>
+#include <stdio.h>
 
 // returns -1 if invalid esc sequence
 // does not cast to char; handle over-length esc seqs at caller
@@ -9,6 +10,6 @@
 long long int parse_char(char* str, size_t* i, int* type);
 
 // print single char in escape-seq format
-void emit_char(unsigned char c);
+void emit_char(unsigned char c, FILE* f);
 
 #endif

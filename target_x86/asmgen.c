@@ -3,6 +3,10 @@
 #include "../3-quads/quads.h"
 #include "../3-quads/quads_cf.h"
 #include "../3-quads/quads_print.h"
+#include "charutil.h"
+#include "semval.h"
+#include "symtab.h"
+#include "types.h"
 #include "util.h"
 
 #include <stdio.h>
@@ -10,6 +14,8 @@
 FILE* out;
 
 int stack_offset;
+int strlit_count = 0;
+struct strlit strlits[100]; // can't have more than 100 string literals
 
 const unsigned stack_align = 16;
 
@@ -35,13 +41,6 @@ char * adir_str[] = {
     [LEAVE] = "leave"
 };
 
-void aemit(char *dir, char *left, char *right) {
-    if (!dir) die("passed NULL opcode directive to asm emitter");
-    fprintf(out, "%s", dir);
-    if (left)  fprintf(out, "\t\t%s", left);
-    if (right) fprintf(out, ", %s", right);
-}
-
 bool getoffset(astn *n, int *o) {
     if (n) {
         if (n->type == ASTN_QTEMP) {
@@ -55,6 +54,11 @@ bool getoffset(astn *n, int *o) {
     }
     return false;
 }
+
+#define ea(...) do { \
+    fprintf(out, "\t\t" __VA_ARGS__); \
+    fprintf(out, "\n"); \
+} while (0);
 
 void m2eax(int off) {
     fprintf(out, "\t\tmovl\t%d(%%ebp), %%eax\n", (off));
@@ -76,6 +80,84 @@ long get_num(astn *n) {
     return (long)n->astn_num.number.integer;
 }
 
+char* all2XXX(astn *n, char* r) {
+    switch (n->type) {
+        case ASTN_SYMPTR: ; // empty stmt
+            st_entry *e = n->astn_symptr.e;
+            //fprintf(stderr, "al2xxx examining %s\n", e->ident);
+            switch (e->storspec) {
+                case SS_AUTO:
+                    ea("movl\t%d(%%ebp), %s", -(e->stack_offset), r);
+                    break;
+                case SS_EXTERN:
+                case SS_STATIC:
+                    //todo("static local vars");
+                    ea("movl\t%s, %s", e->ident, r);
+                    break;
+                default:
+                    die("invalid storage type for value during asmgen");
+                    break;
+            }
+            break;
+        case ASTN_NUM:
+            ea("movl\t$%ld, %s", (long)n->astn_num.number.integer, r);
+            break;
+        case ASTN_QTEMP:
+            ea("movl\t%d(%%ebp), %s", -(n->astn_qtemp.stack_offset), r);
+            break;
+        case ASTN_STRLIT:
+            strlits[strlit_count] = n->astn_strlit.strlit;
+            ea("movl\t$strl.%d, %s", strlit_count, r);
+            strlit_count++;
+            break;
+
+        default:
+            die("invalid astn during asmgen");
+    }
+    return r;
+}
+
+void XXX2all(astn *n, char* r) {
+    switch (n->type) {
+        case ASTN_SYMPTR: ; //empty stmt
+            st_entry *e = n->astn_symptr.e;
+            switch (e->storspec) {
+                case SS_AUTO:
+                    ea("movl\t%s, %d(%%ebp)", r, -(e->stack_offset));
+                    break;
+                case SS_EXTERN:
+                case SS_STATIC:
+                    ea("movl\t%s, %s", r, e->ident);
+                    break;
+                default:
+                    die("invalid storage type for value during asmgen");
+                    break;
+            }
+            break;
+        case ASTN_QTEMP:
+            ea("movl\t%s, %d(%%ebp)", r, -(n->astn_qtemp.stack_offset));
+            break;
+        default:
+            die("invalid astn during asmgen");
+    }
+}
+
+void eax2all(astn *n) {
+    XXX2all(n, "%eax");
+}
+
+void edx2all(astn *n) {
+    XXX2all(n, "%edx");
+}
+
+char* all2eax(astn *n) {
+    return all2XXX(n, "%eax");
+}
+
+char* all2edx(astn *n) {
+    return all2XXX(n, "%edx");
+}
+
 // SUB, ADD
 void asm_msa(quad* q, char* opc) {
     int src1_o, src2_o, trg_o;
@@ -85,15 +167,9 @@ void asm_msa(quad* q, char* opc) {
 
     if (!trgm) die("invalid ADD/SUB target");
     // put src1 in eax
-    if (src1m)
-        m2eax(src1_o);
-    else
-        n2eax(q->src1);
+    all2eax(q->src1);
     // perform add
-    if (src2m)
-        fprintf(out, "\t\t%s\t%d(%%ebp), %%eax\n", opc, src2_o);
-    else
-        fprintf(out, "\t\t%s\t$%ld, %%eax\n", opc, get_num(q->src2));
+    fprintf(out, "\t\t%s\t%d(%%ebp), %%eax\n", opc, src2_o);
     // eax has the result now; save it back to the destination
     eax2m(trg_o);
 }
@@ -115,12 +191,8 @@ void asmgen_q(quad* q) {
             break;
         case Q_MOV:
             if (!trgm) die("invalid MOV target");
-            if (src1m) {
-                m2eax(src1_o);
-                eax2m(trg_o);
-            } else {
-                fprintf(out, "\t\tmovl\t$%ld, %d(%%ebp)\n", get_num(q->src1), trg_o);
-            }
+            all2eax(q->src1);
+            eax2all(q->target);
             break;
         case Q_ADD:
             asm_msa(q, "addl");
@@ -130,28 +202,13 @@ void asmgen_q(quad* q) {
             break;
         case Q_MUL:
             if (!trgm) die("invalid MUL target");
-            // put src1 in eax
-            if (src1m)
-                m2eax(src1_o);
-            else
-                n2eax(q->src1);
-            // perform add
-            if (src2m)
-                fprintf(out, "\t\timul\t%d(%%ebp), %%eax\n", src2_o);
-            else {
-                n2edx(q->src2);
-                fprintf(out, "\t\timul\t%%edx, %%eax\n");
-            }
-            // eax has the result now; save it back to the destination
+            all2eax(q->src1);
+            all2edx(q->src2);
+            ea("\t\timul\t%%edx, %%eax\n");
             eax2m(trg_o);
             break;
         case Q_RET:
-            if (q->src1) {
-                if (src1m)
-                    m2eax(src1_o);
-                else
-                    n2eax(q->src1);
-            }
+            if (q->src1) all2eax(q->src1);
             fprintf(out, "\t\tleave\n");
             fprintf(out, "\t\tret\n");
             break;
@@ -159,10 +216,8 @@ void asmgen_q(quad* q) {
             argcount = 0;
             break;
         case Q_ARG:
-            if (src1m)
-                fprintf(out, "\t\tpushl\t%d(%%ebp)\n", src1_o);
-            else
-                fprintf(out, "\t\tpushl\t$%ld\n", get_num(q->src1));
+            all2eax(q->src1);
+            ea("pushl\t%%eax");
             argcount++;
             break;
         case Q_CALL:
@@ -216,7 +271,16 @@ void asmgen() {
     out = stdout;
     fprintf(out, "# ASM OUTPUT\n# compiled poorly :)\n\n");
 
+    //fprintf(out, ".section rodata\n");
     // init globals, except functions
+    st_entry* e = root_symtab.first;
+    while (e) {
+        if (e->entry_type == STE_VAR) {
+            fprintf(out, ".globl %s\n", e->ident);
+            fprintf(out, ".comm %s, %d\n", e->ident, get_sizeof(e->type));
+        }
+        e = e->next;
+    }
 
     BBL *bbl = &bb_root;
     bbl = bbl_next(bbl);
@@ -246,5 +310,15 @@ void asmgen() {
         printf("\n");
 
         bbl = bbl_next(bbl);
+    }
+
+    fprintf(out, ".section .rodata\n");
+    for (int i=0; i<strlit_count; i++) {
+        fprintf(out, "strl.%d: .asciz \"", i);
+        struct strlit *strl = &strlits[i];
+        for (size_t j=0; j<strl->len; j++) {
+            emit_char(strl->str[j], out);
+        }
+        fprintf(out, "\"\n");
     }
 }

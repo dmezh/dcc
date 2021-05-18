@@ -16,9 +16,9 @@ const char* int_types_str[] = {
     "LONGDOUBLE",
 };
 
-void print_number(const struct number *n) {
+void print_number(const struct number *n, FILE* w) {
     if (n->aux_type == s_CHARLIT) {
-        printf("CHARLIT: '"); emit_char(n->integer); printf("'\n");
+        printf("CHARLIT: '"); emit_char(n->integer, w); printf("'\n");
     } else {
         printf("CONSTANT (");
         if (!n->is_signed) printf("UNSIGNED ");
@@ -32,7 +32,7 @@ void print_number(const struct number *n) {
 
 void print_number_e(const struct number *n) {
     if (n->aux_type == s_CHARLIT) {
-        fprintf(stderr, "CHARLIT: '"); emit_char(n->integer); fprintf(stderr, "'\n");
+        fprintf(stderr, "CHARLIT: '"); emit_char(n->integer, stderr); fprintf(stderr, "'\n");
     } else {
         fprintf(stderr, "CONSTANT (");
         if (!n->is_signed) fprintf(stderr, "UNSIGNED ");
