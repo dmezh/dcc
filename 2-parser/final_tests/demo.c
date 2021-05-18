@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
 	int fast_fib(int x); // also ok!
 	i=0;
 	while (i < 40) {
-		fprintf(stderr, "%d ", fib(i++));
+		fprintf(stderr, "%d ", fast_fib(i++));
 	}
 	printf("\n\n");
 
