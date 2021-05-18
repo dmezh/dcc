@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if [ "$#" -lt 1 ]; then
+	echo -e "(will output to ./prog)\nNeed to specify at least one file... $ ./compile input [input2...]"
+	exit
+fi
+
+sf=()
+
+for i in "$@";
+do
+	gcc -E $i | ./dcc > "$i.S"
+	sf+="${i}.S "
+done
+
+gcc $sf -o prog -m32
