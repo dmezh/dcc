@@ -255,11 +255,16 @@ void asmgen(BBL* head) {
     st_entry* e = root_symtab.first;
     while (e) {
         if (e->entry_type == STE_VAR) {
-            if (e->linkage == L_EXTERNAL)
-                fprintf(out, ".globl %s\n", e->ident);
-            else if (e->linkage == L_INTERNAL)
-                fprintf(out, ".local %s\n", e->ident);
-            fprintf(out, ".comm %s, %d\n", e->ident, get_sizeof(e->type));
+            if (e->storspec == SS_STATIC) {
+                if (e->linkage == L_EXTERNAL)
+                    fprintf(out, ".globl %s\n", e->ident);
+                else if (e->linkage == L_INTERNAL)
+                    fprintf(out, ".local %s\n", e->ident);
+
+                fprintf(out, ".comm %s, %d\n", e->ident, get_sizeof(e->type));
+            } else {
+                fprintf(out, ".extern %s\n", e->ident);
+            }
         }
         e = e->next;
     }
