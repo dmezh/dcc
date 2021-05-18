@@ -31,30 +31,30 @@ int main(int argc, char** argv) {
 	}
 	putchar('\n');
 
-	printf("Now let's print out the first 40 fibonacci numbers using the classic recursive routine.\n");
+	printf("Now let's print out the first 40 fibonacci numbers using a linear routine\n");
 	printf("Ready when you are: press any key to continue. ");
 	getchar();
 
 	int newline; newline='\n';
 	printf("%c", newline); // why not?!
 
-	int fib(); // why not?!
+	int fast_fib(); // why not?!
 	i=0;
 	while (i < 40) {
-		printf("%d ", fib(i++));
+		printf("%d ", fast_fib(i++));
 	}
 	printf("\n\n");
 
 
-	printf("Now let's print out the first 40 fibonacci numbers using a linear routine.\n");
+	printf("Now let's print out the first 40 fibonacci numbers using the classic recursive routine.\n");
 	printf("Note that we'll use fprintf->stderr, so there won't be buffering.\n\n");
 	printf("Ready when you are: press any key to continue. ");
 	getchar(); putchar('\n');
 
-	int fast_fib(int x); // also ok!
+	int fib(int x); // also ok!
 	i=0;
 	while (i < 40) {
-		fprintf(stderr, "%d ", fast_fib(i++));
+		fprintf(stderr, "%d ", fib(i++));
 	}
 	printf("\n\n");
 
