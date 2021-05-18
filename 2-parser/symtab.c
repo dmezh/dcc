@@ -59,23 +59,6 @@ symtab root_symtab = {
 
 symtab *current_scope = &root_symtab;
 
-static void st_delete_entry(char* ident, symtab* st) {
-    st_entry *e = st->first;
-    st_entry *old = NULL;
-    while (e) {
-        if (!strcmp(e->ident, ident)) {
-            if (!old) {
-                st->first = e->next;
-            } else {
-                old->next = e->next;
-            }
-            free(e);
-            return;
-        }
-        e = e->next;
-    }
-}
-
 // currently doesn't support actually defining already-declared functions
 st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context) {
     symtab *fn_scope = current_scope;
@@ -84,6 +67,7 @@ st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context
     char* name = f2.decl->astn_ident.ident;
     st_entry *n = st_lookup_ns(name, NS_MISC);
     if (n && n->entry_type == STE_FN && n->fn_defined) {
+        if (!block) return n; // ignore redecl
         fprintf(stderr, "Error: attempted redefinition of symbolss %s\n", name);
         exit(-5);
     } else {
@@ -93,9 +77,11 @@ st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context
         else
             fndef->astn_decl.type = fndef->astn_decl.type->astn_fndef.decl;
 
-        if (n) st_delete_entry(n->ident, current_scope);
-
-        st_entry *fn = begin_st_entry(fndef, NS_MISC, fndef->astn_decl.context);
+        st_entry *fn;
+        if (n) {
+            fn = n;
+        } else
+            fn = begin_st_entry(fndef, NS_MISC, fndef->astn_decl.context);
         //printf("back from install honey\n");
         fn->body = block;
         fn->param_list = f2.param_list;

@@ -198,7 +198,9 @@ astn* gen_rvalue(astn* node, astn* target) {
 
         if (!target) target=qtemp_alloc(4); // hardcoded int!
 
-        if (node->astn_binop.op == '<') {
+        if (node->astn_binop.op == '<' || node->astn_binop.op == '>' 
+            || node->astn_binop.op == LTEQ || node->astn_binop.op == GTEQ ||
+            node->astn_binop.op == EQEQ || node->astn_binop.op == NOTEQ) {
             cond_rvalue(node, rval_left, rval_right, target);
         } else
             emit(binop_to_quad_op(node->astn_binop.op), rval_left, rval_right, target);
@@ -223,15 +225,43 @@ astn* gen_rvalue(astn* node, astn* target) {
                 emit(Q_LOAD, addr, NULL, target);
                 return target;
 
-            case MINUSMINUS:    todo("minusminus");
-            case PLUSPLUS:      todo("plusplus");
-            case '&':           todo("address-of");
-            case '-':           todo("+pos");
-            case '!':           todo("-neg");
-            case '~':           todo("bwnot");
+            astn *n;
+            case MINUSMINUS:
+                temp = gen_rvalue(utarget, target);
+                n=astn_alloc(ASTN_NUM);
+                n->astn_num.number.integer=1;
+                n->astn_num.number.aux_type = s_INT;
+                gen_assign(cassign_alloc('-', utarget, n));
+                return temp;
+            case PLUSPLUS:
+                temp = gen_rvalue(utarget, target);
+                n=astn_alloc(ASTN_NUM);
+                n->astn_num.number.integer=1;
+                n->astn_num.number.aux_type = s_INT;
+                gen_assign(cassign_alloc('+', utarget, n));
+                return temp;
+            case '&':
+                temp = qtemp_alloc(4); // address type
+                emit(Q_LEA, utarget, NULL, temp);
+                return temp;
+            case '+': // no-op for now
+                return utarget;
+            case '-':
+                temp = qtemp_alloc(4);
+                emit(Q_NEG, gen_rvalue(utarget, NULL), NULL, temp);
+                return temp;
+            case '!':           todo("NOT");
+            case '~':
+                temp = qtemp_alloc(4);
+                emit(Q_BWNOT, gen_rvalue(utarget, NULL), NULL, temp);
+                return temp;
             default:
                 die("unhandled unop");
         }
+    }
+    if (node->type == ASTN_ASSIGN) {
+        gen_assign(node);
+        return gen_rvalue(node->astn_assign.left, target);
     }
     fprintf(stderr, "unhandled node type for gen_rvalue: %d\n", node->type);
     die("FUCK!");
@@ -333,7 +363,7 @@ void gen_fn(st_entry *e) {
 
     f->stack_offset_ez = e->fn_scope->stack_total; // sorry so ugly
     //print_bbs();
-    asmgen();
+    //asmgen(f);
 }
 
 void gen_ret(astn *n) {

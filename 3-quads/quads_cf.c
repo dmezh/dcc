@@ -59,6 +59,18 @@ void gen_condexpr(astn *cond, BB* Bt, BB* Bf) {
     //printf("gen_condexpr asked to generate this condition:\n"); print_ast(cond);
     //printf("generating cond expr, my current BB number is %d\n", current_bb->bbno);
     switch (cond->type) {
+        case ASTN_UNOP:
+            if (cond->astn_unop.op == '!') {
+                astn *targ = gen_rvalue(cond->astn_unop.target, NULL);
+                astn *n = astn_alloc(ASTN_NUM); n->astn_num.number.integer=0; n->astn_num.number.aux_type=s_INT;
+                emit(Q_CMP, targ, n, NULL);
+                emit_branch(EQEQ, Bt, Bf);
+                return;
+            } else {
+                gen_condexpr(gen_rvalue(cond, NULL), Bt, Bf);
+                return;
+            }
+            break;
         case ASTN_BINOP:
             ;
             astn *left = gen_rvalue(cond->astn_binop.left, NULL);
@@ -75,7 +87,14 @@ void gen_condexpr(astn *cond, BB* Bt, BB* Bf) {
             emit_branch(cond->astn_binop.op, Bt, Bf);
 
             break;
-
+        case ASTN_SYMPTR:
+        case ASTN_QTEMP:
+            ;
+            astn *val = gen_rvalue(cond, NULL);
+            astn *n = astn_alloc(ASTN_NUM); n->astn_num.number.integer=0; n->astn_num.number.aux_type=s_INT;
+            emit(Q_CMP, val, n, NULL);
+            emit_branch(NOTEQ, Bt, Bf);
+            break;
         default:
             die("non-binop condexpr");
     }

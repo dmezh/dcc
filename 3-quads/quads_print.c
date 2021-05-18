@@ -35,7 +35,9 @@ char* quad_op_str[] = {
     [Q_ARGBEGIN] = "ARGBEGIN",
     [Q_ARG] = "ARG",
     [Q_CALL] = "CALL",
-    [Q_FNSTART] = "FNSTART"
+    [Q_FNSTART] = "FNSTART",
+    [Q_NEG] = "NEG",
+    [Q_BWNOT] = "BWNOT"
 };
 
 void print_node(const astn* qn) {
@@ -52,7 +54,7 @@ void print_node(const astn* qn) {
         case ASTN_QTEMP:    printf("%%T%05d.%d", qn->astn_qtemp.tempno, qn->astn_qtemp.stack_offset); return;
         case ASTN_QBBNO:    printf("BB.%s.%d", qn->astn_qbbno.bb->fn, qn->astn_qbbno.bb->bbno); return;
         case ASTN_IDENT:    printf("%s", qn->astn_ident.ident); return;
-        default: die("eh");
+        default: fprintf(stderr, "couldnt't handle node %d\n", qn->type); die("eh");
     }
 }
 

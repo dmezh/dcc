@@ -18,7 +18,7 @@ const char* int_types_str[] = {
 
 void print_number(const struct number *n, FILE* w) {
     if (n->aux_type == s_CHARLIT) {
-        printf("CHARLIT: '"); emit_char(n->integer, w); printf("'\n");
+        printf("CHARLIT: '"); emit_char(n->integer, w); printf("\'");
     } else {
         printf("CONSTANT (");
         if (!n->is_signed) printf("UNSIGNED ");
@@ -26,13 +26,13 @@ void print_number(const struct number *n, FILE* w) {
         if (n->aux_type < s_REAL)
             printf("%llu", n->integer);
         else
-            printf("%Lg\n", n->real);
+            printf("%Lg", n->real);
     }
 }
 
 void print_number_e(const struct number *n) {
     if (n->aux_type == s_CHARLIT) {
-        fprintf(stderr, "CHARLIT: '"); emit_char(n->integer, stderr); fprintf(stderr, "'\n");
+        fprintf(stderr, "CHARLIT: '"); emit_char(n->integer, stderr); fprintf(stderr, "\'");
     } else {
         fprintf(stderr, "CONSTANT (");
         if (!n->is_signed) fprintf(stderr, "UNSIGNED ");
@@ -40,6 +40,6 @@ void print_number_e(const struct number *n) {
         if (n->aux_type < s_REAL)
             fprintf(stderr, "%llu", n->integer);
         else
-            fprintf(stderr, "%Lg\n", n->real);
+            fprintf(stderr, "%Lg", n->real);
     }
 }

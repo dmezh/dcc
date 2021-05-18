@@ -5,6 +5,7 @@
  */
 
 %code requires {
+    #include "../target_x86/asmgen.h"
     #include "ast.h"
     #include "location.h"
     #include "../3-quads/quads.h"
@@ -83,7 +84,7 @@
 %%
 
 done:
-    translation_unit                    {   st_dump_recursive();     }
+    translation_unit                    {   asmgen(&bb_root);     }
 ;
 
 // maybe make quads here one day if you dont mind that would be good no rush

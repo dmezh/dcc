@@ -5,33 +5,35 @@
 #include "symtab.h"
 
 enum quad_op {
-    Q_MOV,
-    Q_ADD,
-    Q_SUB,
-    Q_MUL,
-    Q_DIV,
-    Q_MOD,
-    Q_SHL,
-    Q_SHR,
-    Q_BWAND,
-    Q_BWXOR,
-    Q_BWOR,
-    Q_LOAD,
-    Q_STORE,
-    Q_LEA,
+    Q_MOV, // done
+    Q_ADD, // done
+    Q_SUB, // done
+    Q_MUL, // done
+    Q_DIV, // skip
+    Q_MOD, // skip
+    Q_SHL, // skipq
+    Q_SHR, // skipq
+    Q_BWAND, // skipq
+    Q_BWXOR, // skipq
+    Q_BWOR, // skipq
+    Q_LOAD, // done
+    Q_STORE, // done
+    Q_LEA, // done
     Q_CMP,
-    Q_BREQ,
-    Q_BRNE,
+    Q_BREQ, // done
+    Q_BRNE, // done
     Q_BRLT,
     Q_BRLE,
     Q_BRGT,
-    Q_BRGE,
+    Q_BRGE, // done
     Q_BR,
-    Q_RET,
-    Q_ARGBEGIN,
-    Q_ARG,
-    Q_CALL,
-    Q_FNSTART
+    Q_RET, // done
+    Q_ARGBEGIN, // done
+    Q_ARG, // done
+    Q_CALL, // done
+    Q_FNSTART, // done
+    Q_NEG, // done
+    Q_BWNOT // double check
 };
 
 enum qnode_types {
@@ -81,6 +83,7 @@ astn* gen_rvalue(astn* node, astn* target);
 void emit(enum quad_op op, astn* src1, astn* src2, astn* target);
 void gen_fn(st_entry *e);
 void gen_quads(astn *n);
+void gen_assign(astn *node);
 void todo(const char* msg);
 
 #endif

@@ -17,70 +17,22 @@ int stack_offset;
 int strlit_count = 0;
 struct strlit strlits[100]; // can't have more than 100 string literals
 
-const unsigned stack_align = 16;
-
-#define es(op) do { \
-    fprintf(out, "\t\t%s\n", #op); \
-} while (0)
-
-#define e1(op, l) do { \
-    fprintf(out, "\t\t%s\n", #op "\t" #l); \
-} while(0)
-
-#define e2(op, l, r) do { \
-    fprintf(out, "\t\t%s\n", #op "\t" #l ", " #r); \
-} while (0)
-
-char * adir_str[] = {
-    [NONE] = "ERROR_NONE",
-    [EBP] = "%ebp",
-    [ESP] = "%esp",
-    [PUSHL] = "pushl",
-    [MOVL] = "movl",
-    [SUBL] = "subl",
-    [LEAVE] = "leave"
-};
-
-bool getoffset(astn *n, int *o) {
-    if (n) {
-        if (n->type == ASTN_QTEMP) {
-            *o = -(n->astn_qtemp.stack_offset);
-            return true;
-        } else if (n->type == ASTN_SYMPTR) {
-            *o = -(n->astn_symptr.e->stack_offset);
-            return true;
-        }
-        return false;
-    }
-    return false;
-}
+const unsigned stack_align = 16; // desired stack alignment
 
 #define ea(...) do { \
     fprintf(out, "\t\t" __VA_ARGS__); \
     fprintf(out, "\n"); \
 } while (0);
 
-void m2eax(int off) {
-    fprintf(out, "\t\tmovl\t%d(%%ebp), %%eax\n", (off));
-}
-
-void eax2m(int off) {
-    fprintf(out, "\t\tmovl\t%%eax, %d(%%ebp)\n", (off));
-}
-
-void n2eax(astn *n) {
-    fprintf(out, "\t\tmovl\t$%ld, %%eax\n", (long)n->astn_num.number.integer);
-}
-
-void n2edx(astn *n) {
-    fprintf(out, "\t\tmovl\t$%ld, %%edx\n", (long)n->astn_num.number.integer);
-}
-
 long get_num(astn *n) {
     return (long)n->astn_num.number.integer;
 }
 
-char* all2XXX(astn *n, char* r) {
+char* g_id(astn *n) {
+    return n->astn_ident.ident;
+}
+
+void all2XXX(astn *n, char* r) {
     switch (n->type) {
         case ASTN_SYMPTR: ; // empty stmt
             st_entry *e = n->astn_symptr.e;
@@ -114,7 +66,6 @@ char* all2XXX(astn *n, char* r) {
         default:
             die("invalid astn during asmgen");
     }
-    return r;
 }
 
 void XXX2all(astn *n, char* r) {
@@ -142,70 +93,41 @@ void XXX2all(astn *n, char* r) {
     }
 }
 
-void eax2all(astn *n) {
-    XXX2all(n, "%eax");
-}
-
-void edx2all(astn *n) {
-    XXX2all(n, "%edx");
-}
-
-char* all2eax(astn *n) {
-    return all2XXX(n, "%eax");
-}
-
-char* all2edx(astn *n) {
-    return all2XXX(n, "%edx");
-}
-
-// SUB, ADD
-void asm_msa(quad* q, char* opc) {
-    int src1_o, src2_o, trg_o;
-    bool src1m=getoffset(q->src1, &src1_o);
-    bool src2m=getoffset(q->src2, &src2_o);
-    bool trgm=getoffset(q->target, &trg_o);
-
-    if (!trgm) die("invalid ADD/SUB target");
-    // put src1 in eax
-    all2eax(q->src1);
-    // perform add
-    fprintf(out, "\t\t%s\t%d(%%ebp), %%eax\n", opc, src2_o);
-    // eax has the result now; save it back to the destination
-    eax2m(trg_o);
-}
+void eax2all(astn *n) { XXX2all(n, "%eax"); }
+void edx2all(astn *n) { XXX2all(n, "%edx"); }
+void all2eax(astn *n) { all2XXX(n, "%eax"); }
+void all2edx(astn *n) { all2XXX(n, "%edx"); }
 
 static int argcount = 0;
 
 void asmgen_q(quad* q) {
-    //fprintf(out, "\t\t");
-    int src1_o, src2_o, trg_o;
-    bool src1m=getoffset(q->src1, &src1_o);
-    bool src2m=getoffset(q->src2, &src2_o);
-    bool trgm=getoffset(q->target, &trg_o);
-
     switch (q->op) {
         case Q_FNSTART:
-            e1(pushl, %ebp);
-            e2(movl, %esp, %ebp);
+            ea("pushl\t%%ebp");
+            ea("movl\t%%esp, %%ebp");
             fprintf(out, "\t\tsubl\t$%d, %%esp\n", stack_offset);
             break;
         case Q_MOV:
-            if (!trgm) die("invalid MOV target");
             all2eax(q->src1);
             eax2all(q->target);
             break;
         case Q_ADD:
-            asm_msa(q, "addl");
+            all2eax(q->src1);
+            all2edx(q->src2);
+            ea("addl\t%%edx, %%eax");
+            eax2all(q->target);
             break;
         case Q_SUB:
-            asm_msa(q, "subl");
+            all2eax(q->src1);
+            all2edx(q->src2);
+            ea("subl\t%%edx, %%eax");
+            eax2all(q->target);
             break;
         case Q_MUL:
-            if (!trgm) die("invalid MUL target");
             all2eax(q->src1);
             all2edx(q->src2);
             ea("\t\timul\t%%edx, %%eax\n");
-            eax2m(trg_o);
+            eax2all(q->target);
             break;
         case Q_RET:
             if (q->src1) all2eax(q->src1);
@@ -221,57 +143,98 @@ void asmgen_q(quad* q) {
             argcount++;
             break;
         case Q_CALL:
-            if (src1m) { // memory
+            if (q->src1->type == ASTN_IDENT) { // override default action of all2XXX
+                ea("call\t%s", q->src1->astn_ident.ident);
+            } else {
                 fprintf(stderr, "you're trying to call a non-ident - be my guest but you're probably dead\n");
-                fprintf(out, "\t\tcall\t%d(%%ebp)\n", src1_o);
-            } else if (q->src1->type == ASTN_IDENT) { // ident
-                fprintf(out, "\t\tcall\t%s\n", q->src1->astn_ident.ident);
-            } else { // constant
-                fprintf(out, "\t\tcall\t$%ld\n", get_num(q->src1));
+                all2eax(q->src1);
+                ea("call\t%%eax");
             }
-            fprintf(out, "\t\tmovl\t%%eax, %d(%%ebp)\n", trg_o);
-            fprintf(out, "\t\taddl\t$%d, %%esp\n", argcount*4);
+            eax2all(q->target);
+            ea("addl\t$%d, %%esp", argcount*4);
             argcount = 0;
             break;
-        case Q_LEA:
-            if (src1m) {
-                fprintf(out, "\t\tleal\t%d(%%ebp), %%eax\n", src1_o);
-                fprintf(out, "\t\tmovl\t%%eax, %d(%%ebp)\n", trg_o);
-            } else {
-                die("non-mem type input node for LEA");
+        case Q_LEA: // similar breakdown as XXX2all
+            switch (q->src1->type) {
+                case ASTN_SYMPTR: ; // empty stmt
+                    st_entry *e = q->src1->astn_symptr.e;
+                    switch (e->storspec) {
+                        case SS_AUTO:
+                            ea("leal\t%d(%%ebp), %%eax", -(e->stack_offset));
+                            break;
+                        case SS_EXTERN:
+                        case SS_STATIC:
+                            ea("leal\t%s, %%eax", e->ident);
+                            break;
+                        default:
+                            die("invalid storage type for leal during asmgen");
+                            break;
+                    }
+                    break;
+                case ASTN_QTEMP:
+                    ea("leal\t%d(%%ebp), %%eax", -(q->src1->astn_qtemp.stack_offset));
+                default:
+                    die("invalid astn during asmgen");
             }
+            eax2all(q->target);
             break;
-        case Q_STORE: // a mov or so
-            if (src1m) {
-                m2eax(src1_o);
-                fprintf(out, "\t\tmovl\t%d(%%ebp), %%edx\n", trg_o);
-                fprintf(out, "\t\tmovl\t%%eax, (%%edx)\n");
-            } else {
-                fprintf(out, "\t\tmovl\t%d(%%ebp), %%eax\n", trg_o); // get target
-                fprintf(out, "\t\tmovl\t$%ld, (%%eax)\n", get_num(q->src1));
-            }
+        case Q_STORE:
+            all2eax(q->src1);
+            all2edx(q->target);
+            ea("movl\t%%eax, (%%edx)"); // store
             break;
         case Q_LOAD:
-            if (src1m) {
-                m2eax(src1_o);
-                fprintf(out, "\t\tmovl\t(%%eax), %%eax\n"); // load
-                fprintf(out, "\t\tmovl\t%%eax, %d(%%ebp)\n", trg_o);
-            } else {
-                die("load into nonmem");
-            }
+            if (q->src1->type != ASTN_SYMPTR && q->src1->type != ASTN_QTEMP)
+                die("encountered non-mem source node for load");
+            all2eax(q->src1);
+            ea("movl\t(%%eax), %%eax"); // load
+            eax2all(q->target);
             break;
+        case Q_NEG:
+            all2eax(q->src1);
+            ea("negl\t%%eax");
+            eax2all(q->target);
+            break;
+        case Q_BWNOT:
+            all2eax(q->src1);
+            ea("notl\t%%eax");
+            eax2all(q->target);
+            break;
+        case Q_CMP:
+            all2eax(q->src2);
+            all2edx(q->src1);
+            ea("cmpl\t%%eax, %%edx");
+            break;
+        case Q_BR:
+            fprintf(out, "\t\tjmp\t"); e_bba(q->src1); fprintf(out, "\n");
+            break;
+        case Q_BREQ: e_cbr("je",  q);   break;
+        case Q_BRNE: e_cbr("jne", q);   break;
+        case Q_BRLT: e_cbr("jl",  q);   break;
+        case Q_BRLE: e_cbr("jle", q);   break;
+        case Q_BRGT: e_cbr("jg",  q);   break;
+        case Q_BRGE: e_cbr("jge", q);   break;
         default:
             printf("unhandled quad %s\n", quad_op_str[q->op]);
     }
-    //fprintf(out, "\n");
 }
 
-void asmgen() {
+void e_cbr(char *op, quad* q) {
+    fprintf(out, "\t\t%s\t", op);
+    e_bba(q->src1);
+    // uncond jump afterwards for the false branch, could be optimized
+    fprintf(out, "\n\t\tjmp\t");
+    e_bba(q->src2);
+    fprintf(out, "\n");
+}
+void e_bba(astn *n) { e_bb(n->astn_qbbno.bb); }
+void e_bb(BB* b) { fprintf(out, "BB.%s.%d", b->fn, b->bbno); }
+
+void asmgen(BBL* head) {
     // init output file
     out = stdout;
     fprintf(out, "# ASM OUTPUT\n# compiled poorly :)\n\n");
 
-    //fprintf(out, ".section rodata\n");
     // init globals, except functions
     st_entry* e = root_symtab.first;
     while (e) {
@@ -282,9 +245,8 @@ void asmgen() {
         e = e->next;
     }
 
-    BBL *bbl = &bb_root;
-    bbl = bbl_next(bbl);
-
+    BBL *bbl = head;
+    if (bbl == &bb_root) bbl = bbl_next(bbl);
     while (bbl) {
         BB* bb = bbl_data(bbl);
         // "declare" function
@@ -299,6 +261,7 @@ void asmgen() {
         // block label
         fprintf(out, "BB.%s.%d:\n", bb->fn, bb->bbno);
 
+        // generate quads for this bb
         quad *q = bb->start;
         while (q) {
             printf("\t# quad "); print_quad(q);
@@ -306,9 +269,7 @@ void asmgen() {
             q = q->next;
         }
 
-        // stuff
         printf("\n");
-
         bbl = bbl_next(bbl);
     }
 
