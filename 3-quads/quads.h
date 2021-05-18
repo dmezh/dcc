@@ -19,14 +19,14 @@ enum quad_op {
     Q_LOAD, // done
     Q_STORE, // done
     Q_LEA, // done
-    Q_CMP,
+    Q_CMP, // done
     Q_BREQ, // done
     Q_BRNE, // done
-    Q_BRLT,
-    Q_BRLE,
-    Q_BRGT,
+    Q_BRLT, // done
+    Q_BRLE, // done
+    Q_BRGT, // done
     Q_BRGE, // done
-    Q_BR,
+    Q_BR, // done
     Q_RET, // done
     Q_ARGBEGIN, // done
     Q_ARG, // done

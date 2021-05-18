@@ -201,7 +201,7 @@ void st_reserve_stack(st_entry* e) {
         int size;
         if (e->type->astn_type.is_derived && e->type->astn_type.derived.type == t_ARRAY) { // only diff size for arrays
             size = get_sizeof(e->type);
-            fprintf(stderr, "got arr size %d\n", size);
+            //fprintf(stderr, "got arr size %d\n", size);
         } else size = 4;
         symtab *f = st_parent_function();
         if (e->is_param) {

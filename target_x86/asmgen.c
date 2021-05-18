@@ -94,8 +94,10 @@ void XXX2all(astn *n, char* r) {
 }
 
 void eax2all(astn *n) { XXX2all(n, "%eax"); }
+void ecx2all(astn *n) { XXX2all(n, "%ecx"); }
 void edx2all(astn *n) { XXX2all(n, "%edx"); }
 void all2eax(astn *n) { all2XXX(n, "%eax"); }
+void all2ecx(astn *n) { all2XXX(n, "%ecx"); }
 void all2edx(astn *n) { all2XXX(n, "%edx"); }
 
 static int argcount = 0;
@@ -126,8 +128,22 @@ void asmgen_q(quad* q) {
         case Q_MUL:
             all2eax(q->src1);
             all2edx(q->src2);
-            ea("\t\timul\t%%edx, %%eax\n");
+            ea("imul\t%%edx, %%eax");
             eax2all(q->target);
+            break;
+        case Q_DIV:
+            all2eax(q->src1);
+            ea("cdq"); // now edx:eax is src1
+            all2ecx(q->src2);
+            ea("idiv\t%%ecx");
+            eax2all(q->target); // give result
+            break;
+        case Q_MOD:
+            all2eax(q->src1);
+            ea("cdq"); // now edx:eax is src1
+            all2ecx(q->src2);
+            ea("idiv\t%%ecx");
+            edx2all(q->target); // give remainder
             break;
         case Q_RET:
             if (q->src1) all2eax(q->src1);
