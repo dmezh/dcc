@@ -1,5 +1,5 @@
 int printf();
-
+static int z; // just for seeing the .local
 int fib(int i);
 
 int main() {
