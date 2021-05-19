@@ -10,12 +10,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: make standalone parser
+    - name: make dcc
       run: |
         cd 2-parser
         make
-    - name: make standalone lexer
-      run: |
-        cd 1-lexer
-        make
-        make test
