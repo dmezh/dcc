@@ -2,6 +2,7 @@ name: Compile the compiler
 
 on:
   push:
+  workflow_dispatch:
 
 jobs:
   build:
