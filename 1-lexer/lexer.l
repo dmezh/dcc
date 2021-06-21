@@ -23,7 +23,6 @@ static int process_oct(bool is_signed, enum int_types type);
 static int process_real(enum int_types type);
 static unsigned char parse_char_safe(char* str, size_t* i);
 
-YYSTYPE yylval;
 YYLTYPE context = {.lineno = 1, .filename = NULL};
 %}
 
