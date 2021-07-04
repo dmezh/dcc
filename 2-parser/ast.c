@@ -13,7 +13,7 @@
 
 #include "charutil.h"
 #include "parser.tab.h"
-#include "../3-quads/quads_print.h"
+#include "quads_print.h"
 #include "util.h"
 
 /*

@@ -6,7 +6,7 @@
 #endif
 #define TARGET
 
-#include "2-parser/types_common.h"
+#include "types_common.h"
 
 const int target_size[] = {
     [t_VOID]            = 4,

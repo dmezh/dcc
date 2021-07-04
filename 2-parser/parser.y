@@ -5,10 +5,10 @@
  */
 
 %code requires {
-    #include "../target_x86/asmgen.h"
+    #include "asmgen.h"
     #include "ast.h"
     #include "location.h"
-    #include "../3-quads/quads.h"
+    #include "quads.h"
     #include "semval.h"
     #include "symtab.h"
     #include "types.h"

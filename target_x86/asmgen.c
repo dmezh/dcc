@@ -1,8 +1,8 @@
 #include "asmgen.h"
 
-#include "../3-quads/quads.h"
-#include "../3-quads/quads_cf.h"
-#include "../3-quads/quads_print.h"
+#include "quads.h"
+#include "quads_cf.h"
+#include "quads_print.h"
 #include "charutil.h"
 #include "semval.h"
 #include "symtab.h"

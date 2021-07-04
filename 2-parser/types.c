@@ -5,7 +5,7 @@
  */
 
 #include "types.h"
-#include "../target_x86/target_x86_32.h"
+#include "target_x86_32.h"
 
 #include <stdlib.h>
 

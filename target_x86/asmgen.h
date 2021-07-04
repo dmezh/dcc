@@ -1,7 +1,7 @@
 #ifndef ASMGEN_H
 #define ASMGEN_H
 
-#include "../3-quads/quads.h"
+#include "quads.h"
 
 typedef enum asm_dirs {
     NONE,

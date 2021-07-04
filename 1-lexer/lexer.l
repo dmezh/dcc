@@ -11,8 +11,8 @@
 
 #include <stdbool.h>
 
-#include "../2-parser/ast.h"
-#include "../2-parser/parser.tab.h"
+#include "ast.h"
+#include "parser.tab.h"
 #include "location.h"
 #include "charutil.h"
 #include "semval.h"
