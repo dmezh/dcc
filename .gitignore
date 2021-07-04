@@ -8,3 +8,5 @@ lit/*
 2-parser/parse
 2-parser/parser.output
 *p-test*.c
+build
+dcc

@@ -6,7 +6,7 @@ typedef struct YYLTYPE {
     unsigned lineno;
 } YYLTYPE;
 
-#include "1-lexer/lexer.h"
+#include "lexer.h"
 
 static char* fnamestdin = "<stdin>";
 

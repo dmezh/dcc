@@ -11,5 +11,4 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: make dcc
-      run: |
-        cmake --build build
+      run: make
