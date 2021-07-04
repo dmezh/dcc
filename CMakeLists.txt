@@ -6,7 +6,7 @@ include_directories(1-lexer)
 include_directories(2-parser)
 include_directories(3-quads)
 include_directories(target_x86)
-include_directories(.)
+include_directories(common)
 
 ##################################################
 # Make lexer and parser
@@ -15,7 +15,7 @@ include_directories(.)
 find_package(BISON)
 find_package(FLEX)
 
-set(GENERATED ${CMAKE_CURRENT_BINARY_DIR}/gen)
+set(GENERATED ${CMAKE_BINARY_DIR}/gen)
 file(MAKE_DIRECTORY ${GENERATED})
 
 BISON_TARGET(dcc_parser 2-parser/parser.y
@@ -42,13 +42,13 @@ ${FLEX_dcc_lexer_OUTPUTS}
 3-quads/quads_cf.c
 3-quads/quads_print.c
 target_x86/asmgen.c
-charutil.c
-semval.c
-util.c
-yak.ascii.c
+common/charutil.c
+common/semval.c
+common/util.c
+common/yak.ascii.c
 )
 
 set_target_properties(dcc PROPERTIES
-RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/2-parser"
+RUNTIME_OUTPUT_DIR ${CMAKE_SOURCE_DIR}
 C_STANDARD 11
 )
