@@ -12,6 +12,6 @@ jobs:
     - uses: actions/checkout@v2
     - name: make dcc
       run: |
-	mkdir build
+        mkdir build
         cmake .
         cmake --build build
