@@ -1,6 +1,6 @@
 # ECE-466 - Compilers
 
-![Build Action](https://github.com/dmezh/ece466-compilers/actions/workflows/build.yml/badge.svg)
+![Build Action](https://github.com/dmezh/ece466-compilers/actions/workflows/ci.yml/badge.svg)
 
 This is a graduate-level course centered on the construction of a simple C compiler.
 
