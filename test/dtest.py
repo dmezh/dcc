@@ -1,11 +1,13 @@
 #!/usr/bin/python3
 
-import os
+import os, sys
 import subprocess
 import toml
 
 AUTHOR = 'dmezh'
 VERSION = '0.01'
+
+os.chdir(sys.path[0])
 
 conf = toml.load("dtest_cfg.toml")
 tests = conf['tests']
