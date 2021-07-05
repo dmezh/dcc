@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# relative to script path https://stackoverflow.com/questions/24112727
+parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
+cd "$parent_path"
+
+if [ ! -f ./dcc ]; then
+	echo -e "dcc not found in script directory!"
+	exit -2
+fi
+
 if [ "$#" -lt 1 ]; then
 	echo -e "(will output to ./prog)\nNeed to specify at least one file... $ ./compiler input [input2...]"
 	exit
@@ -14,3 +23,5 @@ do
 done
 
 gcc $sf -o prog -m32
+
+rm "$i.S"
