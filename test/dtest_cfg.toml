@@ -1,0 +1,17 @@
+[project]
+name = "DCC"
+tests_path = "cases/"
+exec_prep = "../compiler [SOURCE]"
+exec = "../prog"
+run_after = "rm ../prog"
+
+[tests]
+[tests.exitcode]
+desc = "Return a static exit code from main."
+type = "returncode"
+expect = 99
+
+[tests.add]
+desc = "Basic addition."
+type = "returncode"
+expect = 2
