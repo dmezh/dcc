@@ -178,6 +178,31 @@ void gen_while(astn* wn) {
     current_bb = next;
 }
 
+void gen_for(astn* fl) {
+    struct astn_forloop *f = &fl->astn_forloop;
+
+    BB* cond = bb_alloc();
+    BB* body = bb_alloc();
+    BB* next = bb_alloc();
+
+    gen_quads(f->init);
+
+    uncond_branch(cond);
+    current_bb = cond;
+    gen_condexpr(f->condition, body, next);
+
+    current_bb = body;
+    cursor.brk = next;
+    cursor.cont = cond;
+
+    gen_quads(f->body);
+    gen_quads(f->oneach);
+    
+    uncond_branch(cond);
+
+    current_bb = next;
+}
+
 /*
 BB.y.0:
 %T00005 = MOV a

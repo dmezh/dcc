@@ -15,3 +15,8 @@ expect = 99
 desc = "Basic addition."
 type = "returncode"
 expect = 2
+
+[tests.forloop]
+desc = "Basic for loops."
+type = "returncode"
+expect = 3

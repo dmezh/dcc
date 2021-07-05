@@ -396,7 +396,7 @@ void gen_quads(astn *n) {
         case ASTN_CONTINUE:     uncond_branch(cursor.cont); break; // may leave behind unreachable code, optimizer would get rid of it
         case ASTN_BREAK:        uncond_branch(cursor.brk);  break;// may leave behind unreachable code, optimizer would get rid of it
         case ASTN_SWITCH:       todo("switch statements");  break;
-        case ASTN_FORLOOP:      todo("for loops");          break;
+        case ASTN_FORLOOP:      gen_for(n);           break;
         case ASTN_DECLREC:      break;
 
         case ASTN_FNCALL:
