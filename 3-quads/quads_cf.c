@@ -158,8 +158,6 @@ void gen_if(astn* ifnode) {
 void gen_while(astn* wn) {
     struct astn_whileloop *w = &wn->astn_whileloop;
 
-    if (w->is_dowhile) todo("do-while loops");
-
     BB* cond = bb_alloc();
     BB* body = bb_alloc();
     BB* next = bb_alloc();
@@ -172,8 +170,31 @@ void gen_while(astn* wn) {
     current_bb = body;
     cursor.brk = next;
     cursor.cont = cond;
+
     gen_quads(w->body);
     uncond_branch(cond);
+
+    current_bb = next;
+}
+
+void gen_dowhile(astn* dw) {
+    struct astn_whileloop *d = &dw->astn_whileloop;
+
+    BB* cond = bb_alloc();
+    BB* body = bb_alloc();
+    BB* next = bb_alloc();
+
+    uncond_branch(body);
+
+    current_bb = body;
+    cursor.brk = next;
+    cursor.cont = body;
+
+    gen_quads(d->body);
+    uncond_branch(cond);
+
+    current_bb = cond;
+    gen_condexpr(d->condition, body, next);
 
     current_bb = next;
 }
@@ -197,7 +218,7 @@ void gen_for(astn* fl) {
 
     gen_quads(f->body);
     gen_quads(f->oneach);
-    
+
     uncond_branch(cond);
 
     current_bb = next;

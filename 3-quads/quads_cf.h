@@ -10,6 +10,7 @@ struct cursor {
 
 void gen_if(astn* ifnode);
 void gen_while(astn* wn);
+void gen_dowhile(astn* dw);
 void gen_for(astn* fl);
 BBL* bbl_next(BBL* cur);
 BB* bbl_data(BBL* n);

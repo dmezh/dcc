@@ -391,7 +391,12 @@ void gen_quads(astn *n) {
             break;
         case ASTN_ASSIGN:       gen_assign(n);        break;
         case ASTN_IFELSE:       gen_if(n);            break;
-        case ASTN_WHILELOOP:    gen_while(n);         break;
+        case ASTN_WHILELOOP:
+            if (n->astn_whileloop.is_dowhile)
+                gen_dowhile(n);
+            else
+                gen_while(n);
+            break;
         case ASTN_RETURN:       gen_ret(n);           break;
         case ASTN_CONTINUE:     uncond_branch(cursor.cont); break; // may leave behind unreachable code, optimizer would get rid of it
         case ASTN_BREAK:        uncond_branch(cursor.brk);  break;// may leave behind unreachable code, optimizer would get rid of it

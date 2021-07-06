@@ -20,3 +20,13 @@ expect = 2
 desc = "Basic for loops."
 type = "returncode"
 expect = 3
+
+[tests.whileloop]
+desc = "Basic while loops."
+type = "returncode"
+expect = 64
+
+[tests.dowhileloop]
+desc = "Basic do-while loops."
+type = "returncode"
+expect = 81
