@@ -46,6 +46,11 @@ _perish;
   $ ./compiler yourprogram.c [yourprogram2.c ...]
   $ ./prog
   ```
+- To test (custom tester called dtest, written in Python 3; please `pip install toml` ):
+  ```
+  $ cd test
+  $ ./dtest.py
+  ```
 
 # License
 This project uses the [MIT License](LICENSE.md).
