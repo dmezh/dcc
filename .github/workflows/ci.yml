@@ -20,4 +20,4 @@ jobs:
         sudo apt install -y -q gcc-multilib
 
     - name: Test dcc
-      run: ./test/dtest.py
+      run: make test

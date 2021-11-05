@@ -11,3 +11,7 @@ all:
 clean:
 	rm -rf $(out_dir)
 	rm -f dcc
+
+.PHONY: test
+test:
+	test/dtest.py
