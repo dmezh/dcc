@@ -30,3 +30,8 @@ expect = 64
 desc = "Basic do-while loops."
 type = "returncode"
 expect = 81
+
+[tests.multifunc]
+desc = "Test function calling."
+type = "returncode"
+expect = 98
