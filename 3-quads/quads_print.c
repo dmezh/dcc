@@ -93,27 +93,3 @@ void print_bbs() {
         bbl = bbl_next(bbl);
     }
 }
-
-/*
-int a[10];
-int f()
-{
-int x;
-x=a[3];
-}
-
-int b[10][5];
-int z()
-{
-int x;
-x=b[3][5];
-}
-
-BB.f.0:
-%T00001 = LEA a
-%T00002 = MUL CONSTANT (INT): 3, CONSTANT (INT): 4
-%T00003 = ADD %T00001, CONSTANT (INT): 3
-%T00004 = LOAD %T00003
-x = MOV %T00004
-
-*/
