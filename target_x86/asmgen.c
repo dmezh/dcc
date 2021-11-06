@@ -9,6 +9,8 @@
 #include "types.h"
 #include "util.h"
 
+#include "opt_flatten_adjacent_mov.h"
+
 #include <stdio.h>
 
 FILE* out;
@@ -242,6 +244,7 @@ void e_bb(const BB* b) { fprintf(out, "BB.%s.%d", b->fn, b->bbno); }
 void asmgen(const BBL* head, FILE* f) {
     // init output file
     out = f;
+    opt_flatten_adjacent_mov(head, 1);
     fprintf(out, "# ASM OUTPUT\n# compiled poorly :)\n\n");
 
     // init globals, except functions
