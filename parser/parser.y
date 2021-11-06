@@ -67,6 +67,7 @@
 %type<astn_p> tern_expr const_expr
 %type<astn_p> assign
 
+%type<astn_p> init
 %type<astn_p> decln decln_spec init_decl_list init_decl decl direct_decl type_spec type_qual stor_spec
 %type<astn_p> pointer type_qual_list direct_decl_arr arr_size
 
@@ -100,7 +101,7 @@ external_decln:                             // kludge ish for structs/unions
 ;
 
 fn_def:
-    decln_spec decl lbrace block_item_list rbrace         {  $$=st_define_function(decl_alloc($1, $2, @2), $4, @3);   }
+    decln_spec decl lbrace block_item_list rbrace         {  $$=st_define_function(decl_alloc($1, $2, NULL, @2), $4, @3);   }
 ;
 
 // 6.8.2
@@ -419,7 +420,7 @@ const_expr:
 // the below needs a little logic in the first case for proper struct fwd declaration behavior
 decln:
     decln_spec ';'                  { /* check for idiot user not actually declaring anything */ }
-|   decln_spec init_decl_list ';'   {   $$=decl_alloc($1, $2, @$); }
+|   decln_spec init_decl_list ';'   {   $$=$2; $$->astn_decl.specs = $1;    }
 // no static_assert stuff
 ;
 
@@ -441,8 +442,8 @@ init_decl_list:
 
 // skipping initializers at the moment!
 init_decl:
-    decl
-|   decl '=' init                   {   fprintf(stderr, "Warning: initializer will be ignored\n");      }
+    decl                            {   $$=$1; $$=decl_alloc(NULL, $1, NULL, @$);    }
+|   decl '=' init                   {   $$=$1; $$=decl_alloc(NULL, $1, $3, @$);      }
 ;
 
 // no initializer lists, just simple initializers
@@ -547,12 +548,12 @@ param_t_list:
 
 param_list:
     param_decl                      {   st_new_scope(SCOPE_FUNCTION, @1);
-                                        $$=declrec_alloc(begin_st_entry($1, NS_MISC, $1->astn_decl.context));
+                                        $$=declrec_alloc(begin_st_entry($1, NS_MISC, $1->astn_decl.context), NULL);
                                         $$->astn_declrec.e->is_param = true;
                                         st_reserve_stack($$->astn_declrec.e);
                                         $$=list_alloc($$);
                                     }
-|   param_list ',' param_decl       {   $$=declrec_alloc(begin_st_entry($3, NS_MISC, $3->astn_decl.context));
+|   param_list ',' param_decl       {   $$=declrec_alloc(begin_st_entry($3, NS_MISC, $3->astn_decl.context), NULL);
                                         $$->astn_declrec.e->is_param = true;
                                         st_reserve_stack($$->astn_declrec.e);
                                         list_append($$, $1);
@@ -568,7 +569,7 @@ param_list:
 */
 
 param_decl:
-    decln_spec decl                 {   $$=decl_alloc($1, $2, @2);  }
+    decln_spec decl                 {   $$=decl_alloc($1, $2, NULL, @2);  }
 ;
 
 // we don't care about the value because no K&R syntax
@@ -676,7 +677,7 @@ struct_decl_list:
 // this is equivalent 6.7 decln, where we have the specs/quals and are ready
 // to install.
 struct_decl:
-    spec_qual_list struct_decltr_list ';'   {     $$=decl_alloc($1, $2, @$);      }
+    spec_qual_list struct_decltr_list ';'   {     $$=decl_alloc($1, $2, NULL, @$);      }
 ;
 
 // this is for the members

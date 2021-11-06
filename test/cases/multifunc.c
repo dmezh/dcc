@@ -4,8 +4,8 @@ int multiply_by_adding();
 int indirect_add();
 
 int main() {
-    int a; int b;
-    a = 2; b = 6;
+    int a = 2;
+    int b = 6;
 
     int c;
     c = add(a, b);
@@ -25,10 +25,8 @@ int multiply(int a, int b) {
 }
 
 int multiply_by_adding(int a, int b) {
-    int i;
-    int ret;
-    ret = 0;
-    for (i = 0; i < a; i++) {
+    int ret = 0;
+    for (int i = 0; i < a; i++) {
         ret += b;
     }
     return ret;
