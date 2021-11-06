@@ -8,6 +8,7 @@
     #include "asmgen.h"
     #include "ast.h"
     #include "location.h"
+    #include "main.h"
     #include "quads.h"
     #include "semval.h"
     #include "symtab.h"
@@ -17,6 +18,7 @@
 }
 
 %define parse.trace
+%define parse.error verbose
 
 %code {
     #include <stdio.h>
@@ -26,9 +28,11 @@
         fprintf(stderr, "Error near %s:%d: ", context.filename, context.lineno); \
         fprintf(stderr, __VA_ARGS__); \
         fprintf(stderr, "\n"); \
-        exit(-1); \
+        YYABORT; \
     } while(0)
-    void yyerror (const char *s) { fprintf(stderr, "Parser error: %s\n", s); exit(-10); }
+    void yyerror (const char *s) { fprintf(stderr, "Error near %s:%d - %s\n",
+                                           context.filename, context.lineno,
+                                           s); }
 }
 
 // this trash broken for the global scope, whatever
@@ -79,14 +83,15 @@
 %type<astn_p> type_name 
 %type<astn_p> abstract_decl direct_abstract_decl
 
-%type<astn_p> block_item block_item_list compound_statement select_stmt iterat_stmt opt_expr jump_stmt labeled_stmt
+%type<astn_p> block_item block_item_list block_item_list_maybe_empty
+%type<astn_p> compound_statement select_stmt iterat_stmt opt_expr jump_stmt labeled_stmt
 
 %type<st_entry> external_decln fn_def
 
 %%
 
 done:
-    translation_unit                    {   asmgen(&bb_root);     }
+    translation_unit                    {   parse_done_cb(&bb_root);     }
 ;
 
 // maybe make quads here one day if you dont mind that would be good no rush
@@ -102,13 +107,17 @@ external_decln:                             // kludge ish for structs/unions
 ;
 
 fn_def:
-    decln_spec decl lbrace block_item_list rbrace         {  $$=st_define_function(decl_alloc($1, $2, NULL, @2), $4, @3);   }
+    decln_spec decl lbrace block_item_list_maybe_empty rbrace         {  $$=st_define_function(decl_alloc($1, $2, NULL, @2), $4, @3);   }
 ;
 
 // 6.8.2
 compound_statement:
-    lbrace { st_new_scope(SCOPE_BLOCK, @1); } block_item_list rbrace  {   $$=$3; @$=@1; st_pop_scope();  }
+    lbrace { st_new_scope(SCOPE_BLOCK, @1); } block_item_list_maybe_empty rbrace  {   $$=$3; @$=@1; st_pop_scope();  }
 ;
+
+block_item_list_maybe_empty:
+    block_item_list
+|   %empty                          {   $$=list_alloc(NULL);    }
 
 // just don't call an internal right at the start; it won't work
 block_item_list:
@@ -708,7 +717,3 @@ type_qual:
 ;
 %%
 
-int main() {
-    yydebug = 0;
-    yyparse();
-}

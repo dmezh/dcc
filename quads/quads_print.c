@@ -40,56 +40,56 @@ char* quad_op_str[] = {
     [Q_BWNOT] = "BWNOT"
 };
 
-void print_node(const astn* qn) {
+void print_node(const astn* qn, FILE* f) {
     switch (qn->type) {
-        case ASTN_SYMPTR:   printf("%s", qn->astn_symptr.e->ident); return;
-        case ASTN_NUM:      print_number(&qn->astn_num.number, stdout); return;
+        case ASTN_SYMPTR:   fprintf(f, "%s", qn->astn_symptr.e->ident); return;
+        case ASTN_NUM:      print_number(&qn->astn_num.number, f); return;
         case ASTN_STRLIT:   
-            printf("(strlit)\"");
+            fprintf(f, "(strlit)\"");
             for (size_t i=0; i<qn->astn_strlit.strlit.len; i++) {
-                emit_char(qn->astn_strlit.strlit.str[i], stdout);
+                emit_char(qn->astn_strlit.strlit.str[i], f);
             }
-            printf("\"");
+            fprintf(f, "\"");
             return;
-        case ASTN_QTEMP:    printf("%%T%05d.%d", qn->astn_qtemp.tempno, qn->astn_qtemp.stack_offset); return;
-        case ASTN_QBBNO:    printf("BB.%s.%d", qn->astn_qbbno.bb->fn, qn->astn_qbbno.bb->bbno); return;
-        case ASTN_IDENT:    printf("%s", qn->astn_ident.ident); return;
+        case ASTN_QTEMP:    fprintf(f, "%%T%05d.%d", qn->astn_qtemp.tempno, qn->astn_qtemp.stack_offset); return;
+        case ASTN_QBBNO:    fprintf(f, "BB.%s.%d", qn->astn_qbbno.bb->fn, qn->astn_qbbno.bb->bbno); return;
+        case ASTN_IDENT:    fprintf(f, "%s", qn->astn_ident.ident); return;
         default: fprintf(stderr, "couldnt't handle node %d\n", qn->type); die("eh");
     }
 }
 
-void print_quad(quad* q) {
+void print_quad(quad* q, FILE* f) {
     if (q->target) {
-        print_node(q->target);
-        printf(" = ");
+        print_node(q->target, f);
+        fprintf(f, " = ");
     }
-    printf("%s ", quad_op_str[q->op]);
+    fprintf(f, "%s ", quad_op_str[q->op]);
     if (q->src1) {
-        print_node(q->src1);
+        print_node(q->src1, f);
     }
     if (q->src2) {
-        printf(", ");
-        print_node(q->src2);
+        fprintf(f, ", ");
+        print_node(q->src2, f);
     }
-    printf("\n");
+    fprintf(f, "\n");
 }
 
-void print_bb(BB* b) {
+void print_bb(BB* b, FILE *f) {
     quad* q = b->start;
     while (q) {
-        print_quad(q);
+        print_quad(q, f);
         q = q->next;
     }
 }
 
-void print_bbs() {
+void print_bbs(FILE* f) {
     BBL* bbl = &bb_root;
     bbl = bbl_next(bbl); // first me is null
     while (bbl) {
         BB *bb = bbl_data(bbl);
-        printf("BB.%s.%d:\n", bb->fn, bb->bbno);
-        print_bb(bb);
-        printf("\n");
+        fprintf(f, "BB.%s.%d:\n", bb->fn, bb->bbno);
+        print_bb(bb, f);
+        fprintf(f, "\n");
         bbl = bbl_next(bbl);
     }
 }

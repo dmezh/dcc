@@ -1,9 +1,9 @@
 [project]
 name = "DCC"
 tests_path = "cases/"
-exec_prep = "../compiler [SOURCE]"
-exec = "../prog"
-run_after = "rm ../prog"
+exec_prep = "../dcc -o ./prog [SOURCE]"
+exec = "./prog"
+run_after = "rm ./prog"
 
 [tests]
 [tests.exitcode]

@@ -7,8 +7,8 @@
 
 extern char* quad_op_str[];
 
-void print_node(const astn* qn);
-void print_quad(quad* q);
-void print_bbs();
+void print_node(const astn* qn, FILE* f);
+void print_quad(quad* q, FILE* f);
+void print_bbs(FILE* f);
 
 #endif

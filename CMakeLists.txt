@@ -6,6 +6,7 @@ set(CMAKE_C_COMPILER clang)
 add_compile_options(-Wall -Wextra -fsanitize=undefined -Wpedantic -Wunused -O2)
 set(CMAKE_EXE_LINKER_FLAGS "-fsanitize=undefined -rdynamic")
 
+include_directories(.)
 include_directories(lexer)
 include_directories(parser)
 include_directories(quads)
@@ -23,11 +24,11 @@ set(GENERATED ${CMAKE_BINARY_DIR}/gen)
 file(MAKE_DIRECTORY ${GENERATED})
 
 BISON_TARGET(dcc_parser parser/parser.y
-${GENERATED}/parser.tab.c
-DEFINES_FILE ${GENERATED}/parser.tab.h)
+            ${GENERATED}/parser.tab.c
+            DEFINES_FILE ${GENERATED}/parser.tab.h)
 
 FLEX_TARGET(dcc_lexer lexer/lexer.l
-${GENERATED}/lex.yy.c)
+            ${GENERATED}/lex.yy.c)
 
 ADD_FLEX_BISON_DEPENDENCY(dcc_lexer dcc_parser)
 
@@ -51,6 +52,7 @@ ${FLEX_dcc_lexer_OUTPUTS}
     common/semval.c
     common/util.c
     common/yak.ascii.c
+    main.c
 )
 
 set_target_properties(dcc PROPERTIES C_STANDARD 11)

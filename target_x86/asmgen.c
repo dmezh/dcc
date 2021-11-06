@@ -189,6 +189,7 @@ void asmgen_q(quad* q) {
                     break;
                 case ASTN_QTEMP:
                     ea("leal\t%d(%%ebp), %%eax", -(q->src1->astn_qtemp.stack_offset));
+                    break;
                 default:
                     die("invalid astn during asmgen");
             }
@@ -246,9 +247,9 @@ void e_cbr(char *op, quad* q) {
 void e_bba(astn *n) { e_bb(n->astn_qbbno.bb); }
 void e_bb(BB* b) { fprintf(out, "BB.%s.%d", b->fn, b->bbno); }
 
-void asmgen(BBL* head) {
+void asmgen(BBL* head, FILE* f) {
     // init output file
-    out = stdout;
+    out = f;
     fprintf(out, "# ASM OUTPUT\n# compiled poorly :)\n\n");
 
     // init globals, except functions
@@ -288,12 +289,12 @@ void asmgen(BBL* head) {
         // generate quads for this bb
         quad *q = bb->start;
         while (q) {
-            printf("\t# quad "); print_quad(q);
+            fprintf(f, "\t# quad "); print_quad(q, f);
             asmgen_q(q);
             q = q->next;
         }
 
-        printf("\n");
+        fprintf(out, "\n");
         bbl = bbl_next(bbl);
     }
 

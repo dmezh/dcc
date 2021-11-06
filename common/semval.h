@@ -40,6 +40,5 @@ struct strlit {
 };
 
 void print_number(const struct number *n, FILE* w);
-void print_number_e(const struct number *n);
 
 #endif

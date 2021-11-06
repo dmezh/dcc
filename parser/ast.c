@@ -43,7 +43,7 @@ void print_ast(const astn *n) {
                 break;
             }
 */
-            print_number_e(&n->astn_num.number);
+            print_number(&n->astn_num.number, stderr);
             fprintf(stderr, "\n");
             break;
 
@@ -417,7 +417,7 @@ void print_ast(const astn *n) {
             print_ast(n->astn_case.statement);
             break;
 /**/    case ASTN_QTEMP:
-            print_node(n);
+            print_node(n, stderr);
             break;
         default:
             die("Unhandled AST node type");

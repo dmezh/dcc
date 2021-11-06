@@ -16,30 +16,16 @@ const char* int_types_str[] = {
     "LONGDOUBLE",
 };
 
-void print_number(const struct number *n, FILE* w) {
+void print_number(const struct number *n, FILE* f) {
     if (n->aux_type == s_CHARLIT) {
-        printf("CHARLIT: '"); emit_char(n->integer, w); printf("\'");
+        fprintf(f, "CHARLIT: '"); emit_char(n->integer, f); fprintf(f, "\'");
     } else {
-        printf("CONSTANT (");
-        if (!n->is_signed) printf("UNSIGNED ");
-        printf("%s): ", int_types_str[n->aux_type]);
+        fprintf(f, "CONSTANT (");
+        if (!n->is_signed) fprintf(f, "UNSIGNED ");
+        fprintf(f, "%s): ", int_types_str[n->aux_type]);
         if (n->aux_type < s_REAL)
-            printf("%llu", n->integer);
+            fprintf(f, "%llu", n->integer);
         else
-            printf("%Lg", n->real);
-    }
-}
-
-void print_number_e(const struct number *n) {
-    if (n->aux_type == s_CHARLIT) {
-        fprintf(stderr, "CHARLIT: '"); emit_char(n->integer, stderr); fprintf(stderr, "\'");
-    } else {
-        fprintf(stderr, "CONSTANT (");
-        if (!n->is_signed) fprintf(stderr, "UNSIGNED ");
-        fprintf(stderr, "%s): ", int_types_str[n->aux_type]);
-        if (n->aux_type < s_REAL)
-            fprintf(stderr, "%llu", n->integer);
-        else
-            fprintf(stderr, "%Lg", n->real);
+            fprintf(f, "%Lg", n->real);
     }
 }

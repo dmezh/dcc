@@ -41,11 +41,12 @@ _perish;
   ```
   $ make
   ```
-- To use:
+- To use: (`./dcc -h` for usage)
   ```
-  $ ./compiler yourprogram.c [yourprogram2.c ...]
-  $ ./prog
-  ```
+  $ ./dcc yourprogram.c
+  $ ./a.out
+  ``
+
 - To test (custom tester called dtest, written in Python 3; please `pip install toml` ):
   ```
   $ cd test

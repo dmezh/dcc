@@ -109,7 +109,7 @@ static astn* ptr_target(astn *n) {
     return n->astn_type.derived.target;
 }
 
-void todo(const char* msg) {
+_Noreturn void todo(const char* msg) {
     fprintf(stderr, "TODO: %s\n", msg);
     exit(-1);
 }
@@ -393,6 +393,8 @@ void gen_ret(astn *n) {
 void gen_quads(astn *n) {
     switch (n->type) {
         case ASTN_LIST:
+            if (!list_data(n))
+                break;
             while (n) {
                 gen_quads(list_data(n));
                 n = list_next(n);

@@ -8,7 +8,9 @@ typedef struct YYLTYPE {
 
 #include "lexer.h"
 
-static char* fnamestdin = "<stdin>";
+// attribute needed to shut gcc up, but in general
+// this probably shouldn't be in this header
+static char* __attribute__((unused)) fnamestdin = "<stdin>";
 
 #define YYLTYPE YYLTYPE
 #define YYLLOC_DEFAULT(current, blah2, blah3) do { \
