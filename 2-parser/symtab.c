@@ -61,9 +61,19 @@ symtab *current_scope = &root_symtab;
 
 // currently doesn't support actually defining already-declared functions
 st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context) {
+    astn* decl_type = get_dtypechain_target(fndef->astn_decl.type);
+    struct astn_fndef f2;
+
+    if (decl_type->type == ASTN_FNDEF) {
+        f2 = decl_type->astn_fndef;
+    } else {
+        fprintf(stderr, "Error near %s:%d: invalid declaration\n", openbrace_context.filename, openbrace_context.lineno);
+        exit(-5);
+    }
+
     symtab *fn_scope = current_scope;
     st_pop_scope();
-    struct astn_fndef f2 = (get_dtypechain_target(fndef->astn_decl.type))->astn_fndef;
+
     char* name = f2.decl->astn_ident.ident;
     st_entry *n = st_lookup_ns(name, NS_MISC);
     if (n && n->entry_type == STE_FN && n->fn_defined) {
