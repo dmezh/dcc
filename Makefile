@@ -1,5 +1,8 @@
 out_dir = build
 
+.PHONY: all-test
+all-test: all test
+
 .PHONY: all
 all:
 	mkdir -p $(out_dir)

@@ -15,6 +15,8 @@
 
 unsigned temp_count = 0;
 
+void gen_ret(astn *n);
+
 // allocate temporary
 astn* qtemp_alloc(unsigned size) {
     astn* n = astn_alloc(ASTN_QTEMP);
@@ -357,10 +359,15 @@ void gen_fn(st_entry *e) {
     astn* s = e->body;
     gen_quads(s);
     if (!last_in_bb(current_bb) || last_in_bb(current_bb)->op != Q_RET) {
-        if ((e->type->astn_type.is_derived || e->type->astn_type.scalar.type != t_VOID) &&
-            (strcmp(e->ident, "main")))
-            fprintf(stderr, "WARNING: had to add a ret for you and fn is not void!\n");
-        emit(Q_RET, NULL, NULL, NULL);
+        if (e->type->astn_type.is_derived || e->type->astn_type.scalar.type != t_VOID) {
+            if (!strcmp(e->ident, "main")) {
+                astn *r = astn_alloc(ASTN_RETURN);
+                r->astn_return.ret = const_alloc(0);
+                gen_ret(r);
+            } else {
+                emit(Q_RET, NULL, NULL, NULL);
+            }
+        }
     }
 
     f->stack_offset_ez = e->fn_scope->stack_total; // sorry so ugly
@@ -408,6 +415,9 @@ void gen_quads(astn *n) {
             if (n->astn_declrec.init) {
                 if (n->astn_declrec.e->scope == &root_symtab) {
                     todo("global variable initialization");
+                    // ! this doesn't work; we don't even get a declrec right
+
+                    // ! now (it seems) for globals
                 }
                 // only inside functions one sec
                 astn *i = astn_alloc(ASTN_ASSIGN);

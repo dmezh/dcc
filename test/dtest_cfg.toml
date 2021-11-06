@@ -40,3 +40,8 @@ expect = 98
 desc = "Test null statements."
 type = "returncode"
 expect = 0
+
+[tests.main_implicit_return_0]
+desc = "Test implicit return of 0 from main."
+type = "returncode"
+expect = 0
