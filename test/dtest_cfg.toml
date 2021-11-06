@@ -35,3 +35,8 @@ expect = 81
 desc = "Test function calling."
 type = "returncode"
 expect = 98
+
+[tests.nullstatement]
+desc = "Test null statements."
+type = "returncode"
+expect = 0

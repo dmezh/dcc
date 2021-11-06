@@ -45,7 +45,8 @@ enum astn_types {
     ASTN_LABEL,
     ASTN_CASE,
     ASTN_QTEMP,
-    ASTN_QBBNO
+    ASTN_QBBNO,
+    ASTN_NOOP // has no associated struct
 };
 
 struct astn_assign { // could have been binop but separated for clarity

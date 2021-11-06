@@ -131,7 +131,8 @@ statement:
 
 expr_stmt:
     expr ';'                     {   $$=$1;   }
-|   semicolon                    {   $$=NULL; fprintf(stderr, "Warning: null statement near %s:%d\n", @1.filename, @1.lineno);  }
+|   semicolon                    {   $$=astn_alloc(ASTN_NOOP);
+                                     fprintf(stderr, "Warning: null statement near %s:%d\n", @1.filename, @1.lineno);  }
 ;
 
 select_stmt:

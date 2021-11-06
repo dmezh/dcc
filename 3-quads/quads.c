@@ -415,6 +415,8 @@ void gen_quads(astn *n) {
             fprintf(stderr, "Warning: useless constant statement: ");
             print_ast(n);
             break;
+        case ASTN_NOOP:
+            break;
         
         default:
             fprintf(stderr, "skipping unknown astn for quads %d\n", n->type);
