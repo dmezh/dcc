@@ -21,7 +21,6 @@ enum scope_types {
     SCOPE_BLOCK,
     SCOPE_PROTOTYPE
 };
-extern const char* scope_types_str[];
 
 enum namespaces {
     NS_TEMP_INTERNAL,
@@ -30,7 +29,6 @@ enum namespaces {
     NS_MEMBERS, // I think this would be implied just by being in a struct/union def scope
     NS_MISC
 };
-extern const char* namespaces_str[];
 
 enum st_entry_types {
     STE_UNDEF = 0,
@@ -38,7 +36,6 @@ enum st_entry_types {
     STE_STRUNION_DEF,
     STE_FN
 };
-extern const char* st_entry_types_str[];
 
 enum st_linkage {
     L_UNDEF,
@@ -47,7 +44,6 @@ enum st_linkage {
     L_EXTERNAL
 };
 
-extern const char* linkage_str[];
 
 /*
  * These will be directly pointed to by the AST.
@@ -151,14 +147,5 @@ bool st_insert_given(st_entry *new);
 void st_new_scope(enum scope_types scope_type, YYLTYPE openbrace_context);
 void st_pop_scope();
 void st_destroy(symtab* target);
-
-void st_dump_entry(const st_entry* e);
-void st_dump_single();
-void st_dump_struct(st_entry* s);
-
-void st_examine(char* ident);
-void st_examine_member(char* tag, char* child);
-
-void st_dump_recursive(void);
 
 #endif

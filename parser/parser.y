@@ -11,6 +11,7 @@
     #include "quads.h"
     #include "semval.h"
     #include "symtab.h"
+    #include "symtab_print.h"
     #include "types.h"
     #include "util.h"
 }
