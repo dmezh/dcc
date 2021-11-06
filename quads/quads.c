@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 unsigned temp_count = 0;
 
@@ -356,7 +357,8 @@ void gen_fn(st_entry *e) {
     astn* s = e->body;
     gen_quads(s);
     if (!last_in_bb(current_bb) || last_in_bb(current_bb)->op != Q_RET) {
-        if (e->type->astn_type.is_derived || e->type->astn_type.scalar.type != t_VOID)
+        if ((e->type->astn_type.is_derived || e->type->astn_type.scalar.type != t_VOID) &&
+            (strcmp(e->ident, "main")))
             fprintf(stderr, "WARNING: had to add a ret for you and fn is not void!\n");
         emit(Q_RET, NULL, NULL, NULL);
     }
@@ -402,7 +404,20 @@ void gen_quads(astn *n) {
         case ASTN_BREAK:        uncond_branch(cursor.brk);  break;// may leave behind unreachable code, optimizer would get rid of it
         case ASTN_SWITCH:       todo("switch statements");  break;
         case ASTN_FORLOOP:      gen_for(n);           break;
-        case ASTN_DECLREC:      break;
+        case ASTN_DECLREC:
+            if (n->astn_declrec.init) {
+                if (n->astn_declrec.e->scope == &root_symtab) {
+                    todo("global variable initialization");
+                }
+                // only inside functions one sec
+                astn *i = astn_alloc(ASTN_ASSIGN);
+                astn *s = astn_alloc(ASTN_SYMPTR);
+                s->astn_symptr.e = n->astn_declrec.e;   
+                i->astn_assign.left = s;
+                i->astn_assign.right = n->astn_declrec.init;
+                gen_assign(i);
+            }
+            break;
 
         case ASTN_FNCALL:
         case ASTN_UNOP:

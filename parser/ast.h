@@ -147,6 +147,7 @@ struct astn_type {
 struct astn_decl {
     YYLTYPE context;
     struct astn *specs, *type;
+    struct astn *init;
 };
 
 struct astn_fndef {
@@ -163,6 +164,7 @@ struct astn_compoundstmt {
 // record of a declaration having occurred
 struct astn_declrec {
     struct st_entry* e;
+    struct astn* init;
 };
 
 // st_entry pointer from resolved idents
@@ -279,11 +281,11 @@ astn *typequal_alloc(enum typequal spec);
 astn *storspec_alloc(enum storspec spec);
 astn *dtype_alloc(astn* target, enum der_types type);
 
-astn *decl_alloc(astn *specs, astn *type, YYLTYPE context);
+astn *decl_alloc(astn *specs, astn *type, astn* init, YYLTYPE context);
 astn *strunion_alloc(struct st_entry* symbol);
 
 astn *fndef_alloc(astn* decl, astn* param_list, struct symtab* scope);
-astn *declrec_alloc(struct st_entry *e);
+astn *declrec_alloc(struct st_entry *e, astn* init);
 astn *symptr_alloc(struct st_entry* e);
 
 astn *ifelse_alloc(astn *cond_s, astn *then_s, astn *else_s);

@@ -572,11 +572,12 @@ astn *dtype_alloc(astn *target, enum der_types type) {
 /*
  * allocate decl type node
  */
-astn *decl_alloc(astn *specs, astn *type, YYLTYPE context) {
+astn *decl_alloc(astn *specs, astn *type, astn *init, YYLTYPE context) {
     astn *n=astn_alloc(ASTN_DECL);
     n->astn_decl.specs=specs;
     n->astn_decl.type=type;
     n->astn_decl.context=context;
+    n->astn_decl.init = init;
     return n;
 }
 
@@ -599,9 +600,10 @@ astn *fndef_alloc(astn* decl, astn* param_list, symtab* scope) {
     return n;
 }
 
-astn *declrec_alloc(st_entry* e) {
+astn *declrec_alloc(st_entry* e, astn* init) {
     astn *n=astn_alloc(ASTN_DECLREC);
     n->astn_declrec.e = e;
+    n->astn_declrec.init = init;
     return n;
 }
 
@@ -636,10 +638,11 @@ astn *forloop_alloc(astn *init, astn* condition, astn* oneach, astn* body) {
     return n;
 }
 
+// this shouldn't be here >:(
 astn *do_decl(astn *decl) {
     astn *n = NULL;
-    if(decl->type == ASTN_DECL) {
-        n = declrec_alloc(begin_st_entry(decl, NS_MISC, decl->astn_decl.context));
+    if (decl->type == ASTN_DECL) {
+        n = declrec_alloc(begin_st_entry(decl, NS_MISC, decl->astn_decl.context), decl->astn_decl.init);
         st_reserve_stack(n->astn_declrec.e);
     }
     return n;
