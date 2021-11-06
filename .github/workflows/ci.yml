@@ -9,15 +9,15 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Make dcc
-      run: make -j2
-    
     - name: Prepare test - get packages
       run: |
         python3 -m pip install --upgrade pip
         pip3 install --upgrade toml
         sudo apt install -y -q gcc-multilib
+    
+    - uses: actions/checkout@v2
+    - name: Make dcc
+      run: make -j$(nproc) all
 
     - name: Test dcc
       run: make test
