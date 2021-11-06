@@ -45,7 +45,7 @@ _perish;
   ```
   $ ./dcc yourprogram.c
   $ ./a.out
-  ``
+  ```
 
 - To test (custom tester called dtest, written in Python 3; please `pip install toml` ):
   ```
