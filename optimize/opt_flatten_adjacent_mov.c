@@ -34,8 +34,8 @@ void opt_flatten_adjacent_mov(BBL* root, unsigned passes) {
                 quad *nn = n->next;
                 if ((q->op == Q_MOV && n->op == Q_MOV) &&
                     (q->target->type == ASTN_SYMPTR && q->src1->type == ASTN_QTEMP) &&
-                    (n->target->type == ASTN_QTEMP && n->src1->type == ASTN_SYMPTR)){
-                    //(q->src1->astn_symptr.e == n->target->astn_symptr.e)) { // this line broken
+                    (n->target->type == ASTN_QTEMP && n->src1->type == ASTN_SYMPTR) &&
+                    (q->target->astn_symptr.e == n->src1->astn_symptr.e)) {
                         this_hits++;
                         // we found the pattern.
                         // now we will remove the second quad entirely
