@@ -165,7 +165,6 @@ int main(int argc, char** argv) {
     if (yyparse()) // <- entry to the rest of the compiler
         RED_ERROR("");
 
-    fflush(tmp);
     fseek(tmp, 0, SEEK_SET);
 
     if (!opt.asm_out)
