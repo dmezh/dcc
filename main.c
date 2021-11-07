@@ -85,33 +85,36 @@ static void get_options(int argc, char** argv) {
     opt.in_file = argv[optind];
 }
 
+static FILE* new_tmpfile() {
+    FILE *f = tmpfile();
+    if (!f)
+        RED_ERROR("Error allocating temporary file: %s", strerror(errno));
+
+    return f;
+}
+
 static void preprocess() {
-    int p[2];
-    if (pipe(p)) {
-        RED_ERROR("Error creating pipe for preprocessing: %s", strerror(errno));
-    }
+    FILE* f = new_tmpfile();
 
     switch (fork()) {
         case -1:
             RED_ERROR("Error forking for preprocessing: %s", strerror(errno));
 
         case 0:
-            close(p[0]);
-            dup2(p[1], STDOUT_FILENO);
+            dup2(fileno(f), STDOUT_FILENO);
 
             const char* gcc_argv[] = {"gcc", "-E", opt.in_file, NULL};
             execvp(gcc_argv[0], (char**)gcc_argv);
 
             RED_ERROR("Error execing for preprocessing: %s", strerror(errno));
 
-        default:
-            close(p[1]);
+        default:;
             int status;
             wait(&status);
             if (status)
                 RED_ERROR("Error during preprocessing");
-
-            dup2(p[0], STDIN_FILENO);
+            fseek(f, 0, SEEK_SET);
+            dup2(fileno(f), STDIN_FILENO);
             break;
     }
 }
@@ -159,7 +162,7 @@ int main(int argc, char** argv) {
     preprocess(); // now stdin is the preprocessed file
 
     // keep the assembly output in a tmpfile
-    tmp = tmpfile();
+    tmp = new_tmpfile();
 
     yydebug = opt.debug;
     if (yyparse()) // <- entry to the rest of the compiler
