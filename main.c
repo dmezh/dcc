@@ -99,8 +99,8 @@ static void preprocess() {
             close(p[0]);
             dup2(p[1], STDOUT_FILENO);
 
-            char* gcc_argv[] = {strdup("gcc"), strdup("-E"), strdup(opt.in_file), NULL};
-            execvp(gcc_argv[0], gcc_argv);
+            const char* gcc_argv[] = {"gcc", "-E", opt.in_file, NULL};
+            execvp(gcc_argv[0], (char**)gcc_argv);
 
             RED_ERROR("Error execing for preprocessing: %s", strerror(errno));
 
@@ -124,9 +124,9 @@ static void assemble() {
         case 0:
             dup2(fileno(tmp), STDIN_FILENO);
 
-            char* gcc_argv[] = {strdup("gcc"), strdup("-x"), strdup("assembler"), strdup("-"),
-                                        strdup("-o"), strdup(opt.out_file), strdup("-m32"), NULL};
-            execvp(gcc_argv[0], gcc_argv);
+            const char* gcc_argv[] = {"gcc", "-x", "assembler", "-",
+                                "-o", opt.out_file, "-m32", NULL};
+            execvp(gcc_argv[0], (char**)gcc_argv);
 
             RED_ERROR("Error execing for assembly: %s", strerror(errno))
 
