@@ -1,0 +1,2 @@
+*.output
+parser.tab.c
