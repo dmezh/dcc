@@ -41,6 +41,7 @@ add_executable(dcc
 ${BISON_dcc_parser_OUTPUTS}
 ${FLEX_dcc_lexer_OUTPUTS}
     parser/ast.c
+    parser/ast_print.c
     parser/symtab.c
     parser/symtab_print.c
     parser/types.c

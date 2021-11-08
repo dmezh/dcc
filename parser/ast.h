@@ -12,7 +12,7 @@
 #include "types_common.h"
 
 // If you want to add a new astn type, add it to the enum, add the definition,
-// add it to the union in struct astn, and add it to print_ast in ast.c
+// add it to the union in struct astn, and add it to print_ast in ast_print.c
 enum astn_types {
     ASTN_ASSIGN,
     ASTN_NUM,
@@ -261,7 +261,6 @@ typedef struct astn {
 } astn;
 
 astn* astn_alloc(enum astn_types type);
-void print_ast(const astn *n);
 
 astn *cassign_alloc(int op, astn *left, astn *right);
 astn *binop_alloc(int op, astn *left, astn *right);

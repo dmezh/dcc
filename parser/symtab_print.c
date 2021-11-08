@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 
+#include "ast_print.h"
 #include "symtab.h"
 
 static void st_dump_single_given(symtab* s);

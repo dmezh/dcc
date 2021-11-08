@@ -55,7 +55,7 @@ int get_sizeof(astn* type) {
 // get the first target of an array
 // please only call this from the grammar for array_subscript, as it makes assumptions!
 astn *descend_array(astn *type) {
-    printf("dumping TYPE in start\n"); print_ast(type);
+    //printf("dumping TYPE in start\n"); print_ast(type);
     if (type->type == ASTN_SYMPTR) return descend_array(type->astn_symptr.e->type);
     if (type->type == ASTN_UNOP && type->astn_unop.op == '*') {
         type = type->astn_unop.target->astn_binop.left->astn_symptr.e->type->astn_type.derived.target;

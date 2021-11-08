@@ -1,6 +1,7 @@
 #include "quads.h"
 
 #include "ast.h"
+#include "ast_print.h"
 #include "asmgen.h"
 #include "parser.tab.h" // for token binop values
 #include "quads_cf.h"
