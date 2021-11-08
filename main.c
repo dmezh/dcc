@@ -39,18 +39,23 @@ static struct opt {
     .out_file = NULL,
 };
 
+static void print_usage() {
+    fprintf(stderr, "Usage: ./dcc [OPTIONS] input_file"
+        "\n Options:"
+        "\n   -h              show usage"
+        "\n   -o output_file  specify output file"
+        "\n   -S              output assembly only"
+        "\n   -V              debug mode"
+        "\n   -v              print version information\n");
+}
+
 static void get_options(int argc, char** argv) {
     int a;
+    opterr = 0;
     while ((a = getopt(argc, argv, "hvVSo:")) != -1) {
         switch (a) {
             case 'h':
-                fprintf(stderr, "Usage: ./dcc [OPTIONS] input_file"
-                                "\n Options:"
-                                "\n   -h              show usage"
-                                "\n   -o output_file  specify output file"
-                                "\n   -S              output assembly only"
-                                "\n   -V              debug mode"
-                                "\n   -v              print version information\n");
+                print_usage();
                 exit(0);
             case 'v':
                 fprintf(stderr, "---- dcc - a C compiler ----"
@@ -68,8 +73,9 @@ static void get_options(int argc, char** argv) {
             case 'o':
                 opt.out_file = optarg;
                 break;
-            case '?':;
-                RED_ERROR("Unknown option '%c'", optopt);
+            case '?':
+                print_usage();
+                RED_ERROR("\nUnknown option '%c'", optopt);
             default:
                 die("unreachable");
         }
