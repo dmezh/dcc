@@ -207,6 +207,6 @@ int main(int argc, char** argv) {
     fclose(tmp);
 }
 
-void parse_done_cb(BBL* root) {
+void parse_done_cb(const BBL* root) {
     asmgen(root, tmp);
 }

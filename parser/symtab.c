@@ -44,7 +44,7 @@ st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context
     symtab *fn_scope = current_scope;
     st_pop_scope();
 
-    char* name = fd.decl->astn_ident.ident;
+    const char* name = fd.decl->astn_ident.ident;
     st_entry *n = st_lookup_ns(name, NS_MISC);
     if (n && n->entry_type == STE_FN && n->fn_defined) {
         if (!block) return n; // ignore redecl
@@ -85,7 +85,7 @@ st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context
 /*
  *  Declare (optionally permissively) a struct in the current scope without defining.
  */
-st_entry *st_declare_struct(char* ident, bool strict, YYLTYPE context) {
+st_entry *st_declare_struct(const char* ident, bool strict, YYLTYPE context) {
     st_entry *n = st_lookup(ident, NS_TAGS);
     if (n) {
         if (strict && n->members) {
@@ -118,7 +118,7 @@ st_entry *st_declare_struct(char* ident, bool strict, YYLTYPE context) {
  *
  *  Note: changes would need to be made to support unnamed structs.
  */
-st_entry* st_define_struct(char *ident, astn *decl_list,
+st_entry* st_define_struct(const char *ident, astn *decl_list,
                            YYLTYPE name_context, YYLTYPE closebrace_context, YYLTYPE openbrace_context) {
     st_entry *strunion;
     strunion = st_declare_struct(ident, true, name_context); // strict bc we're about to define!
@@ -270,7 +270,7 @@ st_entry* begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
 /* 
  *  Just allocate; we're not checking any kind of context for redeclarations, etc
  */
-st_entry* stentry_alloc(char *ident) {
+st_entry* stentry_alloc(const char *ident) {
     st_entry *n = safe_calloc(1, sizeof(st_entry));
     n->type = astn_alloc(ASTN_TYPE);
     n->ident = ident;
@@ -303,7 +303,7 @@ st_entry* st_lookup_ns(const char* ident, enum namespaces ns) {
 /*
  *  Fully-qualified lookup; give me symtab to check and namespace
  */
-st_entry* st_lookup_fq(const char* ident, symtab* s, enum namespaces ns) {
+st_entry* st_lookup_fq(const char* ident, const symtab* s, enum namespaces ns) {
     st_entry* cur = s->first;
     while (cur) {
         if (cur->ns == ns && !strcmp(ident, cur->ident))

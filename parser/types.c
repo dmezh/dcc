@@ -32,7 +32,7 @@ const char* der_types_str[] = {
 // sizeof!
 // currently, array sizes are hardcoded to only support regular numbers,
 // we need a bit more machinery, specifically a function to evaluate compile-time constants.
-int get_sizeof(astn* type) {
+int get_sizeof(const astn* type) {
     //printf("getting size of:\n");
     //print_ast(type);
     if (type->type == ASTN_SYMPTR) return (get_sizeof(type->astn_symptr.e->type));
@@ -54,7 +54,7 @@ int get_sizeof(astn* type) {
 
 // get the first target of an array
 // please only call this from the grammar for array_subscript, as it makes assumptions!
-astn *descend_array(astn *type) {
+astn *descend_array(const astn *type) {
     //printf("dumping TYPE in start\n"); print_ast(type);
     if (type->type == ASTN_SYMPTR) return descend_array(type->astn_symptr.e->type);
     if (type->type == ASTN_UNOP && type->astn_unop.op == '*') {

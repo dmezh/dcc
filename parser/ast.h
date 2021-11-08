@@ -60,7 +60,7 @@ struct astn_num {
 };
 
 struct astn_ident {
-    char* ident;
+    const char* ident;
 };
 
 struct astn_strlit {
@@ -270,8 +270,8 @@ astn *list_alloc(astn* me);
 astn *list_append(astn *new, astn *head);
 
 astn *list_alloc(astn* me);
-astn *list_next(astn* cur);
-astn *list_data(astn* n);
+astn *list_next(const astn* cur);
+astn *list_data(const astn* n);
 void list_reverse(astn **l);
 unsigned list_measure(const astn *head);
 

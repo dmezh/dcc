@@ -80,14 +80,14 @@ astn *list_append(astn* new, astn *head) {
 /*
  *  get next node of list
  */
-astn *list_next(astn* cur) {
+astn *list_next(const astn* cur) {
     return cur->astn_list.next;
 }
 
 /*
  *  get current data element
  */
-astn *list_data(astn* n) {
+astn *list_data(const astn* n) {
     return n->astn_list.me;
 }
 

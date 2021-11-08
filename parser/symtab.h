@@ -72,7 +72,7 @@ typedef struct st_entry {
     astn* body;
     bool fn_defined;
 
-    char *ident;
+    const char *ident;
     enum namespaces ns;
     enum st_linkage linkage;
     struct astn *type;
@@ -131,16 +131,16 @@ void st_reserve_stack(st_entry* e);
 
 st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context);
 
-st_entry *st_declare_struct(char* ident, bool strict,  YYLTYPE context);
-st_entry *st_define_struct(char *ident, astn *decl_list,
+st_entry *st_declare_struct(const char* ident, bool strict,  YYLTYPE context);
+st_entry *st_define_struct(const char *ident, astn *decl_list,
                            YYLTYPE name_context, YYLTYPE closebrace_context, YYLTYPE openbrace_context);
 
 st_entry* begin_st_entry(astn *decl, enum namespaces ns,  YYLTYPE context);
-st_entry* stentry_alloc(char *ident);
+st_entry* stentry_alloc(const char *ident);
 
 st_entry* st_lookup(const char* ident, enum namespaces ns);
 st_entry* st_lookup_ns(const char* ident, enum namespaces ns);
-st_entry* st_lookup_fq(const char* ident, symtab* s, enum namespaces ns);
+st_entry* st_lookup_fq(const char* ident, const symtab* s, enum namespaces ns);
 
 bool st_insert_given(st_entry *new);
 

@@ -19,9 +19,9 @@ typedef struct adir {
     int c;
 } adir;
 
-void e_cbr(char *op, quad* q);
-void e_bba(astn *n);
-void e_bb(BB* b);
-void asmgen(BBL* bbl, FILE* out);
+void e_cbr(const char *op, quad* q);
+void e_bba(const astn *n);
+void e_bb(const BB* b);
+void asmgen(const BBL* bbl, FILE* out);
 
 #endif

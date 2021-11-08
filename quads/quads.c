@@ -76,7 +76,7 @@ astn* check_ptr_binop(astn* n) {
 }
 */
 
-void quad_error(char* msg) {
+void quad_error(const char* msg) {
     fprintf(stderr, "quad generation error: %s\n", msg);
     exit(-1);
 }

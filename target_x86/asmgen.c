@@ -24,14 +24,6 @@ const unsigned stack_align = 16; // desired stack alignment
     fprintf(out, "\n"); \
 } while (0);
 
-long get_num(astn *n) {
-    return (long)n->astn_num.number.integer;
-}
-
-char* g_id(astn *n) {
-    return n->astn_ident.ident;
-}
-
 void all2XXX(astn *n, char* r) {
     switch (n->type) {
         case ASTN_SYMPTR: ; // empty stmt
@@ -236,7 +228,7 @@ void asmgen_q(quad* q) {
     }
 }
 
-void e_cbr(char *op, quad* q) {
+void e_cbr(const char *op, quad* q) {
     fprintf(out, "\t\t%s\t", op);
     e_bba(q->src1);
     // uncond jump afterwards for the false branch, could be optimized
@@ -244,10 +236,10 @@ void e_cbr(char *op, quad* q) {
     e_bba(q->src2);
     fprintf(out, "\n");
 }
-void e_bba(astn *n) { e_bb(n->astn_qbbno.bb); }
-void e_bb(BB* b) { fprintf(out, "BB.%s.%d", b->fn, b->bbno); }
+void e_bba(const astn *n) { e_bb(n->astn_qbbno.bb); }
+void e_bb(const BB* b) { fprintf(out, "BB.%s.%d", b->fn, b->bbno); }
 
-void asmgen(BBL* head, FILE* f) {
+void asmgen(const BBL* head, FILE* f) {
     // init output file
     out = f;
     fprintf(out, "# ASM OUTPUT\n# compiled poorly :)\n\n");
@@ -270,7 +262,7 @@ void asmgen(BBL* head, FILE* f) {
         e = e->next;
     }
 
-    BBL *bbl = head;
+    const BBL *bbl = head;
     if (bbl == &bb_root) bbl = bbl_next(bbl);
     while (bbl) {
         BB* bb = bbl_data(bbl);

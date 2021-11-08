@@ -61,7 +61,7 @@ typedef struct BB {
     quad *start, *cur;
 
     unsigned bbno;
-    char* fn;
+    const char* fn;
     unsigned stack_offset_ez;
 } BB;
 

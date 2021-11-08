@@ -29,11 +29,11 @@ BB* bb_alloc() {
     return n;
 }
 
-BBL* bbl_next(BBL* cur) {
+BBL* bbl_next(const BBL* cur) {
     return cur->next;
 }
 
-BB* bbl_data(BBL* n) {
+BB* bbl_data(const BBL* n) {
     return n->me;
 }
 
@@ -47,7 +47,6 @@ void bbl_append(BB* bb) {
     head->next = new;
     return;
 }
-
 
 static astn* wrap_bb(BB* bb) {
     astn *n = astn_alloc(ASTN_QBBNO);
@@ -100,7 +99,7 @@ void gen_condexpr(astn *cond, BB* Bt, BB* Bf) {
     }
 }
 
-void emit_branch (int op, BB* Bt, BB* Bf) {
+void emit_branch(int op, BB* Bt, BB* Bf) {
     switch (op) {
                 case '<':
                     //printf("detected LT\n");
