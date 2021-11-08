@@ -41,7 +41,7 @@ static struct opt {
 
 static void print_usage_additional() {
     fprintf(stderr,
-        "\n Pramas:"
+        "\n Pragmas:"
         "\n  Setting debug level:"
         "\n   #pragma dbg-info          set debug level going forward to INFO"
         "\n   #pragma dbg-verbose       set debug level going forward to VERBOSE"
