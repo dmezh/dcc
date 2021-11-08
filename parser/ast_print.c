@@ -132,7 +132,7 @@ void print_ast(const astn *n) {
             if (n->astn_typespec.is_tagtype) {
                 tabs++;
                     print_ast(NULL);
-                    st_dump_single(n->astn_typespec.symbol->members);
+                    st_dump_single_given(n->astn_typespec.symbol->members);
                 tabs--;
             } else {
                 switch (n->astn_typespec.spec) {

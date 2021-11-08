@@ -5,8 +5,6 @@
 #include "ast_print.h"
 #include "symtab.h"
 
-static void st_dump_single_given(const symtab* s);
-
 static const char* scope_types_str[] = {
     [SCOPE_MINI] = "MINI",
     [SCOPE_FILE] = "GLOBAL",
@@ -36,11 +34,10 @@ static const char* linkage_str[] = {
     [L_EXTERNAL] = "EXTERNAL"
 };
 
-
 /*
- *  Dump a single symbol table (the current_scope) with basic list
+ *  Dump current scope's symbol table
  */
-void st_dump_single() {
+void st_dump_current() {
     st_dump_single_given(current_scope);
 }
 
@@ -73,6 +70,27 @@ void st_dump_entry(const st_entry* e) {
     }
     fprintf(stderr, "STACK: %d", e->stack_offset);
     fprintf(stderr, "\n");
+}
+
+// kind of fake at the moment
+void st_dump_recursive() {
+    fprintf(stderr, "_- symtab dump for translation unit: -_\n");
+    const st_entry *e = current_scope->first;
+    while (e) {
+        st_dump_entry(e);
+        st_examine_given(e);
+        fprintf(stderr, "\n");
+        e = e->next;
+    }
+}
+
+void st_dump_single_given(const symtab* s) {
+    //printf("Dumping symbol table!\n");
+    const st_entry* cur = s->first;
+    while (cur) {
+        st_dump_entry(cur);
+        cur = cur->next;
+    }
 }
 
 /*
@@ -157,25 +175,4 @@ void st_examine_member(const char* tag, const char* child) {
     st_dump_entry(m);
     print_ast(m->type);
     return;
-}
-
-// kind of fake at the moment
-void st_dump_recursive() {
-    fprintf(stderr, "_- symtab dump for translation unit: -_\n");
-    const st_entry *e = current_scope->first;
-    while (e) {
-        st_dump_entry(e);
-        st_examine_given(e);
-        fprintf(stderr, "\n");
-        e = e->next;
-    }
-}
-
-static void st_dump_single_given(const symtab* s) {
-    //printf("Dumping symbol table!\n");
-    const st_entry* cur = s->first;
-    while (cur) {
-        st_dump_entry(cur);
-        cur = cur->next;
-    }
 }

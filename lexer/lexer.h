@@ -7,7 +7,7 @@
 
 #define FRIENDLYFN context.filename ? context.filename : "<stdin>"
 
-int yylex();
+int yylex(void);
 void print_context(bool warn);
 
 struct context {

@@ -198,7 +198,7 @@ internal:                           // sometimes you really do want to murder th
     _PERISH                     {   die("You asked me to die!");    }
 |   _EXAMINE ident              {   st_examine($2->astn_ident.ident);  }
 |   _EXAMINE ident INDSEL ident {   st_examine_member($2->astn_ident.ident, $4->astn_ident.ident);  }
-|   _DUMPSYMTAB                 {   printf("dumping current scope: "); st_dump_single();  }
+|   _DUMPSYMTAB                 {   printf("dumping current scope: "); st_dump_current();  }
 |   debug
 ;
 
