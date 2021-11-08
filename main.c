@@ -39,14 +39,36 @@ static struct opt {
     .out_file = NULL,
 };
 
+static void print_usage_additional() {
+    fprintf(stderr,
+        "\n Pramas:"
+        "\n  Setting debug level:"
+        "\n   #pragma dbg-info          set debug level going forward to INFO"
+        "\n   #pragma dbg-verbose       set debug level going forward to VERBOSE"
+        "\n   #pragma dbg-debug         set debug level going forward to DEBUG"
+        "\n   #pragma dbg-none          set debug level going forward to NONE"
+        "\n"
+        "\n  Manual actions:"
+        "\n   #pragma do-dumpsymtab     dump symbol table"
+        "\n   #pragma do-examine var    examine identifier 'var'"
+        "\n   #pragma do-perish         crash the compiler now"
+        "\n");
+}
+
 static void print_usage() {
     fprintf(stderr, "Usage: ./dcc [OPTIONS] input_file"
         "\n Options:"
-        "\n   -h              show usage"
+        "\n   -h              show extended usage"
         "\n   -o output_file  specify output file"
         "\n   -S              output assembly only"
-        "\n   -V              debug mode"
-        "\n   -v              print version information\n");
+        "\n   -v              debug mode:"
+        "\n                         -v: enable INFO messages"
+        "\n                        -vv: enable VERBOSE messages"
+        "\n                       -vvv: enable DEBUG messages"
+        "\n"
+        "\n                     Note that this overrides any in-source directives."
+        "\n   -V              print version information"
+        "\n");
 }
 
 static void get_options(int argc, char** argv) {
@@ -56,16 +78,17 @@ static void get_options(int argc, char** argv) {
         switch (a) {
             case 'h':
                 print_usage();
+                print_usage_additional();
                 exit(0);
-            case 'v':
+            case 'V':
                 fprintf(stderr, "---- dcc - a C compiler ----"
                                 "\n dcc " DCC_VERSION
                                 "\n architecture: " DCC_ARCHITECTURE "\n"
                                 "\n author: Dan Mezhiborsky"
                                 "\n home: https://github.com/dmezh/dcc\n");
                 exit(0);
-            case 'V':
-                opt.debug = true;
+            case 'v':;
+                opt.debug = 1;
                 break;
             case 'S':
                 opt.asm_out = true;
@@ -170,7 +193,7 @@ int main(int argc, char** argv) {
     // keep the assembly output in a tmpfile
     tmp = new_tmpfile();
 
-    yydebug = opt.debug;
+    yydebug = 0;
     if (yyparse()) // <- entry to the rest of the compiler
         RED_ERROR("");
 

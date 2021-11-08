@@ -56,6 +56,15 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
                             BEGIN(INITIAL);
                         }
 
+    /* Internal actions */
+"#pragma dbg-info"      { return SET_DEBUG_INFO;    }
+"#pragma dbg-verbose"   { return SET_DEBUG_VERBOSE; }
+"#pragma dbg-debug"     { return SET_DEBUG_DEBUG;   }
+"#pragma dbg-none"      { return SET_DEBUG_NONE;    }
+"#pragma do-perish"     { return _PERISH;   }
+"#pragma do-examine"    { return _EXAMINE;  }
+"#pragma do-dumpsymtab" { return _DUMPSYMTAB; }
+
 "auto"          { return AUTO;      }
 "break"         { return BREAK;     }
 "case"          { return CASE;      }
@@ -94,10 +103,6 @@ PUNCT   [\[\]\(\)\{\}\.\&\*\+\-\~\!\/\%\<\>\^\|\?\:\;\=\,\#]
 "_Complex"      { return _COMPLEX;  }
 "_Imaginary"    { return _IMAGINARY;}
 
-    /* Internal actions */
-"_perish"       { return _PERISH;   }
-"_examine"      { return _EXAMINE;  }
-"_dumpsymtab"   { return _DUMPSYMTAB; }
     /* in the order they appear in ISO 6.4.6 */
 ->              { return INDSEL;    }
 \+\+            { return PLUSPLUS;  }

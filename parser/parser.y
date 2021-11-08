@@ -53,6 +53,7 @@
 %token FLOAT FOR GOTO INLINE INT LONG REGISTER RESTRICT RETURN SHORT SIGNED SIZEOF
 %token STATIC STRUCT SWITCH TYPEDEF UNION UNSIGNED VOID VOLATILE WHILE _BOOL _COMPLEX _IMAGINARY
 %token _PERISH _EXAMINE _DUMPSYMTAB IF
+%token SET_DEBUG_INFO SET_DEBUG_VERBOSE SET_DEBUG_DEBUG SET_DEBUG_NONE
 
 %nonassoc THEN
 %nonassoc ELSE
@@ -103,7 +104,7 @@ translation_unit:
 external_decln:                             // kludge ish for structs/unions
     decln                               {   if($1->type == ASTN_DECL) $$=begin_st_entry($1, NS_MISC, $1->astn_decl.context);     }
 |   fn_def                              {   gen_fn($1);  }
-|   internal ';'                        {   $$=(st_entry*)NULL;   }
+|   internal                            {   $$=(st_entry*)NULL;   }
 ;
 
 fn_def:
@@ -117,13 +118,15 @@ compound_statement:
 
 block_item_list_maybe_empty:
     block_item_list
-|   %empty                          {   $$=list_alloc(NULL);    }
+|   internal         {   $$=list_alloc(NULL);    }
+|   %empty           {   $$=list_alloc(NULL);    }
+;
 
 // just don't call an internal right at the start; it won't work
 block_item_list:
     block_item                      {   $$=list_alloc($1);  }
 |   block_item_list block_item      {   $$=list_append($2, $1); $$=$1; }
-|   block_item_list internal ';'    {   $$=$1;  }
+|   block_item_list internal        {   $$=$1;  }
 ;
 
 block_item:
@@ -196,6 +199,14 @@ internal:                           // sometimes you really do want to murder th
 |   _EXAMINE ident              {   st_examine($2->astn_ident.ident);  }
 |   _EXAMINE ident INDSEL ident {   st_examine_member($2->astn_ident.ident, $4->astn_ident.ident);  }
 |   _DUMPSYMTAB                 {   printf("dumping current scope: "); st_dump_single();  }
+|   debug
+;
+
+debug:
+    SET_DEBUG_INFO              {   fprintf(stderr, "SETTING DEBUG INFO\n");    }
+    SET_DEBUG_VERBOSE           {   }
+    SET_DEBUG_DEBUG             {   }
+    SET_DEBUG_NONE              {   }
 ;
 
 // ----------------------------------------------------------------------------
