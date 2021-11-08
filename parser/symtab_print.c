@@ -5,7 +5,7 @@
 #include "ast_print.h"
 #include "symtab.h"
 
-static void st_dump_single_given(symtab* s);
+static void st_dump_single_given(const symtab* s);
 
 static const char* scope_types_str[] = {
     [SCOPE_MINI] = "MINI",
@@ -79,7 +79,7 @@ void st_dump_entry(const st_entry* e) {
  *  Output in-depth info for given st_entry based on entry_type.
  *  Call st_dump_entry() first if you want to get the symbol info line.
  */
-void st_examine_given(st_entry* e) {
+void st_examine_given(const st_entry* e) {
     if (e->entry_type == STE_FN) {
         fprintf(stderr, "FUNCTION RETURNING:\n");
         print_ast(e->type);
@@ -113,10 +113,10 @@ void st_examine_given(st_entry* e) {
 /*
  *  Search for an ident across all the namespaces and output st_entry info.
  */
-void st_examine(char* ident) {
+void st_examine(const char* ident) {
     st_entry *e;
     int count = 0;       // yeah, weird way of getting the enum size
-    for (unsigned i=0; i<sizeof(namespaces_str)/sizeof(char*); i++) {
+    for (unsigned i=0; i<sizeof(namespaces_str)/sizeof(namespaces_str[0]); i++) {
         if ((e = st_lookup(ident, i))) {
             count++;
             printf("> found <%s>, here is the entry (and type if applicable):\n", ident);
@@ -134,7 +134,7 @@ void st_examine(char* ident) {
 /*
  *  Search for a member of a tag and output st_entry info.
  */
-void st_examine_member(char* tag, char* child) {
+void st_examine_member(const char* tag, const char* child) {
     st_entry *e = st_lookup(tag, NS_TAGS);
     if (!e) {
         printf("> I was not able to find tag <%s>.\n\n", tag);
@@ -171,7 +171,7 @@ void st_dump_recursive() {
     }
 }
 
-static void st_dump_single_given(symtab* s) {
+static void st_dump_single_given(const symtab* s) {
     //printf("Dumping symbol table!\n");
     st_entry* cur = s->first;
     while (cur) {

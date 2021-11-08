@@ -58,7 +58,7 @@ void print_node(const astn* qn, FILE* f) {
     }
 }
 
-void print_quad(quad* q, FILE* f) {
+void print_quad(const quad* q, FILE* f) {
     if (q->target) {
         print_node(q->target, f);
         fprintf(f, " = ");
