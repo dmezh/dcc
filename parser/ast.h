@@ -224,39 +224,43 @@ struct astn_qbbno {
     struct BB* bb;
 };
 
+// uppercase member names are a style decision; they're clear and they also
+// allow us to have members like .Sizeof, .Return, etc without clobbering
+// the names to avoid conflicting with keywords.
+
 typedef struct astn {
     enum astn_types type;
     union {
-        struct astn_assign astn_assign;
-        struct astn_num astn_num;
-        struct astn_ident astn_ident;
-        struct astn_strlit astn_strlit;
-        struct astn_binop astn_binop;
-        struct astn_fncall astn_fncall;
-        struct astn_select astn_select;
-        struct astn_unop astn_unop;
-        struct astn_sizeof astn_sizeof;
-        struct astn_tern astn_tern;
-        struct astn_list astn_list;
-        struct astn_typespec astn_typespec;
-        struct astn_typequal astn_typequal;
-        struct astn_storspec astn_storspec;
-        struct astn_type astn_type;
-        struct astn_decl astn_decl;
-        struct astn_fndef astn_fndef;
-        struct astn_compoundstmt astn_compoundstmt;
-        struct astn_declrec astn_declrec;
-        struct astn_symptr astn_symptr;
-        struct astn_ifelse astn_ifelse;
-        struct astn_switch astn_switch;
-        struct astn_whileloop astn_whileloop;
-        struct astn_forloop astn_forloop;
-        struct astn_goto astn_goto;
-        struct astn_return astn_return;
-        struct astn_label astn_label;
-        struct astn_case astn_case;
-        struct astn_qtemp astn_qtemp;
-        struct astn_qbbno astn_qbbno;
+        struct astn_assign Assign;
+        struct astn_num Num;
+        struct astn_ident Ident;
+        struct astn_strlit Strlit;
+        struct astn_binop Binop;
+        struct astn_fncall Fncall;
+        struct astn_select Select;
+        struct astn_unop Unop;
+        struct astn_sizeof Sizeof;
+        struct astn_tern Tern;
+        struct astn_list List;
+        struct astn_typespec Typespec;
+        struct astn_typequal Typequal;
+        struct astn_storspec Storspec;
+        struct astn_type Type;
+        struct astn_decl Decl;
+        struct astn_fndef Fndef;
+        struct astn_compoundstmt Compoundstmt;
+        struct astn_declrec Declrec;
+        struct astn_symptr Symptr;
+        struct astn_ifelse Ifelse;
+        struct astn_switch Switch;
+        struct astn_whileloop Whileloop;
+        struct astn_forloop Forloop;
+        struct astn_goto Goto;
+        struct astn_return Return;
+        struct astn_label Label;
+        struct astn_case Case;
+        struct astn_qtemp Qtemp;
+        struct astn_qbbno Qbbno;
     };
 } astn;
 

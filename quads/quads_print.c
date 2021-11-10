@@ -42,18 +42,18 @@ char* quad_op_str[] = {
 
 void print_node(const astn* qn, FILE* f) {
     switch (qn->type) {
-        case ASTN_SYMPTR:   fprintf(f, "%s", qn->astn_symptr.e->ident); return;
-        case ASTN_NUM:      print_number(&qn->astn_num.number, f); return;
+        case ASTN_SYMPTR:   fprintf(f, "%s", qn->Symptr.e->ident); return;
+        case ASTN_NUM:      print_number(&qn->Num.number, f); return;
         case ASTN_STRLIT:   
             fprintf(f, "(strlit)\"");
-            for (size_t i=0; i<qn->astn_strlit.strlit.len; i++) {
-                emit_char(qn->astn_strlit.strlit.str[i], f);
+            for (size_t i=0; i<qn->Strlit.strlit.len; i++) {
+                emit_char(qn->Strlit.strlit.str[i], f);
             }
             fprintf(f, "\"");
             return;
-        case ASTN_QTEMP:    fprintf(f, "%%T%05d.%d", qn->astn_qtemp.tempno, qn->astn_qtemp.stack_offset); return;
-        case ASTN_QBBNO:    fprintf(f, "BB.%s.%d", qn->astn_qbbno.bb->fn, qn->astn_qbbno.bb->bbno); return;
-        case ASTN_IDENT:    fprintf(f, "%s", qn->astn_ident.ident); return;
+        case ASTN_QTEMP:    fprintf(f, "%%T%05d.%d", qn->Qtemp.tempno, qn->Qtemp.stack_offset); return;
+        case ASTN_QBBNO:    fprintf(f, "BB.%s.%d", qn->Qbbno.bb->fn, qn->Qbbno.bb->bbno); return;
+        case ASTN_IDENT:    fprintf(f, "%s", qn->Ident.ident); return;
         default: fprintf(stderr, "couldnt't handle node %d\n", qn->type); die("eh");
     }
 }

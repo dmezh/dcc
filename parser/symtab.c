@@ -32,19 +32,19 @@ symtab *current_scope = &root_symtab;
 
 // currently doesn't support actually defining already-declared functions
 st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context) {
-    astn* decl_type = get_dtypechain_target(fndef->astn_decl.type);
+    astn* decl_type = get_dtypechain_target(fndef->Decl.type);
 
     if (decl_type->type != ASTN_FNDEF) {
         fprintf(stderr, "Error near %s:%d: invalid declaration\n", openbrace_context.filename, openbrace_context.lineno);
         exit(-5);
     }
 
-    struct astn_fndef fd = decl_type->astn_fndef;
+    struct astn_fndef fd = decl_type->Fndef;
 
     symtab *fn_scope = current_scope;
     st_pop_scope();
 
-    const char* name = fd.decl->astn_ident.ident;
+    const char* name = fd.decl->Ident.ident;
     st_entry *n = st_lookup_ns(name, NS_MISC);
     if (n && n->entry_type == STE_FN && n->fn_defined) {
         if (!block) return n; // ignore redecl
@@ -53,12 +53,12 @@ st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context
     }
 
     // following actions leak an astn_fndef
-    if (fndef->astn_decl.type->type == ASTN_TYPE) // necessarily a derived type
-        reset_dtypechain_target(fndef->astn_decl.type, fd.decl);
+    if (fndef->Decl.type->type == ASTN_TYPE) // necessarily a derived type
+        reset_dtypechain_target(fndef->Decl.type, fd.decl);
     else
-        fndef->astn_decl.type = fndef->astn_decl.type->astn_fndef.decl;
+        fndef->Decl.type = fndef->Decl.type->Fndef.decl;
 
-    st_entry *fn = n ? n : begin_st_entry(fndef, NS_MISC, fndef->astn_decl.context);
+    st_entry *fn = n ? n : begin_st_entry(fndef, NS_MISC, fndef->Decl.context);
 
     //printf("back from install honey\n");
     astn* p = fd.param_list;
@@ -128,7 +128,7 @@ st_entry* st_define_struct(const char *ident, astn *decl_list,
     strunion->members = current_scope; // mini-scope
     st_entry *member;
     while (decl_list) {
-        member = begin_st_entry(list_data(decl_list), NS_MEMBERS, list_data(decl_list)->astn_decl.context);
+        member = begin_st_entry(list_data(decl_list), NS_MEMBERS, list_data(decl_list)->Decl.context);
         member->linkage = L_NONE;
         member->storspec = SS_NONE;
         decl_list = list_next(decl_list);
@@ -157,7 +157,7 @@ symtab* st_parent_function() {
 static void st_check_linkage(st_entry* e) {
     if (e->scope == &root_symtab) {
         if (e->storspec == SS_UNDEF) { // plain declaration in global scope
-            if (e->type->astn_type.is_const)// top level type
+            if (e->type->Type.is_const)// top level type
                 e->linkage = L_INTERNAL;
             else
                 e->linkage = L_EXTERNAL;
@@ -177,7 +177,7 @@ static void st_check_linkage(st_entry* e) {
 void st_reserve_stack(st_entry* e) {
     if (e->storspec == SS_AUTO) {
         int size;
-        if (e->type->astn_type.is_derived && e->type->astn_type.derived.type == t_ARRAY) { // only diff size for arrays
+        if (e->type->Type.is_derived && e->type->Type.derived.type == t_ARRAY) { // only diff size for arrays
             size = get_sizeof(e->type);
             //fprintf(stderr, "got arr size %d\n", size);
         } else size = 4;
@@ -207,21 +207,21 @@ st_entry* begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
     if (decl->type != ASTN_DECL)
         die("Invalid astn for begin_st_entry() (astn_decl was expected)");
 
-    astn *spec = decl->astn_decl.specs;
-    astn *decl_list = decl->astn_decl.type;
+    astn *spec = decl->Decl.specs;
+    astn *decl_list = decl->Decl.type;
 
     st_entry *new;
-    if (decl->astn_decl.type->type == ASTN_FNDEF) { // GIGA kludge for function declarations
+    if (decl->Decl.type->type == ASTN_FNDEF) { // GIGA kludge for function declarations
         st_entry *newfn = st_define_function(decl, NULL, context);
         newfn->fn_defined = false;
         newfn->def_context = (YYLTYPE){NULL, 0}; // it's not defined
         return newfn;
     }
 
-    new = stentry_alloc(get_dtypechain_target(decl_list)->astn_ident.ident);
+    new = stentry_alloc(get_dtypechain_target(decl_list)->Ident.ident);
     new->ns = ns;
 
-    struct astn_type *t = &new->type->astn_type;
+    struct astn_type *t = &new->type->Type;
     new->storspec = describe_type(spec, t);
 
     new->decl_context = context;
@@ -237,7 +237,7 @@ st_entry* begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
     st_check_linkage(new);
 
     reset_dtypechain_target(decl_list, new->type); // end of chain is now the type instead of ident
-    if (decl_list->type == ASTN_TYPE && decl_list->astn_type.is_derived) { // ALLOCATE HERE?
+    if (decl_list->type == ASTN_TYPE && decl_list->Type.is_derived) { // ALLOCATE HERE?
         new->type = decl_list; // because otherwise it's just an IDENT
     }
 

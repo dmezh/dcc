@@ -35,19 +35,19 @@ const char* der_types_str[] = {
 int get_sizeof(const astn* type) {
     //printf("getting size of:\n");
     //print_ast(type);
-    if (type->type == ASTN_SYMPTR) return (get_sizeof(type->astn_symptr.e->type));
+    if (type->type == ASTN_SYMPTR) return (get_sizeof(type->Symptr.e->type));
     if (type->type != ASTN_TYPE) die("sizeof was given an non-type astn");
-    if (!type->astn_type.is_derived)
-        return target_size[type->astn_type.scalar.type];
+    if (!type->Type.is_derived)
+        return target_size[type->Type.scalar.type];
     else {
-        if (type->astn_type.derived.type == t_PTR) {
+        if (type->Type.derived.type == t_PTR) {
             return target_size[t_PTR];
         }
         else {
-            if (type->astn_type.derived.size->type != ASTN_NUM) {
+            if (type->Type.derived.size->type != ASTN_NUM) {
                 fprintf(stderr, "Sorry, can't yet evaluate compile-time constants other than plain numbers\n");
             }
-            return type->astn_type.derived.size->astn_num.number.integer * get_sizeof(type->astn_type.derived.target);
+            return type->Type.derived.size->Num.number.integer * get_sizeof(type->Type.derived.target);
         }
     }
 }
@@ -56,14 +56,14 @@ int get_sizeof(const astn* type) {
 // please only call this from the grammar for array_subscript, as it makes assumptions!
 astn *descend_array(const astn *type) {
     //printf("dumping TYPE in start\n"); print_ast(type);
-    if (type->type == ASTN_SYMPTR) return descend_array(type->astn_symptr.e->type);
-    if (type->type == ASTN_UNOP && type->astn_unop.op == '*') {
-        type = type->astn_unop.target->astn_binop.left->astn_symptr.e->type->astn_type.derived.target;
+    if (type->type == ASTN_SYMPTR) return descend_array(type->Symptr.e->type);
+    if (type->type == ASTN_UNOP && type->Unop.op == '*') {
+        type = type->Unop.target->Binop.left->Symptr.e->type->Type.derived.target;
     }
     if (type->type == ASTN_TYPE) {
-        if (!type->astn_type.is_derived || type->astn_type.derived.type != t_ARRAY)
+        if (!type->Type.is_derived || type->Type.derived.type != t_ARRAY)
             die("Passed a non-array to array-specific function");
-        return type->astn_type.derived.target;
+        return type->Type.derived.target;
     }
     die("Passed invalid astn to descend_array");
     return NULL;
@@ -84,15 +84,15 @@ enum storspec describe_type(astn *spec, struct astn_type *t) {
 
     while (spec) { // we'll do more validation later of the typespecs later
         if (spec->type == ASTN_TYPESPEC) {
-            if (spec->astn_typespec.is_tagtype) {
+            if (spec->Typespec.is_tagtype) {
                 t->is_tagtype = true;
-                t->tagtype.symbol = spec->astn_typespec.symbol;
+                t->tagtype.symbol = spec->Typespec.symbol;
                 astn *old = spec;
-                spec = spec->astn_typespec.next;
+                spec = spec->Typespec.next;
                 free(old);
                 tagtypes++;
             } else {
-                switch (spec->astn_typespec.spec) {
+                switch (spec->Typespec.spec) {
                     case TS_VOID:       VOIDs++;        break;
                     case TS_CHAR:       CHARs++;        break;
                     case TS_SHORT:      SHORTs++;       break;
@@ -108,7 +108,7 @@ enum storspec describe_type(astn *spec, struct astn_type *t) {
                 }
                 total_typespecs++;
                 astn* old = spec;
-                spec = spec->astn_typespec.next;
+                spec = spec->Typespec.next;
                 free(old); // maybe a little memory management
             }
         } else if (spec->type == ASTN_TYPEQUAL) { // specifying multiple times is valid
@@ -117,11 +117,11 @@ enum storspec describe_type(astn *spec, struct astn_type *t) {
             if (storspec_set) { // better error handling later
                 st_error("cannot specify more storage class more than once\n");
             }
-            storspec = spec->astn_storspec.spec;
-            //printf("dbg - storspec astn has %d, so %s", spec->astn_storspec.spec, storspec_str[t->scalar.storspec]);
+            storspec = spec->Storspec.spec;
+            //printf("dbg - storspec astn has %d, so %s", spec->Storspec.spec, storspec_str[t->scalar.storspec]);
             storspec_set = true;
             astn* old = spec;
-            spec = spec->astn_storspec.next;
+            spec = spec->Storspec.next;
             free(old);
         } else {
             die("Invalid astn type in spec chain");
@@ -262,14 +262,14 @@ void strict_qualify_type(astn *qual, struct astn_type *t) {
 // qualify a type from a single astn *qual and return the next node
 // destroys qual!
 static astn *qualify_single(astn *qual, struct astn_type *t) {
-    switch (qual->astn_typequal.qual) {
+    switch (qual->Typequal.qual) {
         case TQ_CONST:      t->is_const = true;       break;
         case TQ_RESTRICT:   t->is_restrict = true;    break;
         case TQ_VOLATILE:   t->is_volatile = true;    break;
         default:    die("invalid typequal");
     }
     astn *old = qual;
-    qual = qual->astn_typequal.next;
+    qual = qual->Typequal.next;
     free(old);
     return qual;
 }
