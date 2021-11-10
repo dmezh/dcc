@@ -29,8 +29,8 @@ astn* astn_alloc(enum astn_types type) {
  */
 astn *cassign_alloc(int op, astn *left, astn *right) {
     astn *n=astn_alloc(ASTN_ASSIGN);
-    n->astn_assign.left=left;
-    n->astn_assign.right=binop_alloc(op, left, right);
+    n->Assign.left=left;
+    n->Assign.right=binop_alloc(op, left, right);
     return n;
 }
 
@@ -39,9 +39,9 @@ astn *cassign_alloc(int op, astn *left, astn *right) {
  */
 astn *binop_alloc(int op, astn *left, astn *right) {
     astn *n=astn_alloc(ASTN_BINOP);
-    n->astn_binop.op=op;
-    n->astn_binop.left=left;
-    n->astn_binop.right=right;
+    n->Binop.op=op;
+    n->Binop.left=left;
+    n->Binop.right=right;
     return n;
 }
 
@@ -50,8 +50,8 @@ astn *binop_alloc(int op, astn *left, astn *right) {
  */
 astn *unop_alloc(int op, astn *target) {
     astn *n=astn_alloc(ASTN_UNOP);
-    n->astn_unop.op=op;
-    n->astn_unop.target=target;
+    n->Unop.op=op;
+    n->Unop.target=target;
     return n;
 }
 
@@ -60,8 +60,8 @@ astn *unop_alloc(int op, astn *target) {
  */
 astn *list_alloc(astn *me) {
     astn *l=astn_alloc(ASTN_LIST);
-    l->astn_list.me=me;
-    l->astn_list.next=NULL;
+    l->List.me=me;
+    l->List.next=NULL;
     return l;
 }
 
@@ -72,8 +72,8 @@ astn *list_alloc(astn *me) {
 //              (arg to add)(head of ll)
 astn *list_append(astn* new, astn *head) {
     astn *n=list_alloc(new);
-    while (head->astn_list.next) head=head->astn_list.next;
-    head->astn_list.next = n;
+    while (head->List.next) head=head->List.next;
+    head->List.next = n;
     return n;
 }
 
@@ -81,14 +81,14 @@ astn *list_append(astn* new, astn *head) {
  *  get next node of list
  */
 astn *list_next(const astn* cur) {
-    return cur->astn_list.next;
+    return cur->List.next;
 }
 
 /*
  *  get current data element
  */
 astn *list_data(const astn* n) {
-    return n->astn_list.me;
+    return n->List.me;
 }
 
 // DSA shit
@@ -97,7 +97,7 @@ void list_reverse(astn **l) {
     struct astn *prev=NULL, *current=*l, *next=NULL;
     while (current) {
         next = list_next(current);
-        current->astn_list.next = prev;
+        current->List.next = prev;
         prev = current;
         current = next;
     }
@@ -109,7 +109,7 @@ void list_reverse(astn **l) {
  */
 unsigned list_measure(const astn *head) {
     int c = 0;
-    while ((head=head->astn_list.next)) {
+    while ((head=head->List.next)) {
         c++;
     }
     return c + 1;
@@ -120,8 +120,8 @@ unsigned list_measure(const astn *head) {
  */
 astn *typespec_alloc(enum typespec spec) {
     astn *n=astn_alloc(ASTN_TYPESPEC);
-    n->astn_typespec.spec = spec;
-    n->astn_typespec.next = NULL;
+    n->Typespec.spec = spec;
+    n->Typespec.next = NULL;
     //fprintf(stderr, "ALLOCATED TSPEC\n");
     return n;
 }
@@ -131,8 +131,8 @@ astn *typespec_alloc(enum typespec spec) {
  */
 astn *typequal_alloc(enum typequal qual) {
     astn *n=astn_alloc(ASTN_TYPEQUAL);
-    n->astn_typequal.qual = qual;
-    n->astn_typespec.next = NULL;
+    n->Typequal.qual = qual;
+    n->Typespec.next = NULL;
     return n;
 }
 
@@ -141,8 +141,8 @@ astn *typequal_alloc(enum typequal qual) {
  */
 astn *storspec_alloc(enum storspec spec) {
     astn *n=astn_alloc(ASTN_STORSPEC);
-    n->astn_storspec.spec = spec;
-    n->astn_storspec.next = NULL;
+    n->Storspec.spec = spec;
+    n->Storspec.next = NULL;
     return n;
 }
 
@@ -151,11 +151,11 @@ astn *storspec_alloc(enum storspec spec) {
  */
 astn *dtype_alloc(astn *target, enum der_types type) {
     astn *n=astn_alloc(ASTN_TYPE);
-    n->astn_type.is_derived = true;
-    n->astn_type.derived.type = type;
-    n->astn_type.derived.target = target;
+    n->Type.is_derived = true;
+    n->Type.derived.type = type;
+    n->Type.derived.target = target;
     //fprintf(stderr, "ALLOCATED DTYPE %p OF TYPE %s WITH TARGET %p\n",
-    //        (void*)n, der_types_str[n->astn_type.derived.type], (void*)n->astn_type.derived.target);
+    //        (void*)n, der_types_str[n->Type.derived.type], (void*)n->Type.derived.target);
     return n;
 }
 
@@ -164,10 +164,10 @@ astn *dtype_alloc(astn *target, enum der_types type) {
  */
 astn *decl_alloc(astn *specs, astn *type, astn *init, YYLTYPE context) {
     astn *n=astn_alloc(ASTN_DECL);
-    n->astn_decl.specs=specs;
-    n->astn_decl.type=type;
-    n->astn_decl.context=context;
-    n->astn_decl.init = init;
+    n->Decl.specs=specs;
+    n->Decl.type=type;
+    n->Decl.context=context;
+    n->Decl.init = init;
     return n;
 }
 
@@ -176,55 +176,55 @@ astn *decl_alloc(astn *specs, astn *type, astn *init, YYLTYPE context) {
  */
 astn *strunion_alloc(struct st_entry* symbol) {
     astn *n=astn_alloc(ASTN_TYPESPEC);
-    n->astn_typespec.is_tagtype = true;
-    n->astn_typespec.symbol = symbol;
-    n->astn_typespec.next = NULL;
+    n->Typespec.is_tagtype = true;
+    n->Typespec.symbol = symbol;
+    n->Typespec.next = NULL;
     return n;
 }
 
 astn *fndef_alloc(astn* decl, astn* param_list, symtab* scope) {
     astn *n=astn_alloc(ASTN_FNDEF);
-    n->astn_fndef.decl = decl;
-    n->astn_fndef.param_list = param_list;
-    n->astn_fndef.scope = scope;
+    n->Fndef.decl = decl;
+    n->Fndef.param_list = param_list;
+    n->Fndef.scope = scope;
     return n;
 }
 
 astn *declrec_alloc(st_entry* e, astn* init) {
     astn *n=astn_alloc(ASTN_DECLREC);
-    n->astn_declrec.e = e;
-    n->astn_declrec.init = init;
+    n->Declrec.e = e;
+    n->Declrec.init = init;
     return n;
 }
 
 astn *symptr_alloc(st_entry* e) {
     astn *n=astn_alloc(ASTN_SYMPTR);
-    n->astn_symptr.e = e;
+    n->Symptr.e = e;
     return n;
 }
 
 astn *ifelse_alloc(astn *cond_s, astn *then_s, astn *else_s) {
     astn *n=astn_alloc(ASTN_IFELSE);
-    n->astn_ifelse.condition_s = cond_s;
-    n->astn_ifelse.then_s = then_s;
-    n->astn_ifelse.else_s = else_s;
+    n->Ifelse.condition_s = cond_s;
+    n->Ifelse.then_s = then_s;
+    n->Ifelse.else_s = else_s;
     return n;
 }
 
 astn *whileloop_alloc(astn* cond_s, astn* body_s, bool is_dowhile) {
     astn *n=astn_alloc(ASTN_WHILELOOP);
-    n->astn_whileloop.is_dowhile = is_dowhile;
-    n->astn_whileloop.condition = cond_s;
-    n->astn_whileloop.body = body_s;
+    n->Whileloop.is_dowhile = is_dowhile;
+    n->Whileloop.condition = cond_s;
+    n->Whileloop.body = body_s;
     return n;
 }
 
 astn *forloop_alloc(astn *init, astn* condition, astn* oneach, astn* body) {
     astn *n=astn_alloc(ASTN_FORLOOP);
-    n->astn_forloop.init = init;
-    n->astn_forloop.condition = condition;
-    n->astn_forloop.oneach = oneach;
-    n->astn_forloop.body = body;
+    n->Forloop.init = init;
+    n->Forloop.condition = condition;
+    n->Forloop.oneach = oneach;
+    n->Forloop.body = body;
     return n;
 }
 
@@ -232,8 +232,8 @@ astn *forloop_alloc(astn *init, astn* condition, astn* oneach, astn* body) {
 astn *do_decl(astn *decl) {
     astn *n = NULL;
     if (decl->type == ASTN_DECL) {
-        n = declrec_alloc(begin_st_entry(decl, NS_MISC, decl->astn_decl.context), decl->astn_decl.init);
-        st_reserve_stack(n->astn_declrec.e);
+        n = declrec_alloc(begin_st_entry(decl, NS_MISC, decl->Decl.context), decl->Decl.init);
+        st_reserve_stack(n->Declrec.e);
     }
     return n;
 }
@@ -243,11 +243,11 @@ astn *do_decl(astn *decl) {
  * (ptr to)->(array of)->...->target
  */
 void set_dtypechain_target(astn *top, astn *target) {
-    while (top->astn_type.derived.target) {
-        top = top->astn_type.derived.target;
+    while (top->Type.derived.target) {
+        top = top->Type.derived.target;
     }
     //ffprintf(stderr, stderr, "setting target to %p, I arrived at %p\n", (void*)target, (void*)top);
-    top->astn_type.derived.target = target;
+    top->Type.derived.target = target;
 }
 
 /*
@@ -255,12 +255,12 @@ void set_dtypechain_target(astn *top, astn *target) {
  */
 void reset_dtypechain_target(astn *top, astn *target) {
     astn* last = top;
-    while (top->type == ASTN_TYPE && top->astn_type.derived.target) {
+    while (top->type == ASTN_TYPE && top->Type.derived.target) {
         last = top;
-        top = top->astn_type.derived.target;
+        top = top->Type.derived.target;
     }
     //ffprintf(stderr, stderr, "resetting target to %p, I arrived at %p\n\n", (void*)target, (void*)last);
-    last->astn_type.derived.target = target;
+    last->Type.derived.target = target;
 }
 
 /*
@@ -276,8 +276,8 @@ void merge_dtypechains(astn *parent, astn *child) {
  * get last target of chain of derived types
  */
 astn* get_dtypechain_target(astn* top) {
-    while (top->type == ASTN_TYPE && top->astn_type.derived.target) {
-        top = top->astn_type.derived.target;
+    while (top->type == ASTN_TYPE && top->Type.derived.target) {
+        top = top->Type.derived.target;
     }
     return top;
 }

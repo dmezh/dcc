@@ -27,7 +27,7 @@ const unsigned stack_align = 16; // desired stack alignment
 void all2XXX(astn *n, char* r) {
     switch (n->type) {
         case ASTN_SYMPTR: ; // empty stmt
-            st_entry *e = n->astn_symptr.e;
+            st_entry *e = n->Symptr.e;
             //fprintf(stderr, "al2xxx examining %s\n", e->ident);
             switch (e->storspec) {
                 case SS_AUTO:
@@ -44,13 +44,13 @@ void all2XXX(astn *n, char* r) {
             }
             break;
         case ASTN_NUM:
-            ea("movl\t$%ld, %s", (long)n->astn_num.number.integer, r);
+            ea("movl\t$%ld, %s", (long)n->Num.number.integer, r);
             break;
         case ASTN_QTEMP:
-            ea("movl\t%d(%%ebp), %s", -(n->astn_qtemp.stack_offset), r);
+            ea("movl\t%d(%%ebp), %s", -(n->Qtemp.stack_offset), r);
             break;
         case ASTN_STRLIT:
-            strlits[strlit_count] = n->astn_strlit.strlit;
+            strlits[strlit_count] = n->Strlit.strlit;
             ea("movl\t$strl.%d, %s", strlit_count, r);
             strlit_count++;
             break;
@@ -63,7 +63,7 @@ void all2XXX(astn *n, char* r) {
 void XXX2all(astn *n, char* r) {
     switch (n->type) {
         case ASTN_SYMPTR: ; //empty stmt
-            st_entry *e = n->astn_symptr.e;
+            st_entry *e = n->Symptr.e;
             switch (e->storspec) {
                 case SS_AUTO:
                     ea("movl\t%s, %d(%%ebp)", r, -(e->stack_offset));
@@ -78,7 +78,7 @@ void XXX2all(astn *n, char* r) {
             }
             break;
         case ASTN_QTEMP:
-            ea("movl\t%s, %d(%%ebp)", r, -(n->astn_qtemp.stack_offset));
+            ea("movl\t%s, %d(%%ebp)", r, -(n->Qtemp.stack_offset));
             break;
         default:
             die("invalid astn during asmgen");
@@ -152,7 +152,7 @@ void asmgen_q(quad* q) {
             break;
         case Q_CALL:
             if (q->src1->type == ASTN_IDENT) { // override default action of all2XXX
-                ea("call\t%s", q->src1->astn_ident.ident);
+                ea("call\t%s", q->src1->Ident.ident);
             } else {
                 fprintf(stderr, "you're trying to call a non-ident - be my guest but you're probably dead\n");
                 all2eax(q->src1);
@@ -165,7 +165,7 @@ void asmgen_q(quad* q) {
         case Q_LEA: // similar breakdown as XXX2all
             switch (q->src1->type) {
                 case ASTN_SYMPTR: ; // empty stmt
-                    st_entry *e = q->src1->astn_symptr.e;
+                    st_entry *e = q->src1->Symptr.e;
                     switch (e->storspec) {
                         case SS_AUTO:
                             ea("leal\t%d(%%ebp), %%eax", -(e->stack_offset));
@@ -180,7 +180,7 @@ void asmgen_q(quad* q) {
                     }
                     break;
                 case ASTN_QTEMP:
-                    ea("leal\t%d(%%ebp), %%eax", -(q->src1->astn_qtemp.stack_offset));
+                    ea("leal\t%d(%%ebp), %%eax", -(q->src1->Qtemp.stack_offset));
                     break;
                 default:
                     die("invalid astn during asmgen");
@@ -236,7 +236,7 @@ void e_cbr(const char *op, quad* q) {
     e_bba(q->src2);
     fprintf(out, "\n");
 }
-void e_bba(const astn *n) { e_bb(n->astn_qbbno.bb); }
+void e_bba(const astn *n) { e_bb(n->Qbbno.bb); }
 void e_bb(const BB* b) { fprintf(out, "BB.%s.%d", b->fn, b->bbno); }
 
 void asmgen(const BBL* head, FILE* f) {

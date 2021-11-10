@@ -50,7 +50,7 @@ void bbl_append(BB* bb) {
 
 static astn* wrap_bb(BB* bb) {
     astn *n = astn_alloc(ASTN_QBBNO);
-    n->astn_qbbno.bb = bb;
+    n->Qbbno.bb = bb;
     return n;
 }
 
@@ -59,9 +59,9 @@ void gen_condexpr(astn *cond, BB* Bt, BB* Bf) {
     //printf("generating cond expr, my current BB number is %d\n", current_bb->bbno);
     switch (cond->type) {
         case ASTN_UNOP:
-            if (cond->astn_unop.op == '!') {
-                astn *targ = gen_rvalue(cond->astn_unop.target, NULL);
-                astn *n = astn_alloc(ASTN_NUM); n->astn_num.number.integer=0; n->astn_num.number.aux_type=s_INT;
+            if (cond->Unop.op == '!') {
+                astn *targ = gen_rvalue(cond->Unop.target, NULL);
+                astn *n = astn_alloc(ASTN_NUM); n->Num.number.integer=0; n->Num.number.aux_type=s_INT;
                 emit(Q_CMP, targ, n, NULL);
                 emit_branch(EQEQ, Bt, Bf);
                 return;
@@ -72,8 +72,8 @@ void gen_condexpr(astn *cond, BB* Bt, BB* Bf) {
             break;
         case ASTN_BINOP:
             ;
-            astn *left = gen_rvalue(cond->astn_binop.left, NULL);
-            astn *right = gen_rvalue(cond->astn_binop.right, NULL);
+            astn *left = gen_rvalue(cond->Binop.left, NULL);
+            astn *right = gen_rvalue(cond->Binop.right, NULL);
             /*
             printf("binop found, left and right prepared. Dumping nodes:\nL:\n");
             print_node(left);
@@ -83,14 +83,14 @@ void gen_condexpr(astn *cond, BB* Bt, BB* Bf) {
             */
 
             emit(Q_CMP, left, right, NULL);
-            emit_branch(cond->astn_binop.op, Bt, Bf);
+            emit_branch(cond->Binop.op, Bt, Bf);
 
             break;
         case ASTN_SYMPTR:
         case ASTN_QTEMP:
             ;
             astn *val = gen_rvalue(cond, NULL);
-            astn *n = astn_alloc(ASTN_NUM); n->astn_num.number.integer=0; n->astn_num.number.aux_type=s_INT;
+            astn *n = astn_alloc(ASTN_NUM); n->Num.number.integer=0; n->Num.number.aux_type=s_INT;
             emit(Q_CMP, val, n, NULL);
             emit_branch(NOTEQ, Bt, Bf);
             break;
@@ -130,7 +130,7 @@ void uncond_branch(BB* b) {
 }
 
 void gen_if(astn* ifnode) {
-    struct astn_ifelse *if_node = &ifnode->astn_ifelse;
+    struct astn_ifelse *if_node = &ifnode->Ifelse;
     BB* Bt = bb_alloc();
     BB* Bf = bb_alloc();
     BB* Bn;
@@ -155,7 +155,7 @@ void gen_if(astn* ifnode) {
 }
 
 void gen_while(astn* wn) {
-    struct astn_whileloop *w = &wn->astn_whileloop;
+    struct astn_whileloop *w = &wn->Whileloop;
 
     BB* cond = bb_alloc();
     BB* body = bb_alloc();
@@ -177,7 +177,7 @@ void gen_while(astn* wn) {
 }
 
 void gen_dowhile(astn* dw) {
-    struct astn_whileloop *d = &dw->astn_whileloop;
+    struct astn_whileloop *d = &dw->Whileloop;
 
     BB* cond = bb_alloc();
     BB* body = bb_alloc();
@@ -199,7 +199,7 @@ void gen_dowhile(astn* dw) {
 }
 
 void gen_for(astn* fl) {
-    struct astn_forloop *f = &fl->astn_forloop;
+    struct astn_forloop *f = &fl->Forloop;
 
     BB* cond = bb_alloc();
     BB* body = bb_alloc();

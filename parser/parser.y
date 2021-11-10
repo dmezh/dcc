@@ -102,7 +102,7 @@ translation_unit:
 ;
 
 external_decln:                             // kludge ish for structs/unions
-    decln                               {   if($1->type == ASTN_DECL) $$=begin_st_entry($1, NS_MISC, $1->astn_decl.context);     }
+    decln                               {   if($1->type == ASTN_DECL) $$=begin_st_entry($1, NS_MISC, $1->Decl.context);     }
 |   fn_def                              {   gen_fn($1);  }
 |   internal                            {   $$=(st_entry*)NULL;   }
 ;
@@ -152,7 +152,7 @@ expr_stmt:
 select_stmt:
     IF '(' expr ')' statement       %prec THEN             { $$=ifelse_alloc($3, $5, NULL); }
 |   IF '(' expr ')' statement ELSE statement               { $$=ifelse_alloc($3, $5, $7); ; }
-|   SWITCH '(' expr ')' statement                          { $$=astn_alloc(ASTN_SWITCH); $$->astn_switch.condition=$3; $$->astn_switch.body=$5; }
+|   SWITCH '(' expr ')' statement                          { $$=astn_alloc(ASTN_SWITCH); $$->Switch.condition=$3; $$->Switch.body=$5; }
 ;
 
 iterat_stmt:
@@ -164,16 +164,16 @@ iterat_stmt:
 ;
 
 jump_stmt:
-    GOTO ident ';'          { $$=astn_alloc(ASTN_GOTO); $$->astn_goto.ident=$2;     }
+    GOTO ident ';'          { $$=astn_alloc(ASTN_GOTO); $$->Goto.ident=$2;     }
 |   CONTINUE ';'            { if (current_scope->scope_type != SCOPE_BLOCK) ps_error(@1, "fuck you"); $$=astn_alloc(ASTN_CONTINUE); }
 |   BREAK ';'               { if (current_scope->scope_type != SCOPE_BLOCK) ps_error(@1, "fuck you"); $$=astn_alloc(ASTN_BREAK);    }
-|   RETURN opt_expr ';'     { $$=astn_alloc(ASTN_RETURN); $$->astn_return.ret=$2;   }
+|   RETURN opt_expr ';'     { $$=astn_alloc(ASTN_RETURN); $$->Return.ret=$2;   }
 ;
 
 labeled_stmt:
-    ident ':' statement                 { $$=astn_alloc(ASTN_LABEL); $$->astn_label.ident=$1; $$->astn_label.statement=$3;      }
-|   CASE const_expr ':' statement       { $$=astn_alloc(ASTN_CASE); $$->astn_case.case_expr=$2; $$->astn_case.statement=$4;     }
-|   DEFAULT ':' statement               { $$=astn_alloc(ASTN_CASE); $$->astn_case.case_expr=NULL; $$->astn_case.statement=$3;   }
+    ident ':' statement                 { $$=astn_alloc(ASTN_LABEL); $$->Label.ident=$1; $$->Label.statement=$3;      }
+|   CASE const_expr ':' statement       { $$=astn_alloc(ASTN_CASE); $$->Case.case_expr=$2; $$->Case.statement=$4;     }
+|   DEFAULT ':' statement               { $$=astn_alloc(ASTN_CASE); $$->Case.case_expr=NULL; $$->Case.statement=$3;   }
 ;
 
 opt_expr:
@@ -196,8 +196,8 @@ rparen:     ')'
 // Internal actions
 internal:                           // sometimes you really do want to murder the thing
     _PERISH                     {   die("You asked me to die!");    }
-|   _EXAMINE ident              {   st_examine($2->astn_ident.ident);  }
-|   _EXAMINE ident INDSEL ident {   st_examine_member($2->astn_ident.ident, $4->astn_ident.ident);  }
+|   _EXAMINE ident              {   st_examine($2->Ident.ident);  }
+|   _EXAMINE ident INDSEL ident {   st_examine_member($2->Ident.ident, $4->Ident.ident);  }
 |   _DUMPSYMTAB                 {   printf("dumping current scope: "); st_dump_current();  }
 |   debug
 ;
@@ -212,9 +212,9 @@ debug:
 // ----------------------------------------------------------------------------
 // 6.5.1 Primary expressions
 primary_expr:
-    ident                       {   st_entry *e = st_lookup($1->astn_ident.ident, NS_MISC);
+    ident                       {   st_entry *e = st_lookup($1->Ident.ident, NS_MISC);
                                     if (!e) 
-                                        ps_error(@1, "'%s' undefined", $1->astn_ident.ident);
+                                        ps_error(@1, "'%s' undefined", $1->Ident.ident);
                                     else
                                         $$=symptr_alloc(e);
                                 }
@@ -226,19 +226,19 @@ primary_expr:
 
 ident:
     IDENT                       {   $$=astn_alloc(ASTN_IDENT);
-                                    $$->astn_ident.ident=$1;
+                                    $$->Ident.ident=$1;
                                 }
 ;
 
 constant:
     NUMBER                      {   $$=astn_alloc(ASTN_NUM);
-                                    $$->astn_num.number=$1;
+                                    $$->Num.number=$1;
                                 }
 ;
 
 stringlit:
     STRING                      {   $$=astn_alloc(ASTN_STRLIT);
-                                    $$->astn_strlit.strlit=$1;
+                                    $$->Strlit.strlit=$1;
                                 }
 ;
 // ----------------------------------------------------------------------------
@@ -255,25 +255,25 @@ postfix_expr:
 
 array_subscript:
     postfix_expr '[' expr ']'   {   $$=unop_alloc('*', astn_alloc(ASTN_BINOP));
-                                    $$->astn_unop.target->astn_binop.op='+';
-                                    $$->astn_unop.target->astn_binop.left=$1;
+                                    $$->Unop.target->Binop.op='+';
+                                    $$->Unop.target->Binop.left=$1;
                                     //astn *n = astn_alloc(ASTN_NUM);
-                                    //n->astn_num.number.integer = ($3->astn_num.number.integer) * get_sizeof(descend_array($1));
-                                    //n->astn_num.number.aux_type = s_INT;
-                                    $$->astn_unop.target->astn_binop.right=$3;
+                                    //n->Num.number.integer = ($3->Num.number.integer) * get_sizeof(descend_array($1));
+                                    //n->Num.number.aux_type = s_INT;
+                                    $$->Unop.target->Binop.right=$3;
                                 }
 ;
 
 fncall:
     postfix_expr '(' ')'        {   $$=astn_alloc(ASTN_FNCALL);
-                                    $$->astn_fncall.fn=$1;
-                                    $$->astn_fncall.argcount=0;
-                                    $$->astn_fncall.args=NULL;
+                                    $$->Fncall.fn=$1;
+                                    $$->Fncall.argcount=0;
+                                    $$->Fncall.args=NULL;
                                 }
 |   postfix_expr '('arg_list')' {   $$=astn_alloc(ASTN_FNCALL);
-                                    $$->astn_fncall.fn=$1;
-                                    $$->astn_fncall.args=$3;
-                                    $$->astn_fncall.argcount=list_measure($$->astn_fncall.args);
+                                    $$->Fncall.fn=$1;
+                                    $$->Fncall.args=$3;
+                                    $$->Fncall.argcount=list_measure($$->Fncall.args);
                                 }
 ;
 
@@ -284,15 +284,15 @@ arg_list:
 
 select:
     postfix_expr '.' ident      {   $$=astn_alloc(ASTN_SELECT);
-                                    $$->astn_select.parent = $1;
-                                    $$->astn_select.member = $3;
+                                    $$->Select.parent = $1;
+                                    $$->Select.member = $3;
                                 }
 ;
 
 indsel:
     postfix_expr INDSEL ident   {   $$=astn_alloc(ASTN_SELECT);
-                                    $$->astn_select.parent=unop_alloc('*', $1);
-                                    $$->astn_select.member=$3;
+                                    $$->Select.parent=unop_alloc('*', $1);
+                                    $$->Select.member=$3;
                                 }
 ;
 
@@ -306,15 +306,15 @@ unary_expr:
     postfix_expr
 |   unops
 |   PLUSPLUS unary_expr         {   astn *n=astn_alloc(ASTN_NUM);
-                                    n->astn_num.number.integer=1;
-                                    n->astn_num.number.is_signed=1;
-                                    n->astn_num.number.aux_type=s_INT;
+                                    n->Num.number.integer=1;
+                                    n->Num.number.is_signed=1;
+                                    n->Num.number.aux_type=s_INT;
                                     $$=cassign_alloc('+', $2, n);
                                 }
 |   MINUSMINUS unary_expr       {   astn *n=astn_alloc(ASTN_NUM);
-                                    n->astn_num.number.integer=1;
-                                    n->astn_num.number.is_signed=1;
-                                    n->astn_num.number.aux_type=s_INT;
+                                    n->Num.number.integer=1;
+                                    n->Num.number.is_signed=1;
+                                    n->Num.number.aux_type=s_INT;
                                     $$=cassign_alloc('-', $2, n);
                                 }
 // todo: casts
@@ -331,11 +331,11 @@ unops:
 ;
 
 sizeof:
-    SIZEOF unary_expr           {   $$=astn_alloc(ASTN_NUM); $$->astn_num.number.integer=get_sizeof($2); 
-                                    $$->astn_num.number.is_signed=false; $$->astn_num.number.aux_type=s_INT;
+    SIZEOF unary_expr           {   $$=astn_alloc(ASTN_NUM); $$->Num.number.integer=get_sizeof($2); 
+                                    $$->Num.number.is_signed=false; $$->Num.number.aux_type=s_INT;
                                 }
-|   SIZEOF '(' type_name ')'    {   $$=astn_alloc(ASTN_NUM); $$->astn_num.number.integer=get_sizeof($3); 
-                                    $$->astn_num.number.is_signed=false; $$->astn_num.number.aux_type=s_INT; }
+|   SIZEOF '(' type_name ')'    {   $$=astn_alloc(ASTN_NUM); $$->Num.number.integer=get_sizeof($3); 
+                                    $$->Num.number.is_signed=false; $$->Num.number.aux_type=s_INT; }
 ;
 // ----------------------------------------------------------------------------
 // 6.5.4 Cast operators
@@ -398,9 +398,9 @@ logor_expr:
 tern_expr:
     logor_expr
 |   logor_expr '?' expr ':' tern_expr   {   $$=astn_alloc(ASTN_TERN);
-                                            $$->astn_tern.cond=$1;
-                                            $$->astn_tern.t_then=$3;
-                                            $$->astn_tern.t_else=$5;
+                                            $$->Tern.cond=$1;
+                                            $$->Tern.t_then=$3;
+                                            $$->Tern.t_else=$5;
                                         }
 ;
 // ----------------------------------------------------------------------------
@@ -408,8 +408,8 @@ tern_expr:
 assign:
     tern_expr
 |   unary_expr '=' assign       {   $$=astn_alloc(ASTN_ASSIGN);
-                                    $$->astn_assign.left=$1;
-                                    $$->astn_assign.right=$3;
+                                    $$->Assign.left=$1;
+                                    $$->Assign.right=$3;
                                 }
 |   unary_expr TIMESEQ assign   {   $$=cassign_alloc('*', $1, $3);  }
 |   unary_expr DIVEQ assign     {   $$=cassign_alloc('/', $1, $3);  }
@@ -441,7 +441,7 @@ const_expr:
 // the below needs a little logic in the first case for proper struct fwd declaration behavior
 decln:
     decln_spec ';'                  { /* check for idiot user not actually declaring anything */ }
-|   decln_spec init_decl_list ';'   {   $$=$2; $$->astn_decl.specs = $1;    }
+|   decln_spec init_decl_list ';'   {   $$=$2; $$->Decl.specs = $1;    }
 // no static_assert stuff
 ;
 
@@ -450,9 +450,9 @@ decln_spec:
     type_spec
 |   type_qual
 |   stor_spec
-|   decln_spec type_spec            {   $$=$2; $$->astn_typespec.next = $1;     }
-|   decln_spec type_qual            {   $$=$2; $$->astn_typequal.next = $1;     }
-|   decln_spec stor_spec            {   $$=$2; $$->astn_storspec.next = $1;     }
+|   decln_spec type_spec            {   $$=$2; $$->Typespec.next = $1;     }
+|   decln_spec type_qual            {   $$=$2; $$->Typequal.next = $1;     }
+|   decln_spec stor_spec            {   $$=$2; $$->Storspec.next = $1;     }
 ;
 
 // for now just single, but it will be easy to add the full functionality
@@ -509,7 +509,7 @@ init:
 // 6.7.6 Declarators
 decl:                                   // similar issue with arrays was dealt with by splitting the grammar
     pointer direct_decl             {   // I could do that here instead of the if/else, but I'm dead inside
-                                        if ($2->type == ASTN_TYPE && $2->astn_type.is_derived) {
+                                        if ($2->type == ASTN_TYPE && $2->Type.is_derived) {
                                             merge_dtypechains($2, $1);
                                             $$=$2;
                                         } else {
@@ -526,11 +526,11 @@ decl:                                   // similar issue with arrays was dealt w
 // this will be an astn_type, which may or may not be a derived type
 type_name:
     spec_qual_list                 {    struct astn *n=astn_alloc(ASTN_TYPE);
-                                        describe_type($1, &n->astn_type);
+                                        describe_type($1, &n->Type);
                                         $$=n;
                                    }
 |   spec_qual_list abstract_decl   {    struct astn *n=astn_alloc(ASTN_TYPE);
-                                        describe_type($1, &n->astn_type);
+                                        describe_type($1, &n->Type);
                                         set_dtypechain_target($2, n);
                                         $$=$2;  }
 ;
@@ -544,9 +544,9 @@ abstract_decl:
 
 direct_abstract_decl:
     '(' abstract_decl ')'                   { $$=$2; }
-|   '[' assign ']'                          { $$=dtype_alloc(NULL, t_ARRAY); $$->astn_type.derived.size = $2;}
+|   '[' assign ']'                          { $$=dtype_alloc(NULL, t_ARRAY); $$->Type.derived.size = $2;}
 |   direct_abstract_decl '[' assign ']'     {   astn* n=dtype_alloc(NULL, t_ARRAY);
-                                                n->astn_type.derived.size = $3;
+                                                n->Type.derived.size = $3;
                                                 set_dtypechain_target($1, n);
                                                 $$=$1;
                                             }
@@ -569,14 +569,14 @@ param_t_list:
 
 param_list:
     param_decl                      {   st_new_scope(SCOPE_FUNCTION, @1);
-                                        $$=declrec_alloc(begin_st_entry($1, NS_MISC, $1->astn_decl.context), NULL);
-                                        $$->astn_declrec.e->is_param = true;
-                                        st_reserve_stack($$->astn_declrec.e);
+                                        $$=declrec_alloc(begin_st_entry($1, NS_MISC, $1->Decl.context), NULL);
+                                        $$->Declrec.e->is_param = true;
+                                        st_reserve_stack($$->Declrec.e);
                                         $$=list_alloc($$);
                                     }
-|   param_list ',' param_decl       {   $$=declrec_alloc(begin_st_entry($3, NS_MISC, $3->astn_decl.context), NULL);
-                                        $$->astn_declrec.e->is_param = true;
-                                        st_reserve_stack($$->astn_declrec.e);
+|   param_list ',' param_decl       {   $$=declrec_alloc(begin_st_entry($3, NS_MISC, $3->Decl.context), NULL);
+                                        $$->Declrec.e->is_param = true;
+                                        st_reserve_stack($$->Declrec.e);
                                         list_append($$, $1);
                                         $$=$1;
                                     }
@@ -603,15 +603,15 @@ ident_list:
 // because of that, there is ugliness with the parenthesized decl; please un-fuck this when able
 direct_decl_arr:
     ident '[' arr_size ']'              {   $$=dtype_alloc($1, t_ARRAY);
-                                            $$->astn_type.derived.size = $3;
+                                            $$->Type.derived.size = $3;
                                         }
 |   direct_decl_arr '[' arr_size ']'    {   astn *n=dtype_alloc(NULL, t_ARRAY);
-                                            n->astn_type.derived.size = $3;
+                                            n->Type.derived.size = $3;
                                             merge_dtypechains($1, n);
                                             $$=$1;
                                         }
 |   '(' decl ')' '[' arr_size ']'       {   astn *n=dtype_alloc(NULL, t_ARRAY);
-                                            n->astn_type.derived.size = $5;
+                                            n->Type.derived.size = $5;
                                             merge_dtypechains($2, n);
                                             $$=$2;
                                         }
@@ -625,14 +625,14 @@ arr_size:
 pointer:
     '*'                             {   $$=dtype_alloc(NULL, t_PTR);    } // root of the (potential) chain
 |   '*' type_qual_list              {   $$=dtype_alloc(NULL, t_PTR);
-                                        strict_qualify_type($2, &$$->astn_type);
+                                        strict_qualify_type($2, &$$->Type);
                                     }
 |   '*' pointer                     {   $$=dtype_alloc(NULL, t_PTR);
                                         set_dtypechain_target($2, $$);
                                         $$=$2;
                                     }
 |   '*' type_qual_list pointer      {   $$=dtype_alloc(NULL, t_PTR);
-                                        strict_qualify_type($2, &$$->astn_type);
+                                        strict_qualify_type($2, &$$->Type);
                                         set_dtypechain_target($3, $$);
                                         $$=$3;
                                     }
@@ -641,7 +641,7 @@ pointer:
 type_qual_list:
     type_qual
 |   type_qual_list type_qual        {   $$=$2;
-                                        $$->astn_typequal.next = $1;
+                                        $$->Typequal.next = $1;
                                     }
 
 // 6.7.1 Storage class specifiers
@@ -674,9 +674,9 @@ type_spec:
 // ex: struct z p; // where z has not been declared before.
 // there is zero chance this is correct for all the scoping rules.
 strunion_spec:
-    str_or_union ident lbrace struct_decl_list rbrace   {   $$=strunion_alloc(st_define_struct($2->astn_ident.ident, $4, @2, @5, @3));  }
+    str_or_union ident lbrace struct_decl_list rbrace   {   $$=strunion_alloc(st_define_struct($2->Ident.ident, $4, @2, @5, @3));  }
 |   str_or_union lbrace struct_decl_list rbrace         {   ps_error(@2, "unnamed structs/unions are not yet supported");                }
-|   str_or_union ident                                  {   $$=strunion_alloc(st_declare_struct($2->astn_ident.ident, false, @$));  }
+|   str_or_union ident                                  {   $$=strunion_alloc(st_declare_struct($2->Ident.ident, false, @$));  }
 ;
 
 // not an astn_p
@@ -705,8 +705,8 @@ struct_decl:
 spec_qual_list:
     type_spec
 |   type_qual
-|   type_spec spec_qual_list    {  $$=$1; $$->astn_typespec.next = $2;  }
-|   type_qual spec_qual_list    {  $$=$1; $$->astn_typequal.next = $2;  }
+|   type_spec spec_qual_list    {  $$=$1; $$->Typespec.next = $2;  }
+|   type_qual spec_qual_list    {  $$=$1; $$->Typequal.next = $2;  }
 ;
 
 // no ident lists at the moment
