@@ -224,6 +224,10 @@ struct astn_qbbno {
     struct BB* bb;
 };
 
+// uppercase member names are a style decision; they're clear and they also
+// allow us to have members like .Sizeof, .Return, etc without clobbering
+// the names to avoid conflicting with keywords.
+
 typedef struct astn {
     enum astn_types type;
     union {
