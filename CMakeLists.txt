@@ -42,6 +42,7 @@ add_executable(dcc
 ${BISON_dcc_parser_OUTPUTS}
 ${FLEX_dcc_lexer_OUTPUTS}
     optimize/opt_flatten_adjacent_mov.c
+    optimize/optimization.c
     parser/ast.c
     parser/ast_print.c
     parser/symtab.c

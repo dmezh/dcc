@@ -241,10 +241,9 @@ void e_cbr(const char *op, quad* q) {
 void e_bba(const astn *n) { e_bb(n->Qbbno.bb); }
 void e_bb(const BB* b) { fprintf(out, "BB.%s.%d", b->fn, b->bbno); }
 
-void asmgen(const BBL* head, FILE* f) {
+void asmgen(BBL* head, FILE* f) {
     // init output file
     out = f;
-    opt_flatten_adjacent_mov(head, 2);
     fprintf(out, "# ASM OUTPUT\n# compiled poorly :)\n\n");
 
     // init globals, except functions

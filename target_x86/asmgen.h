@@ -22,6 +22,6 @@ typedef struct adir {
 void e_cbr(const char *op, quad* q);
 void e_bba(const astn *n);
 void e_bb(const BB* b);
-void asmgen(const BBL* bbl, FILE* out);
+void asmgen(BBL* bbl, FILE* out);
 
 #endif
