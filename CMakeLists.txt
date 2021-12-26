@@ -8,6 +8,7 @@ set(CMAKE_EXE_LINKER_FLAGS "-fsanitize=undefined -rdynamic")
 
 include_directories(.)
 include_directories(lexer)
+include_directories(optimize)
 include_directories(parser)
 include_directories(quads)
 include_directories(target_x86)
@@ -40,6 +41,8 @@ include_directories(${GENERATED})
 add_executable(dcc
 ${BISON_dcc_parser_OUTPUTS}
 ${FLEX_dcc_lexer_OUTPUTS}
+    optimize/opt_flatten_adjacent_mov.c
+    optimize/optimization.c
     parser/ast.c
     parser/ast_print.c
     parser/symtab.c

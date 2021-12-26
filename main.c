@@ -9,11 +9,12 @@
 #include <unistd.h>
 
 #include "asmgen.h"
+#include "optimization.h"
 #include "parser.tab.h"
 #include "quads.h"
 #include "util.h"
 
-#define DCC_VERSION "0.2.0"
+#define DCC_VERSION "0.2.0_opt"
 #define DCC_ARCHITECTURE "x86_32"
 
 #define BRED "\033[1;31m"
@@ -32,11 +33,15 @@ FILE* tmp;
 static struct opt {
     bool debug;
     bool asm_out;
+    bool optimize;
     const char* out_file;
     const char* in_file;
 } opt = {
+    .debug = false,
     .asm_out = false,
+    .optimize = false,
     .out_file = NULL,
+    .in_file = NULL
 };
 
 static void print_usage_additional() {
@@ -61,6 +66,7 @@ static void print_usage() {
         "\n   -h              show extended usage"
         "\n   -o output_file  specify output file"
         "\n   -S              output assembly only"
+        "\n   -O              enable optimization."
         "\n   -v              debug mode:"
         "\n                         -v: enable INFO messages"
         "\n                        -vv: enable VERBOSE messages"
@@ -74,7 +80,7 @@ static void print_usage() {
 static void get_options(int argc, char** argv) {
     int a;
     opterr = 0;
-    while ((a = getopt(argc, argv, "hvVSo:")) != -1) {
+    while ((a = getopt(argc, argv, "hvVSOo:")) != -1) {
         switch (a) {
             case 'h':
                 print_usage();
@@ -92,6 +98,9 @@ static void get_options(int argc, char** argv) {
                 break;
             case 'S':
                 opt.asm_out = true;
+                break;
+            case 'O':
+                opt.optimize = true;
                 break;
             case 'o':
                 opt.out_file = optarg;
@@ -207,6 +216,10 @@ int main(int argc, char** argv) {
     fclose(tmp);
 }
 
-void parse_done_cb(const BBL* root) {
+void parse_done_cb(BBL* root) {
+    if (opt.optimize) {
+        // optimization passes
+        dcc_optimize(root);
+    }
     asmgen(root, tmp);
 }
