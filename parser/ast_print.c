@@ -394,6 +394,9 @@ void print_ast(const astn *n) {
     case ASTN_QTEMP:
         print_node(n, stderr);
         break;
+    case ASTN_NOOP:
+        fprintf(stderr, "(NOOP)\n");
+        break;
     default:
         die("Unhandled AST node type");
 }
