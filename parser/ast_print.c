@@ -283,9 +283,21 @@ void print_ast(const astn *n) {
             print_ast(n->Fndef.decl); // should just be the name!
         tabs--;
         if (n->Fndef.param_list) {
-            fprintf(stderr, " with param list:\n");
             tabs++;
-                print_ast(n->Fndef.param_list);
+                print_ast(NULL);
+                fprintf(stderr, "> with param list:\n");
+                tabs++;
+                    struct astn *a = n->Fndef.param_list;
+                    while (a) {
+                        print_ast(a->List.me);
+                        tabs++;
+                            print_ast(NULL);
+                            fprintf(stderr, "> with type:\n");
+                            print_ast(a->List.me->Declrec.e->type);
+                        tabs--;
+                        a = a->List.next;
+                    }
+                tabs--;
             tabs--;
         } else {
             fprintf(stderr, "with no params\n");
