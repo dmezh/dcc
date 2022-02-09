@@ -124,7 +124,6 @@ compound_statement:
 
 block_item_list_maybe_empty:
     block_item_list
-|   internal         {   $$=list_alloc(NULL);    }
 |   %empty           {   $$=list_alloc(NULL);    }
 ;
 
@@ -132,7 +131,6 @@ block_item_list_maybe_empty:
 block_item_list:
     block_item                      {   $$=list_alloc($1);  }
 |   block_item_list block_item      {   $$=list_append($2, $1); $$=$1; }
-|   block_item_list internal        {   $$=$1;  }
 ;
 
 block_item:
@@ -140,6 +138,7 @@ block_item:
                                     if (DBGLVL_DEBUG()) print_ast($$);
                                 }
 |   statement                   {   if (DBGLVL_DEBUG()) print_ast($1); }
+|   internal                    {   $$=NULL; }
 ;
 
 statement:

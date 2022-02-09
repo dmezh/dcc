@@ -50,3 +50,8 @@ expect = 0
 desc = "Test compilation of variadics, without testing accessing varargs themselves."
 type = "returncode"
 expect = 1
+
+[tests.pragmas]
+desc = "Test parsing of pragmas (compilation success with pragmas)."
+type = "returncode"
+expect = 0
