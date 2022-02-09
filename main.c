@@ -166,7 +166,7 @@ static void assemble() {
             int status;
             wait(&status);
             if (status)
-                RED_ERROR("Error during preprocessing");
+                RED_ERROR("Error during assembly");
     }
 }
 
