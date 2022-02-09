@@ -31,6 +31,7 @@ enum astn_types {
     ASTN_TYPE,
     ASTN_DECL,
     ASTN_FNDEF,
+    ASTN_ELLIPSIS,
     ASTN_COMPOUNDSTMT,
     ASTN_DECLREC,
     ASTN_SYMPTR,
@@ -155,6 +156,8 @@ struct astn_fndef {
     struct astn* param_list;
     struct symtab* scope;
 };
+
+// no astn_ellipsis struct
 
 struct astn_compoundstmt {
     YYLTYPE begin, end;

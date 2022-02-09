@@ -49,7 +49,8 @@ ${FLEX_dcc_lexer_OUTPUTS}
     quads/quads_cf.c
     quads/quads_print.c
     target_x86/asmgen.c
-    common/charutil
+    common/charutil.c
+    common/debug.c
     common/semval.c
     common/util.c
     common/yak.ascii.c

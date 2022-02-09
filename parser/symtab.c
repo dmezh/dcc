@@ -63,7 +63,9 @@ st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context
     //printf("back from install honey\n");
     astn* p = fd.param_list;
     while (block && p) {
-        if (list_data(p)->type != ASTN_DECLREC) {
+        if (list_data(p)->type == ASTN_ELLIPSIS) {
+            fn->variadic = true;
+        } else if (list_data(p)->type != ASTN_DECLREC) {
             st_error("function parameter name omitted near %s:%d\n", fn_scope->context.filename, fn_scope->context.lineno);
         }
         p = list_next(p);

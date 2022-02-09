@@ -290,11 +290,13 @@ void print_ast(const astn *n) {
                     struct astn *a = n->Fndef.param_list;
                     while (a) {
                         print_ast(a->List.me);
-                        tabs++;
-                            print_ast(NULL);
-                            fprintf(stderr, "> with type:\n");
-                            print_ast(a->List.me->Declrec.e->type);
-                        tabs--;
+                        if (a->List.me->type != ASTN_ELLIPSIS) {
+                            tabs++;
+                                print_ast(NULL);
+                                fprintf(stderr, "> with type:\n");
+                                print_ast(a->List.me->Declrec.e->type);
+                            tabs--;
+                        }
                         a = a->List.next;
                     }
                 tabs--;
@@ -302,6 +304,10 @@ void print_ast(const astn *n) {
         } else {
             fprintf(stderr, "with no params\n");
         }
+        break;
+
+    case ASTN_ELLIPSIS:
+        fprintf(stderr, "ELLIPSIS\n");
         break;
 
     case ASTN_DECLREC:

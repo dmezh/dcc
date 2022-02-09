@@ -71,6 +71,7 @@ typedef struct st_entry {
     struct symtab* fn_scope;
     astn* body;
     bool fn_defined;
+    bool variadic;
 
     const char *ident;
     enum namespaces ns;

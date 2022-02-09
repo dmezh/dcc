@@ -7,6 +7,8 @@
 %code requires {
     #include "asmgen.h"
     #include "ast.h"
+    #include "ast_print.h"
+    #include "debug.h"
     #include "location.h"
     #include "main.h"
     #include "quads.h"
@@ -101,8 +103,12 @@ translation_unit:
 |   translation_unit external_decln
 ;
 
-external_decln:                             // kludge ish for structs/unions
-    decln                               {   if($1->type == ASTN_DECL) $$=begin_st_entry($1, NS_MISC, $1->Decl.context);     }
+external_decln:                             // kludge ish for structs/unions // NOTE: why is $1 invalid after begin_st_entry()?
+    decln                               {   if ($1->type == ASTN_DECL) {
+                                                if (DBGLVL_DEBUG()) print_ast($1);
+                                                $$=begin_st_entry($1, NS_MISC, $1->Decl.context);
+                                            }
+                                        }
 |   fn_def                              {   gen_fn($1);  }
 |   internal                            {   $$=(st_entry*)NULL;   }
 ;
@@ -130,8 +136,10 @@ block_item_list:
 ;
 
 block_item:
-    decln                       {  $$=do_decl($1);  }
-|   statement
+    decln                       {   $$=do_decl($1);
+                                    if (DBGLVL_DEBUG()) print_ast($$);
+                                }
+|   statement                   {   if (DBGLVL_DEBUG()) print_ast($1); }
 ;
 
 statement:
@@ -198,15 +206,15 @@ internal:                           // sometimes you really do want to murder th
     _PERISH                     {   die("You asked me to die!");    }
 |   _EXAMINE ident              {   st_examine($2->Ident.ident);  }
 |   _EXAMINE ident INDSEL ident {   st_examine_member($2->Ident.ident, $4->Ident.ident);  }
-|   _DUMPSYMTAB                 {   printf("dumping current scope: "); st_dump_current();  }
+|   _DUMPSYMTAB                 {   fprintf(stderr, "dumping current scope: \n"); st_dump_current();  }
 |   debug
 ;
 
 debug:
-    SET_DEBUG_INFO              {   fprintf(stderr, "SETTING DEBUG INFO\n");    }
-    SET_DEBUG_VERBOSE           {   }
-    SET_DEBUG_DEBUG             {   }
-    SET_DEBUG_NONE              {   }
+    SET_DEBUG_INFO              {   debug_setlevel_INFO(); }
+|   SET_DEBUG_VERBOSE           {   debug_setlevel_VERBOSE(); }
+|   SET_DEBUG_DEBUG             {   debug_setlevel_DEBUG(); }
+|   SET_DEBUG_NONE              {   debug_setlevel_NONE(); }
 ;
 
 // ----------------------------------------------------------------------------
@@ -563,7 +571,7 @@ direct_decl:
 
 param_t_list:
     param_list
-|   param_list ',' ELLIPSIS         {  ps_error(@1, "not handling variadic fn");  }
+|   param_list ',' ELLIPSIS         {   list_append(astn_alloc(ASTN_ELLIPSIS), $1); }
 ;
 
 

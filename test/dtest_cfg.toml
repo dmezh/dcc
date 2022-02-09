@@ -45,3 +45,8 @@ expect = 0
 desc = "Test implicit return of 0 from main."
 type = "returncode"
 expect = 0
+
+[tests.variadics_parse]
+desc = "Test compilation of variadics, without testing accessing varargs themselves."
+type = "returncode"
+expect = 1

@@ -102,7 +102,10 @@ void st_examine_given(const st_entry* e) {
         fprintf(stderr, "FUNCTION RETURNING:\n");
         print_ast(e->type);
         if (e->param_list) {
-            fprintf(stderr, "AND TAKING PARAMS:\n");
+            if (e->variadic)
+                fprintf(stderr, "AND TAKING PARAMS (VARIADIC):\n");
+            else
+                fprintf(stderr, "AND TAKING PARAMS:\n");
             print_ast(e->param_list);
         } else {
             fprintf(stderr, "TAKING UNKNOWN/NO PARAMETERS\n");
