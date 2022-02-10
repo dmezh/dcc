@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include "asmgen.h"
+#include "debug.h"
 #include "parser.tab.h"
 #include "quads.h"
 #include "util.h"
@@ -30,11 +31,12 @@
 FILE* tmp;
 
 static struct opt {
-    bool debug;
+    int debug;
     bool asm_out;
     const char* out_file;
     const char* in_file;
 } opt = {
+    .debug = 0,
     .asm_out = false,
     .out_file = NULL,
 };
@@ -88,7 +90,7 @@ static void get_options(int argc, char** argv) {
                                 "\n home: https://github.com/dmezh/dcc\n");
                 exit(0);
             case 'v':;
-                opt.debug = 1;
+                opt.debug++;
                 break;
             case 'S':
                 opt.asm_out = true;
@@ -102,6 +104,20 @@ static void get_options(int argc, char** argv) {
             default:
                 die("unreachable");
         }
+    }
+
+    switch (opt.debug) {
+        case 0:
+            break;
+        case 1:
+            debug_setlevel_INFO();
+            break;
+        case 2:
+            debug_setlevel_VERBOSE();
+            break;
+        case 3:
+        default:
+            debug_setlevel_DEBUG();
     }
 
     if (!opt.out_file)
