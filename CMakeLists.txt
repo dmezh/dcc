@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.10)
 project(DCC)
 
 set(CMAKE_C_COMPILER clang)
-add_compile_options(-Wall -Wextra -fsanitize=undefined -Wpedantic -Wunused -O2)
-set(CMAKE_EXE_LINKER_FLAGS "-fsanitize=undefined -rdynamic")
+add_compile_options(-Wall -Wextra -fsanitize=undefined -Wpedantic -Wunused -O2 -ggdb)
+set(CMAKE_EXE_LINKER_FLAGS "-fsanitize=undefined -rdynamic -ggdb")
 
 include_directories(.)
 include_directories(lexer)
