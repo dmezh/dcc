@@ -138,7 +138,7 @@ block_item:
                                     if (DBGLVL_DEBUG()) print_ast($$);
                                 }
 |   statement                   {   if (DBGLVL_DEBUG()) print_ast($1); }
-|   internal                    {   $$=NULL; }
+|   internal                    {   $$=astn_alloc(ASTN_NOOP); }
 ;
 
 statement:
