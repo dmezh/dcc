@@ -38,7 +38,7 @@ void print_ast(const astn *n) {
         for (size_t i=0; i<n->Strlit.strlit.len; i++) {
             emit_char(n->Strlit.strlit.str[i], stderr);
         }
-        fprintf(stderr, "\"\\n");
+        fprintf(stderr, "\"\n");
         break;
 
     case ASTN_BINOP:
