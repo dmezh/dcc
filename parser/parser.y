@@ -114,7 +114,7 @@ external_decln:                             // kludge ish for structs/unions // 
 ;
 
 fn_def:
-    decln_spec decl lbrace block_item_list_maybe_empty rbrace         {  $$=st_define_function(decl_alloc($1, $2, NULL, @2), $4, @3);   }
+    decln_spec decl lbrace { current_scope = $2->Type.derived.scope; } block_item_list_maybe_empty rbrace         {  st_pop_scope(); $$=st_define_function(decl_alloc($1, $2, NULL, @2), $5, @3);   }
 ;
 
 // 6.8.2
@@ -563,9 +563,34 @@ direct_decl:
     ident                           {   $$=$1;  }
 |   '(' decl ')'                    {   $$=$2;  }
 |   direct_decl_arr
-|   direct_decl '(' param_t_list ')'{   $$=fndef_alloc($1, $3, current_scope); @$=@1;    }
+|   direct_decl '(' param_t_list ')'{   // fprintf(stderr, "Am here\n");
+                                        // print_ast($1);
+                                        astn *n = dtype_alloc(get_dtypechain_target($1), t_FN);
+                                        n->Type.derived.param_list = $3;
+                                        n->Type.derived.scope = current_scope;
+                                        if ($1->type == ASTN_TYPE) { // derived
+                                            reset_dtypechain_target($1, n);
+                                            $$=$1;
+                                        } else {
+                                            $$=n;
+                                        }
+                                        st_pop_scope();
+                                        @$=@1; }
 |   direct_decl '(' ident_list ')'  {   ps_error(@3, "not handling K&R syntax");   }
-|   direct_decl '(' ')'             {   st_new_scope(SCOPE_FUNCTION, @1); $$=fndef_alloc($1, NULL, current_scope); @$=@1;  }
+|   direct_decl '(' ')'             {   // fprintf(stderr, "Am here\n");
+                                        // print_ast($1);
+                                        st_new_scope(SCOPE_FUNCTION, @1);
+                                        astn *n = dtype_alloc(get_dtypechain_target($1), t_FN);
+                                        n->Type.derived.param_list = NULL;
+                                        n->Type.derived.scope = current_scope;
+                                        if ($1->type == ASTN_TYPE) { // derived
+                                            reset_dtypechain_target($1, n);
+                                            $$=$1;
+                                        } else {
+                                            $$=n;
+                                        }
+                                        st_pop_scope();
+                                        @$=@1; }
 ;
 
 param_t_list:

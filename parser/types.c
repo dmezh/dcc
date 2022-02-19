@@ -43,7 +43,11 @@ int get_sizeof(const astn* type) {
         if (type->Type.derived.type == t_PTR) {
             return target_size[t_PTR];
         }
+        // add t_FN stuff
         else {
+            if (!type->Type.derived.size) {
+                return NULL;
+            }
             if (type->Type.derived.size->type != ASTN_NUM) {
                 fprintf(stderr, "Sorry, can't yet evaluate compile-time constants other than plain numbers\n");
             }

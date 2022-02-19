@@ -131,6 +131,7 @@ extern symtab* current_scope;
 void st_reserve_stack(st_entry* e);
 
 st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context);
+st_entry *st_declare_function(astn* fndef, YYLTYPE openbrace_context);
 
 st_entry *st_declare_struct(const char* ident, bool strict,  YYLTYPE context);
 st_entry *st_define_struct(const char *ident, astn *decl_list,

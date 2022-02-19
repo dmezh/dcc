@@ -12,12 +12,13 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "ast_print.h"
 #include "location.h"
 #include "types.h"
 #include "util.h"
 
 static void st_check_linkage(st_entry* e);
-void st_dump_single_given(symtab* s);
+static st_entry* real_begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context);
 
 // symtab for this translation unit
 symtab root_symtab = {
@@ -30,57 +31,80 @@ symtab root_symtab = {
 
 symtab *current_scope = &root_symtab;
 
-// currently doesn't support actually defining already-declared functions
-st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context) {
-    astn* decl_type = get_dtypechain_target(fndef->Decl.type);
+st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE context) {
+    // get the name
+    astn *ident = get_dtypechain_target(fndef->Decl.type);
+    if (ident->type != ASTN_IDENT)
+        die("Expected ident at end of dtypechain");
+    const char *name = ident->Ident.ident;
 
-    if (decl_type->type != ASTN_FNDEF) {
-        fprintf(stderr, "Error near %s:%d: invalid declaration\n", openbrace_context.filename, openbrace_context.lineno);
+    // check if function has been declarated and/or defined
+    st_entry *fn = st_lookup(name, NS_MISC);
+    if (fn) { // found existing entry
+        if (fn->entry_type == STE_FN) { // entry is fn
+            if (fn->fn_defined) { // fn defined
+                st_error("Attempted redefinition of function %s near %s:%d\n", name, context.filename, context.lineno);
+            }
+        } else {
+            st_error("Attempted redeclaration of symbol %s near %s:%d\n", name, context.filename, context.lineno);
+        }
+    }
+
+    // check existing declaration's compatibility at this point
+    fn = st_declare_function(fndef, context);
+
+    // define the scope's context and function body AST
+    fn->body = block;
+    fn->fn_defined = true;
+    fn->fn_scope->context = context;
+
+    return fn;
+}
+
+st_entry *st_declare_function(astn* decl, YYLTYPE context) {
+    // Basic checks on the declaration we got
+    if (decl->type != ASTN_DECL)
+        die("Invalid astn is not of decl type");
+
+    if (decl->Decl.type->type != ASTN_TYPE)
+        die("Invalid non-type astn at top of function declaration type chain");
+
+    if (decl->Decl.type->Type.derived.type != t_FN) {
+        fprintf(stderr, "Error near %s:%d: invalid declaration\n", context.filename, context.lineno);
         exit(-5);
     }
 
-    struct astn_fndef fd = decl_type->Fndef;
+    // get the name
+    astn *ident = get_dtypechain_target(decl->Decl.type);
+    if (ident->type != ASTN_IDENT)
+        die("Expected ident at end of dtypechain");
+    const char *name = ident->Ident.ident;
 
-    symtab *fn_scope = current_scope;
-    st_pop_scope();
+    // make new st_entry if needed
+    st_entry *fn = st_lookup_ns(name, NS_MISC);
+    if (!fn) // check for compatibility with existing declaration here
+        fn = real_begin_st_entry(decl, NS_MISC, decl->Decl.context);
 
-    const char* name = fd.decl->Ident.ident;
-    st_entry *n = st_lookup_ns(name, NS_MISC);
-    if (n && n->entry_type == STE_FN && n->fn_defined) {
-        if (!block) return n; // ignore redecl
-        fprintf(stderr, "Error: attempted redefinition of symbolss %s\n", name);
-        exit(-5);
-    }
-
-    // following actions leak an astn_fndef
-    if (fndef->Decl.type->type == ASTN_TYPE) // necessarily a derived type
-        reset_dtypechain_target(fndef->Decl.type, fd.decl);
-    else
-        fndef->Decl.type = fndef->Decl.type->Fndef.decl;
-
-    st_entry *fn = n ? n : begin_st_entry(fndef, NS_MISC, fndef->Decl.context);
-
-    //printf("back from install honey\n");
-    astn* p = fd.param_list;
-    while (block && p) {
+    // check the parameter list for ellipses and missing names
+    astn* p = decl->Decl.type->Type.derived.param_list;
+    while (p) {
         if (list_data(p)->type == ASTN_ELLIPSIS) {
             fn->variadic = true;
         } else if (list_data(p)->type != ASTN_DECLREC) {
-            st_error("function parameter name omitted near %s:%d\n", fn_scope->context.filename, fn_scope->context.lineno);
+            st_error("function parameter name omitted near %s:%d\n", decl->Decl.type->Type.derived.scope->context.filename, decl->Decl.type->Type.derived.scope->context.lineno);
         }
         p = list_next(p);
     }
 
-    fn->body = block;
-    fn->param_list = fd.param_list;
+    // set the rest of the st_entry fields we'll need
+    fn->param_list = decl->Decl.type->Type.derived.param_list;
     fn->entry_type = STE_FN;
-    fn->fn_scope = fn_scope;
+    fn->fn_scope = decl->Decl.type->Type.derived.scope; // we're destroying any existing scope, fix this for type-checking prototypes.
     fn->fn_scope->parent_func = fn;
-    //fn->fn_scope->stack_total = 0;
-    fn->fn_scope->context = openbrace_context; // kludge up from grammar
     fn->storspec = SS_NONE;
-    fn->def_context = openbrace_context; // this probably isn't consistent with structs, whatever
-    fn->fn_defined = true;
+    fn->def_context = context; // this probably isn't consistent with structs, whatever
+    fn->fn_defined = false;
+
     return fn;
 }
 
@@ -97,6 +121,11 @@ st_entry *st_declare_struct(const char* ident, bool strict, YYLTYPE context) {
             return n; // "redeclared"
         }
     } else {
+        // get up to the closest scope in the stack that's not a mini-scope
+        symtab* save = current_scope;
+        while (current_scope == SCOPE_MINI)
+            st_pop_scope();
+
         st_entry *new = stentry_alloc(ident);
         new->ns = NS_TAGS;
         new->entry_type = STE_STRUNION_DEF;
@@ -104,11 +133,8 @@ st_entry *st_declare_struct(const char* ident, bool strict, YYLTYPE context) {
         new->decl_context = context;
         new->linkage = L_NONE;
         new->storspec = SS_NONE;
-        // get up to the closest scope in the stack that's not a mini-scope
-        symtab* save = current_scope;
-        while (current_scope == SCOPE_MINI)
-            st_pop_scope();
         new->scope = current_scope;
+
         current_scope = save; // restore scope stack
         st_insert_given(new);
         return new;
@@ -195,54 +221,87 @@ void st_reserve_stack(st_entry* e) {
     }
 }
 
+static void check_dtypechain_legality(astn *head) {
+    // TODO: add context
+    // not allowed:
+    // - array of function
+    // - function returning function
+    // - function returning array
+    while (head && head->type == ASTN_TYPE && head->Type.is_derived) {
+        astn *target = head->Type.derived.target;
+        switch (head->Type.derived.type) {
+            case t_PTR:
+                break;
+            case t_ARRAY:
+            {
+                if (target->type == ASTN_TYPE && target->Type.is_derived &&
+                    target->Type.derived.type == t_FN) {
+                        st_error("Attempted declaration of array of functions\n");
+                    }
+                break;
+            }
+            case t_FN:
+            {
+                if (target->type == ASTN_TYPE && target->Type.is_derived) {
+                    if (target->Type.derived.type == t_FN) {
+                        st_error("Attempted declaration of function returning function\n");
+                    }
+                    if (target->Type.derived.type == t_ARRAY) {
+                        st_error("Attempted declaration of function returning array\n");
+                    }
+                }
+            }
+            default:
+                break;
+        }
+        head = head->Type.derived.target;
+    }
+}
+
 
 /*
  *  Synthesize a new st_entry, qualify and specify it, and attempt to install it
  *  into the current scope. Sets entry_type to STE_VAR by default.
  * 
  *  TODO: decl is not yet a list
- * 
- *  Note: It would introduce safety at compile-time to make the parameter an astn_decl,
- *  but I am taking the route of preferring all interfaces to the parser be plain astn* 's.
  */
-st_entry* begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
+static st_entry* real_begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
     if (decl->type != ASTN_DECL)
         die("Invalid astn for begin_st_entry() (astn_decl was expected)");
 
-    astn *spec = decl->Decl.specs;
-    astn *decl_list = decl->Decl.type;
+    // Get information from the type chain
+    astn *type_chain = decl->Decl.type;
 
-    st_entry *new;
-    if (decl->Decl.type->type == ASTN_FNDEF) { // GIGA kludge for function declarations
-        st_entry *newfn = st_define_function(decl, NULL, context);
-        newfn->fn_defined = false;
-        newfn->def_context = (YYLTYPE){NULL, 0}; // it's not defined
-        return newfn;
+    check_dtypechain_legality(type_chain);
+
+    astn *target = get_dtypechain_target(type_chain);
+    if (target->type != ASTN_IDENT)
+        die("Unexpected decl target astnode type\n");
+
+    // allocate a new entry
+    st_entry *new = stentry_alloc(target->Ident.ident);
+
+    // complete the type by flipping the dtypechain
+    reset_dtypechain_target(type_chain, new->type); // end of chain is now the type instead of ident
+    if (type_chain->type == ASTN_TYPE && type_chain->Type.is_derived) { // ALLOCATE HERE?
+        new->type = type_chain; // because otherwise it's just an IDENT
     }
 
-    new = stentry_alloc(get_dtypechain_target(decl_list)->Ident.ident);
-    new->ns = ns;
-
-    struct astn_type *t = &new->type->Type;
-    new->storspec = describe_type(spec, t);
-
+    // set context, namespace, scope, and entry type
     new->decl_context = context;
+    new->ns = ns;
     new->scope = current_scope;
     new->entry_type = STE_VAR; // default; override from caller when needed!
-    symtab* f = st_parent_function();
-    if ((f && !new->storspec) || new->storspec == SS_AUTO) {
+
+    // describe the storage and linkage
+    new->storspec = describe_type(decl->Decl.specs, &new->type->Type);
+
+    if (!new->storspec && st_parent_function())
         new->storspec = SS_AUTO;
-        //st_entry* func = st_parent_function()->parent_func;
-        // storage alloc
-    }
-//    st_check_tentative(new);
+
     st_check_linkage(new);
 
-    reset_dtypechain_target(decl_list, new->type); // end of chain is now the type instead of ident
-    if (decl_list->type == ASTN_TYPE && decl_list->Type.is_derived) { // ALLOCATE HERE?
-        new->type = decl_list; // because otherwise it's just an IDENT
-    }
-
+    // attempt to insert the new entry, check for permitted redeclaration
     if (!st_insert_given(new)) {
         if (new->scope == &root_symtab) {
             st_entry* prev = st_lookup_ns(new->ident, new->ns);
@@ -268,6 +327,19 @@ st_entry* begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
     }
     return new;
 }
+
+st_entry* begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
+    if (decl->Decl.type->type == ASTN_TYPE && decl->Decl.type->Type.derived.type == t_FN) { // GIGA kludge for function declarations
+        // fprintf(stderr, "got hereeee\n");
+        st_entry *newfn = st_declare_function(decl, context);
+        newfn->fn_defined = false;
+        newfn->def_context = (YYLTYPE){NULL, 0}; // it's not defined
+        return newfn;
+    } else {
+        return real_begin_st_entry(decl, ns, context);
+    }
+}
+
 
 /* 
  *  Just allocate; we're not checking any kind of context for redeclarations, etc

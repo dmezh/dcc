@@ -128,6 +128,8 @@ struct astn_type {
             enum der_types type;
             struct astn *target;
             struct astn *size; // rename?
+            struct astn *param_list;
+            struct symtab *scope;
         } derived;
         struct {
             enum scalar_types type;
@@ -303,6 +305,8 @@ astn *do_decl(astn *decl);
 void set_dtypechain_target(astn* top, astn* target);
 void reset_dtypechain_target(astn* top, astn* target);
 void merge_dtypechains(astn *parent, astn *child);
+
+astn* get_dtypechain_last_link(astn *top);
 astn* get_dtypechain_target(astn* top);
 
 

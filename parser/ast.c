@@ -273,7 +273,19 @@ void merge_dtypechains(astn *parent, astn *child) {
 }
 
 /*
- * get last target of chain of derived types
+ * Get last derived link in chain of derived types
+ */
+astn* get_dtypechain_last_link(astn *top) {
+    while (top->type == ASTN_TYPE &&
+           top->Type.derived.target &&
+           top->Type.derived.target->type == ASTN_TYPE) {
+        top = top->Type.derived.target;
+    }
+    return top;
+}
+
+/*
+ * Get final target of chain of derived types
  */
 astn* get_dtypechain_target(astn* top) {
     while (top->type == ASTN_TYPE && top->Type.derived.target) {

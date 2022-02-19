@@ -222,7 +222,32 @@ void print_ast(const astn *n) {
             } else {
                 switch (n->Type.derived.type) {
                     case t_PTR:     fprintf(stderr, "PTR TO");       break;
-                    case t_FN:      fprintf(stderr, "FN RETURNING"); break; // dead code at the moment
+                    case t_FN:
+                        fprintf(stderr, "FN RETURNING\n");
+                        if (n->Type.derived.param_list) {
+                            tabs++;
+                                print_ast(NULL);
+                                fprintf(stderr, "> with param list:\n");
+                                tabs++;
+                                    struct astn *a = n->Type.derived.param_list;
+                                    while (a) {
+                                        print_ast(a->List.me);
+                                        if (a->List.me->type != ASTN_ELLIPSIS) {
+                                            tabs++;
+                                                print_ast(NULL);
+                                                fprintf(stderr, "> with type:\n");
+                                                print_ast(a->List.me->Declrec.e->type);
+                                            tabs--;
+                                        }
+                                        a = a->List.next;
+                                    }
+                                tabs--;
+                            tabs--;
+                        } else {
+                            print_ast(NULL);
+                            fprintf(stderr, "> with no params\n");
+                        }
+                        break;
                     default:        die("invalid derived type");
                 }
                 fprintf(stderr, "\n");
@@ -302,7 +327,8 @@ void print_ast(const astn *n) {
                 tabs--;
             tabs--;
         } else {
-            fprintf(stderr, "with no params\n");
+            print_ast(NULL);
+            fprintf(stderr, "> with no params\n");
         }
         break;
 
