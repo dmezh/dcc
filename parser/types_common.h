@@ -10,6 +10,7 @@
 // all of the below type-related shit should be moved out of ast.h
 // these are type SPECIFIERS, NOT types
 enum typespec {
+    TS_UNDEF = 0,
     TS_VOID,
     TS_CHAR,
     TS_SHORT,
@@ -24,6 +25,7 @@ enum typespec {
 };
 
 enum typequal {
+    TQ_UNDEF = 0,
     TQ_CONST,
     TQ_RESTRICT,
     TQ_VOLATILE

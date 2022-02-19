@@ -131,7 +131,7 @@ st_entry *st_declare_struct(const char* ident, bool strict, YYLTYPE context) {
         new->scope = current_scope;
         // get up to the closest scope in the stack that's not a mini-scope
         symtab* save = current_scope;
-        while (current_scope == SCOPE_MINI)
+        while (current_scope->scope_type == SCOPE_MINI)
             st_pop_scope();
 
         current_scope = save; // restore scope stack

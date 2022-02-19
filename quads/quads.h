@@ -5,6 +5,7 @@
 #include "symtab.h"
 
 enum quad_op {
+    Q_UNDEF = 0,
     Q_MOV, // done
     Q_ADD, // done
     Q_SUB, // done
@@ -37,7 +38,7 @@ enum quad_op {
 };
 
 enum qnode_types {
-    QN_UNDEF,
+    QN_UNDEF = 0,
     QN_ASTN,
     QN_STVAR,
     QN_CONSTANT,
@@ -45,7 +46,7 @@ enum qnode_types {
 };
 
 enum addr_modes {
-    MODE_UNDEF,
+    MODE_UNDEF = 0,
     MODE_DIRECT,
     MODE_INDIRECT
 };

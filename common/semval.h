@@ -12,7 +12,7 @@
 #include <stdio.h>
 
 enum int_types {
-    s_UNSPEC,
+    s_UNDEF = 0,
     s_CHARLIT,
     s_INT,
     s_LONG,

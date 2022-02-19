@@ -15,6 +15,7 @@
 #include "types_common.h"
 
 enum scope_types {
+    SCOPE_UNDEF = 0,
     SCOPE_MINI,
     SCOPE_FILE,
     SCOPE_FUNCTION,
@@ -23,6 +24,7 @@ enum scope_types {
 };
 
 enum namespaces {
+    NS_UNDEF = 0,
     NS_TEMP_INTERNAL,
     NS_TAGS,
     NS_LABELS,
@@ -38,7 +40,7 @@ enum st_entry_types {
 };
 
 enum st_linkage {
-    L_UNDEF,
+    L_UNDEF = 0,
     L_NONE,
     L_INTERNAL,
     L_EXTERNAL
