@@ -308,6 +308,15 @@ void merge_dtypechains(astn *parent, astn *child);
 
 astn* get_dtypechain_last_link(astn *top);
 astn* get_dtypechain_target(astn* top);
+const char *get_dtypechain_ident(astn *d);
 
+#define ast_check(node, asttype, msg) \
+    do { \
+        if (node->type != asttype) { \
+            fprintf(stderr, "FAILED ASTN CHECK AT %s:%d: ", __FILE__, __LINE__); \
+            fprintf(stderr, "Expected type %s and got type %d\n", #asttype, node->type); \
+            die(msg); \
+        } \
+    } while (0); \
 
 #endif

@@ -32,11 +32,11 @@ symtab root_symtab = {
 symtab *current_scope = &root_symtab;
 
 st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE context) {
+    ast_check(fndef, ASTN_DECL, "Expected decl.");
+    ast_check(block, ASTN_LIST, "Expected list for fn body.");
+
     // get the name
-    astn *ident = get_dtypechain_target(fndef->Decl.type);
-    if (ident->type != ASTN_IDENT)
-        die("Expected ident at end of dtypechain");
-    const char *name = ident->Ident.ident;
+    const char *name = get_dtypechain_ident(fndef->Decl.type);
 
     // check if function has been declarated and/or defined
     st_entry *fn = st_lookup(name, NS_MISC);
@@ -62,12 +62,9 @@ st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE context) {
 }
 
 st_entry *st_declare_function(astn* decl, YYLTYPE context) {
-    // Basic checks on the declaration we got
-    if (decl->type != ASTN_DECL)
-        die("Invalid astn is not of decl type");
-
-    if (decl->Decl.type->type != ASTN_TYPE)
-        die("Invalid non-type astn at top of function declaration type chain");
+    ast_check(decl, ASTN_DECL, "Expected decl.");
+    ast_check(decl->Decl.type, ASTN_TYPE,
+              "Invalid non-type astn at top of function declaration type chain.");
 
     if (decl->Decl.type->Type.derived.type != t_FN) {
         fprintf(stderr, "Error near %s:%d: invalid declaration\n", context.filename, context.lineno);
@@ -75,10 +72,7 @@ st_entry *st_declare_function(astn* decl, YYLTYPE context) {
     }
 
     // get the name
-    astn *ident = get_dtypechain_target(decl->Decl.type);
-    if (ident->type != ASTN_IDENT)
-        die("Expected ident at end of dtypechain");
-    const char *name = ident->Ident.ident;
+    const char *name = get_dtypechain_ident(decl->Decl.type);
 
     // make new st_entry if needed
     st_entry *fn = st_lookup_ns(name, NS_MISC);
@@ -265,20 +259,16 @@ static void check_dtypechain_legality(astn *head) {
  *  TODO: decl is not yet a list
  */
 static st_entry* real_begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
-    if (decl->type != ASTN_DECL)
-        die("Invalid astn for begin_st_entry() (astn_decl was expected)");
+    ast_check(decl, ASTN_DECL, "Expected decl to make new st_entry.");
 
     // Get information from the type chain
     astn *type_chain = decl->Decl.type;
-
     check_dtypechain_legality(type_chain);
 
-    astn *target = get_dtypechain_target(type_chain);
-    if (target->type != ASTN_IDENT)
-        die("Unexpected decl target astnode type\n");
+    const char *name = get_dtypechain_ident(type_chain);
 
     // allocate a new entry
-    st_entry *new = stentry_alloc(target->Ident.ident);
+    st_entry *new = stentry_alloc(name);
 
     // complete the type by flipping the dtypechain
     reset_dtypechain_target(type_chain, new->type); // end of chain is now the type instead of ident
@@ -328,8 +318,7 @@ static st_entry* real_begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE con
 }
 
 st_entry* begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
-    if (decl->Decl.type->type == ASTN_TYPE && decl->Decl.type->Type.derived.type == t_FN) { // GIGA kludge for function declarations
-        // fprintf(stderr, "got hereeee\n");
+    if (decl->Decl.type->type == ASTN_TYPE && decl->Decl.type->Type.derived.type == t_FN) {
         st_entry *newfn = st_declare_function(decl, context);
         newfn->fn_defined = false;
         newfn->def_context = (YYLTYPE){NULL, 0}; // it's not defined

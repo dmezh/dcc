@@ -36,7 +36,9 @@ int get_sizeof(const astn* type) {
     //printf("getting size of:\n");
     //print_ast(type);
     if (type->type == ASTN_SYMPTR) return (get_sizeof(type->Symptr.e->type));
-    if (type->type != ASTN_TYPE) die("sizeof was given an non-type astn");
+
+    ast_check(type, ASTN_TYPE, "sizeof was given a non-type astn.");
+
     if (!type->Type.is_derived)
         return target_size[type->Type.scalar.type];
     else {

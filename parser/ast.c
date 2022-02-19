@@ -293,3 +293,15 @@ astn* get_dtypechain_target(astn* top) {
     }
     return top;
 }
+
+/*
+ * Get ident at end of chain of derived types
+ *
+ * Not all dtypechains will have an ident at the end, so only call this if you
+ * know and require that the ident is there.
+ */
+const char *get_dtypechain_ident(astn *d) {
+    astn *i = get_dtypechain_target(d);
+    ast_check(i, ASTN_IDENT, "Expected ident at end of dtypechain.");
+    return i->Ident.ident;
+}
