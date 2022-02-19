@@ -66,9 +66,10 @@ st_entry *st_declare_function(astn* decl, YYLTYPE context) {
     ast_check(decl->Decl.type, ASTN_TYPE,
               "Invalid non-type astn at top of function declaration type chain.");
 
-    if (decl->Decl.type->Type.derived.type != t_FN) {
-        fprintf(stderr, "Error near %s:%d: invalid declaration\n", context.filename, context.lineno);
-        exit(-5);
+    struct astn_type *decl_type = &decl->Decl.type->Type;
+
+    if (decl_type->derived.type != t_FN) {
+        st_error("Invalid declaration near %s:%d:\n", context.filename, context.lineno);
     }
 
     // get the name
@@ -80,20 +81,21 @@ st_entry *st_declare_function(astn* decl, YYLTYPE context) {
         fn = real_begin_st_entry(decl, NS_MISC, decl->Decl.context);
 
     // check the parameter list for ellipses and missing names
-    astn* p = decl->Decl.type->Type.derived.param_list;
+    astn* p = decl_type->derived.param_list;
     while (p) {
         if (list_data(p)->type == ASTN_ELLIPSIS) {
             fn->variadic = true;
         } else if (list_data(p)->type != ASTN_DECLREC) {
-            st_error("function parameter name omitted near %s:%d\n", decl->Decl.type->Type.derived.scope->context.filename, decl->Decl.type->Type.derived.scope->context.lineno);
+            YYLTYPE *scope_context = &decl_type->derived.scope->context;
+            st_error("function parameter name omitted near %s:%d\n", scope_context->filename, scope_context->lineno);
         }
         p = list_next(p);
     }
 
     // set the rest of the st_entry fields we'll need
-    fn->param_list = decl->Decl.type->Type.derived.param_list;
+    fn->param_list = decl_type->derived.param_list;
     fn->entry_type = STE_FN;
-    fn->fn_scope = decl->Decl.type->Type.derived.scope; // we're destroying any existing scope, fix this for type-checking prototypes.
+    fn->fn_scope = decl_type->derived.scope; // we're destroying any existing scope, fix this for type-checking prototypes.
     fn->fn_scope->parent_func = fn;
     fn->storspec = SS_NONE;
     fn->def_context = context; // this probably isn't consistent with structs, whatever
