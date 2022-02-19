@@ -121,11 +121,6 @@ st_entry *st_declare_struct(const char* ident, bool strict, YYLTYPE context) {
             return n; // "redeclared"
         }
     } else {
-        // get up to the closest scope in the stack that's not a mini-scope
-        symtab* save = current_scope;
-        while (current_scope == SCOPE_MINI)
-            st_pop_scope();
-
         st_entry *new = stentry_alloc(ident);
         new->ns = NS_TAGS;
         new->entry_type = STE_STRUNION_DEF;
@@ -134,6 +129,10 @@ st_entry *st_declare_struct(const char* ident, bool strict, YYLTYPE context) {
         new->linkage = L_NONE;
         new->storspec = SS_NONE;
         new->scope = current_scope;
+        // get up to the closest scope in the stack that's not a mini-scope
+        symtab* save = current_scope;
+        while (current_scope == SCOPE_MINI)
+            st_pop_scope();
 
         current_scope = save; // restore scope stack
         st_insert_given(new);
@@ -156,7 +155,7 @@ st_entry* st_define_struct(const char *ident, astn *decl_list,
     strunion->members = current_scope; // mini-scope
     st_entry *member;
     while (decl_list) {
-        member = begin_st_entry(list_data(decl_list), NS_MEMBERS, list_data(decl_list)->Decl.context);
+        member = real_begin_st_entry(list_data(decl_list), NS_MEMBERS, list_data(decl_list)->Decl.context);
         member->linkage = L_NONE;
         member->storspec = SS_NONE;
         decl_list = list_next(decl_list);
