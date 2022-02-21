@@ -21,10 +21,10 @@
 #define RESET "\033[0m"
 
 #define RED_ERROR(...) do {                         \
-    fprintf(stderr, BRED);                          \
-    fprintf(stderr, __VA_ARGS__);                   \
-    fprintf(stderr, RESET "\n");                    \
-    fprintf(stderr, "\nCompilation failed :(\n");   \
+    eprintf(BRED);                          \
+    eprintf(__VA_ARGS__);                   \
+    eprintf(RESET "\n");                    \
+    eprintf("\nCompilation failed :(\n");   \
     exit(-1);                                       \
 } while(0);
 
@@ -42,7 +42,7 @@ static struct opt {
 };
 
 static void print_usage_additional() {
-    fprintf(stderr,
+    eprintf(
         "\n Pragmas:"
         "\n  Setting debug level:"
         "\n   #pragma dbg-info          set debug level going forward to INFO"
@@ -58,7 +58,7 @@ static void print_usage_additional() {
 }
 
 static void print_usage() {
-    fprintf(stderr, "Usage: ./dcc [OPTIONS] input_file"
+    eprintf("Usage: ./dcc [OPTIONS] input_file"
         "\n Options:"
         "\n   -h              show extended usage"
         "\n   -o output_file  specify output file"
@@ -83,11 +83,11 @@ static void get_options(int argc, char** argv) {
                 print_usage_additional();
                 exit(0);
             case 'V':
-                fprintf(stderr, "---- dcc - a C compiler ----"
-                                "\n dcc " DCC_VERSION
-                                "\n architecture: " DCC_ARCHITECTURE "\n"
-                                "\n author: Dan Mezhiborsky"
-                                "\n home: https://github.com/dmezh/dcc\n");
+                eprintf("---- dcc - a C compiler ----"
+                        "\n dcc " DCC_VERSION
+                        "\n architecture: " DCC_ARCHITECTURE "\n"
+                        "\n author: Dan Mezhiborsky"
+                        "\n home: https://github.com/dmezh/dcc\n");
                 exit(0);
             case 'v':;
                 opt.debug++;
@@ -211,7 +211,7 @@ int main(int argc, char** argv) {
 
     yydebug = 0;
     if (yyparse()) // <- entry to the rest of the compiler
-        RED_ERROR("");
+        RED_ERROR("\n");
 
     fseek(tmp, 0, SEEK_SET);
 

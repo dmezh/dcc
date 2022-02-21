@@ -8,6 +8,11 @@
 #define SYMTAB_UTIL_H
 
 #include "symtab.h"
+#include "util.h"
+
+#define st_error(...) \
+    eprintf("Error declaring symbol: " __VA_ARGS__); \
+    exit(-5);
 
 st_entry* stentry_alloc(const char *ident);
 

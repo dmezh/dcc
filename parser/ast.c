@@ -122,7 +122,7 @@ astn *typespec_alloc(enum typespec spec) {
     astn *n=astn_alloc(ASTN_TYPESPEC);
     n->Typespec.spec = spec;
     n->Typespec.next = NULL;
-    //fprintf(stderr, "ALLOCATED TSPEC\n");
+    //eprintf("ALLOCATED TSPEC\n");
     return n;
 }
 
@@ -154,7 +154,7 @@ astn *dtype_alloc(astn *target, enum der_types type) {
     n->Type.is_derived = true;
     n->Type.derived.type = type;
     n->Type.derived.target = target;
-    //fprintf(stderr, "ALLOCATED DTYPE %p OF TYPE %s WITH TARGET %p\n",
+    //eprintf("ALLOCATED DTYPE %p OF TYPE %s WITH TARGET %p\n",
     //        (void*)n, der_types_str[n->Type.derived.type], (void*)n->Type.derived.target);
     return n;
 }
@@ -246,7 +246,7 @@ void set_dtypechain_target(astn *top, astn *target) {
     while (top->Type.derived.target) {
         top = top->Type.derived.target;
     }
-    //ffprintf(stderr, stderr, "setting target to %p, I arrived at %p\n", (void*)target, (void*)top);
+    //eprintf("setting target to %p, I arrived at %p\n", (void*)target, (void*)top);
     top->Type.derived.target = target;
 }
 
@@ -259,7 +259,7 @@ void reset_dtypechain_target(astn *top, astn *target) {
         last = top;
         top = top->Type.derived.target;
     }
-    //ffprintf(stderr, stderr, "resetting target to %p, I arrived at %p\n\n", (void*)target, (void*)last);
+    //eprintf("resetting target to %p, I arrived at %p\n\n", (void*)target, (void*)last);
     last->Type.derived.target = target;
 }
 

@@ -5,9 +5,7 @@
 #include <stdio.h> // for error macro below
 #include <stdlib.h>
 
-#define st_error(...) \
-    fprintf(stderr, "Error declaring symbol: " __VA_ARGS__); \
-    exit(-5);
+#define eprintf(...) fprintf(stderr, __VA_ARGS__)
 
 void *safe_malloc(size_t size);
 void *safe_calloc(size_t num, size_t size);

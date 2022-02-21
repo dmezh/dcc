@@ -5,6 +5,7 @@
 #include "ast_print.h"
 #include "symtab.h"
 #include "symtab_util.h"
+#include "util.h"
 
 static const char* scope_types_str[] = {
     [SCOPE_MINI] = "MINI",
@@ -47,7 +48,7 @@ void st_dump_current() {
  */
 void st_dump_entry(const st_entry* e) {
     if (!e) return;
-    fprintf(stderr, "%s<%s> <ns:%s> <stor:%s%s> <scope:%s @ %s:%d>",
+    eprintf("%s<%s> <ns:%s> <stor:%s%s> <scope:%s @ %s:%d>",
             st_entry_types_str[e->entry_type],
             e->ident,
             namespaces_str[e->ns],
@@ -58,29 +59,29 @@ void st_dump_entry(const st_entry* e) {
             e->scope->context.lineno
     );
     if (e->scope == &root_symtab && e->linkage && e->linkage != L_NONE) {
-        fprintf(stderr, " <linkage:%s>", linkage_str[e->linkage]);
+        eprintf(" <linkage:%s>", linkage_str[e->linkage]);
     }
     if (e->decl_context.filename) {
-        fprintf(stderr, " <decl %s:%d>", e->decl_context.filename, e->decl_context.lineno);
+        eprintf(" <decl %s:%d>", e->decl_context.filename, e->decl_context.lineno);
     }
     if ((e->ns == NS_TAGS && !e->members) || (e->entry_type == STE_FN && !e->fn_defined)) {
-        fprintf(stderr, " (FWD-DECL)");
+        eprintf(" (FWD-DECL)");
     }
     if (e->def_context.filename) {
-        fprintf(stderr, " <def %s:%d>", e->def_context.filename, e->def_context.lineno);
+        eprintf(" <def %s:%d>", e->def_context.filename, e->def_context.lineno);
     }
-    fprintf(stderr, "STACK: %d", e->stack_offset);
-    fprintf(stderr, "\n");
+    eprintf("STACK: %d", e->stack_offset);
+    eprintf("\n");
 }
 
 // kind of fake at the moment
 void st_dump_recursive() {
-    fprintf(stderr, "_- symtab dump for translation unit: -_\n");
+    eprintf("_- symtab dump for translation unit: -_\n");
     const st_entry *e = current_scope->first;
     while (e) {
         st_dump_entry(e);
         st_examine_given(e);
-        fprintf(stderr, "\n");
+        eprintf("\n");
         e = e->next;
     }
 }
@@ -100,21 +101,21 @@ void st_dump_single_given(const symtab* s) {
  */
 void st_examine_given(const st_entry* e) {
     if (e->entry_type == STE_FN) {
-        fprintf(stderr, "FUNCTION RETURNING:\n");
+        eprintf("FUNCTION RETURNING:\n");
         print_ast(e->type);
         if (e->param_list) {
             if (e->variadic)
-                fprintf(stderr, "AND TAKING PARAMS (VARIADIC):\n");
+                eprintf("AND TAKING PARAMS (VARIADIC):\n");
             else
-                fprintf(stderr, "AND TAKING PARAMS:\n");
+                eprintf("AND TAKING PARAMS:\n");
             print_ast(e->param_list);
         } else {
-            fprintf(stderr, "TAKING UNKNOWN/NO PARAMETERS\n");
+            eprintf("TAKING UNKNOWN/NO PARAMETERS\n");
         }
         if (e->fn_defined) {
-            fprintf(stderr, "DUMPING FUNCTION SYMTAB:\n");
+            eprintf("DUMPING FUNCTION SYMTAB:\n");
             st_dump_single_given(e->fn_scope);
-            fprintf(stderr, "DUMPING FUNCTION AST:\n");
+            eprintf("DUMPING FUNCTION AST:\n");
             print_ast(e->body);
         }
     }
@@ -122,7 +123,7 @@ void st_examine_given(const st_entry* e) {
         print_ast(e->type);
     }
     if (e->entry_type == STE_STRUNION_DEF && e->members) {
-        fprintf(stderr, "Dumping tag-type mini scope of tag <%s>!\n", e->ident);
+        eprintf("Dumping tag-type mini scope of tag <%s>!\n", e->ident);
         const st_entry* cur = e->members->first;
         while (cur) {
             st_dump_entry(cur);

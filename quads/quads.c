@@ -77,7 +77,7 @@ astn* check_ptr_binop(astn* n) {
 */
 
 void quad_error(const char* msg) {
-    fprintf(stderr, "quad generation error: %s\n", msg);
+    eprintf("quad generation error: %s\n", msg);
     exit(-1);
 }
 
@@ -111,7 +111,7 @@ static astn* ptr_target(astn *n) {
 }
 
 _Noreturn void todo(const char* msg) {
-    fprintf(stderr, "TODO: %s\n", msg);
+    eprintf("TODO: %s\n", msg);
     exit(-1);
 }
 
@@ -219,7 +219,7 @@ astn* gen_rvalue(astn* node, astn* target) {
 
                 // multidim arrays: needs fixing
                 if (isarr(utarget))
-                {   fprintf(stderr, "yup\n");
+                {   eprintf("yup\n");
                     return gen_rvalue(ptr_target(utarget), target);
                 }
                 ;
@@ -267,7 +267,7 @@ astn* gen_rvalue(astn* node, astn* target) {
         gen_assign(node);
         return gen_rvalue(node->Assign.left, target);
     }
-    fprintf(stderr, "unhandled node type for gen_rvalue: %d\n", node->type);
+    eprintf("unhandled node type for gen_rvalue: %d\n", node->type);
     die("FUCK!");
     return NULL;
 }
@@ -287,7 +287,7 @@ void gen_assign(astn *node) {
     enum addr_modes destmode;
     astn *dest = gen_lvalue(node->Assign.left, &destmode);
     if (!dest) {
-        fprintf(stderr, "Error: not an lvalue: "); die("test");
+        eprintf("Error: not an lvalue: "); die("test");
         print_ast(node->Assign.left);
         exit(-1);
     }
@@ -381,12 +381,12 @@ void gen_ret(astn *n) {
     bool non_void = (e->type->Type.is_derived || e->type->Type.scalar.type != t_VOID);
     if (n->Return.ret) {
         if (!non_void)
-            fprintf(stderr, "Warning: 'return' with a value in a void function\n");
+            eprintf("Warning: 'return' with a value in a void function\n");
         emit(Q_RET, gen_rvalue(n->Return.ret, NULL), NULL, NULL);
     }
     else {
         if (non_void)
-            fprintf(stderr, "Warning: 'return' without a value in a nonvoid function\n");
+            eprintf("Warning: 'return' without a value in a nonvoid function\n");
         emit(Q_RET, NULL, NULL, NULL);
     }
 }
@@ -440,13 +440,13 @@ void gen_quads(astn *n) {
 
         case ASTN_NUM:
         case ASTN_STRLIT:
-            fprintf(stderr, "Warning: useless constant statement: ");
+            eprintf("Warning: useless constant statement: ");
             print_ast(n);
             break;
         case ASTN_NOOP:
             break;
         
         default:
-            fprintf(stderr, "skipping unknown astn for quads %d\n", n->type);
+            eprintf("skipping unknown astn for quads %d\n", n->type);
     }
 }

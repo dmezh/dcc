@@ -112,7 +112,7 @@ st_entry *st_declare_struct(const char* ident, bool strict, YYLTYPE context) {
     st_entry *n = st_lookup(ident, NS_TAGS);
     if (n) {
         if (strict && n->members) {
-            fprintf(stderr, "Error: attempted redeclaration of complete tag");
+            eprintf("Error: attempted redeclaration of complete tag");
             exit(-5);
         } else {
             return n; // "redeclared"
@@ -208,7 +208,7 @@ void st_reserve_stack(st_entry* e) {
         int size;
         if (e->type->Type.is_derived && e->type->Type.derived.type == t_ARRAY) { // only diff size for arrays
             size = get_sizeof(e->type);
-            //fprintf(stderr, "got arr size %d\n", size);
+            //eprintf("got arr size %d\n", size);
         } else size = 4;
         symtab *f = st_parent_function();
         if (e->is_param) {

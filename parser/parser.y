@@ -28,12 +28,12 @@
     #include <stdlib.h>
     int yylex(void);
     #define ps_error(context, ...) do { \
-        fprintf(stderr, "Error near %s:%d: ", context.filename, context.lineno); \
-        fprintf(stderr, __VA_ARGS__); \
-        fprintf(stderr, "\n"); \
+        eprintf("Error near %s:%d: ", context.filename, context.lineno); \
+        eprintf(__VA_ARGS__); \
+        eprintf("\n"); \
         YYABORT; \
     } while(0)
-    void yyerror (const char *s) { fprintf(stderr, "Error near %s:%d - %s\n",
+    void yyerror (const char *s) { eprintf("Error near %s:%d - %s\n",
                                            context.filename, context.lineno,
                                            s); }
 }
@@ -154,7 +154,7 @@ statement:
 expr_stmt:
     expr ';'                     {   $$=$1;   }
 |   semicolon                    {   $$=astn_alloc(ASTN_NOOP);
-                                     fprintf(stderr, "Warning: null statement near %s:%d\n", @1.filename, @1.lineno);  }
+                                     eprintf("Warning: null statement near %s:%d\n", @1.filename, @1.lineno);  }
 ;
 
 select_stmt:
@@ -206,7 +206,7 @@ internal:                           // sometimes you really do want to murder th
     _PERISH                     {   die("You asked me to die!");    }
 |   _EXAMINE ident              {   st_examine($2->Ident.ident);  }
 |   _EXAMINE ident INDSEL ident {   st_examine_member($2->Ident.ident, $4->Ident.ident);  }
-|   _DUMPSYMTAB                 {   fprintf(stderr, "dumping current scope: \n"); st_dump_current();  }
+|   _DUMPSYMTAB                 {   eprintf("dumping current scope: \n"); st_dump_current();  }
 |   debug
 ;
 
@@ -564,7 +564,7 @@ direct_decl:
     ident                           {   $$=$1;  }
 |   '(' decl ')'                    {   $$=$2;  }
 |   direct_decl_arr
-|   direct_decl '(' param_t_list ')'{   // fprintf(stderr, "Am here\n");
+|   direct_decl '(' param_t_list ')'{   // eprintf("Am here\n");
                                         // print_ast($1);
                                         astn *n = dtype_alloc(get_dtypechain_target($1), t_FN);
                                         n->Type.derived.param_list = $3;
@@ -578,7 +578,7 @@ direct_decl:
                                         st_pop_scope();
                                         @$=@1; }
 |   direct_decl '(' ident_list ')'  {   ps_error(@3, "not handling K&R syntax");   }
-|   direct_decl '(' ')'             {   // fprintf(stderr, "Am here\n");
+|   direct_decl '(' ')'             {   // eprintf("Am here\n");
                                         // print_ast($1);
                                         st_new_scope(SCOPE_FUNCTION, @1);
                                         astn *n = dtype_alloc(get_dtypechain_target($1), t_FN);

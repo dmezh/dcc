@@ -52,17 +52,17 @@ void *safe_realloc(void* old, size_t size) {
 #define BACKTRACE_DEPTH 128
 
 _Noreturn void die(const char* msg) {
-    fprintf(stderr, "\nInternal error: %s\n", msg);
+    eprintf("\nInternal error: %s\n", msg);
 
-    fprintf(stderr, "%s\n", yak);
+    eprintf("%s\n", yak);
 
     #ifdef __GLIBC__
-    fprintf(stderr, "Trying to print backtrace:\n------------------------------\n");
+    eprintf("Trying to print backtrace:\n------------------------------\n");
     void* callstack[BACKTRACE_DEPTH];
     int frames = backtrace(callstack, BACKTRACE_DEPTH);
     char** strings = backtrace_symbols(callstack, frames);
     for (int i = 0; i<frames; i++) {
-        fprintf(stderr, "%s\n", strings[i]);
+        eprintf("%s\n", strings[i]);
     }
     #endif
 

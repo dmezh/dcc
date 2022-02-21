@@ -28,7 +28,7 @@ void all2XXX(astn *n, char* r) {
     switch (n->type) {
         case ASTN_SYMPTR: ; // empty stmt
             st_entry *e = n->Symptr.e;
-            //fprintf(stderr, "al2xxx examining %s\n", e->ident);
+            //eprintf("al2xxx examining %s\n", e->ident);
             switch (e->storspec) {
                 case SS_AUTO:
                     ea("movl\t%d(%%ebp), %s", -(e->stack_offset), r);
@@ -154,7 +154,7 @@ void asmgen_q(quad* q) {
             if (q->src1->type == ASTN_IDENT) { // override default action of all2XXX
                 ea("call\t%s", q->src1->Ident.ident);
             } else {
-                fprintf(stderr, "you're trying to call a non-ident - be my guest but you're probably dead\n");
+                eprintf("you're trying to call a non-ident - be my guest but you're probably dead\n");
                 all2eax(q->src1);
                 ea("call\t%%eax");
             }

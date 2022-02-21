@@ -11,6 +11,7 @@
 
 #include "ast.h"
 #include "symtab.h"
+#include "symtab_util.h"
 #include "util.h"
 
 const char* storspec_str[] = {
@@ -51,7 +52,7 @@ int get_sizeof(const astn* type) {
                 return NULL;
             }
             if (type->Type.derived.size->type != ASTN_NUM) {
-                fprintf(stderr, "Sorry, can't yet evaluate compile-time constants other than plain numbers\n");
+                eprintf("Sorry, can't yet evaluate compile-time constants other than plain numbers\n");
             }
             return type->Type.derived.size->Num.number.integer * get_sizeof(type->Type.derived.target);
         }
