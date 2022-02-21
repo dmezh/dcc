@@ -140,16 +140,5 @@ st_entry *st_define_struct(const char *ident, astn *decl_list,
                            YYLTYPE name_context, YYLTYPE closebrace_context, YYLTYPE openbrace_context);
 
 st_entry* begin_st_entry(astn *decl, enum namespaces ns,  YYLTYPE context);
-st_entry* stentry_alloc(const char *ident);
-
-st_entry* st_lookup(const char* ident, enum namespaces ns);
-st_entry* st_lookup_ns(const char* ident, enum namespaces ns);
-st_entry* st_lookup_fq(const char* ident, const symtab* s, enum namespaces ns);
-
-bool st_insert_given(st_entry *new);
-
-void st_new_scope(enum scope_types scope_type, YYLTYPE openbrace_context);
-void st_pop_scope();
-void st_destroy(symtab* target);
 
 #endif

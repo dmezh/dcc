@@ -4,6 +4,7 @@
 
 #include "ast_print.h"
 #include "symtab.h"
+#include "symtab_util.h"
 
 static const char* scope_types_str[] = {
     [SCOPE_MINI] = "MINI",

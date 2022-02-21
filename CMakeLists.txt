@@ -44,6 +44,7 @@ ${FLEX_dcc_lexer_OUTPUTS}
     parser/ast_print.c
     parser/symtab.c
     parser/symtab_print.c
+    parser/symtab_util.c
     parser/types.c
     quads/quads.c
     quads/quads_cf.c

@@ -3,6 +3,7 @@
 
 #include <stddef.h> // for size_t
 #include <stdio.h> // for error macro below
+#include <stdlib.h>
 
 #define st_error(...) \
     fprintf(stderr, "Error declaring symbol: " __VA_ARGS__); \
