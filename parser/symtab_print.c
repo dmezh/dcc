@@ -101,7 +101,6 @@ void st_dump_single_given(const symtab* s) {
  */
 void st_examine_given(const st_entry* e) {
     if (e->entry_type == STE_FN) {
-        eprintf("FUNCTION RETURNING:\n");
         print_ast(e->type);
         if (e->param_list) {
             if (e->variadic)

@@ -279,12 +279,6 @@ static st_entry* real_begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE con
     // allocate a new entry
     st_entry *new = stentry_alloc(name);
 
-    // complete the type by flipping the dtypechain
-    reset_dtypechain_target(type_chain, new->type); // end of chain is now the type instead of ident
-    if (type_chain->type == ASTN_TYPE && type_chain->Type.is_derived) { // ALLOCATE HERE?
-        new->type = type_chain; // because otherwise it's just an IDENT
-    }
-
     // set context, namespace, scope, and entry type
     new->decl_context = context;
     new->ns = ns;
@@ -298,6 +292,12 @@ static st_entry* real_begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE con
         new->storspec = SS_AUTO;
 
     st_check_linkage(new);
+
+    // complete the type by flipping the dtypechain
+    reset_dtypechain_target(type_chain, new->type); // end of chain is now the type instead of ident
+    if (type_chain->type == ASTN_TYPE && type_chain->Type.is_derived) { // ALLOCATE HERE?
+        new->type = type_chain; // because otherwise it's just an IDENT
+    }
 
     // attempt to insert the new entry, check for permitted redeclaration
     if (!st_insert_given(new)) {
