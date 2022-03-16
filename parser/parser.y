@@ -26,6 +26,7 @@
 %code {
     #include <stdio.h>
     #include <stdlib.h>
+    #include <string.h>
     int yylex(void);
     #define ps_error(context, ...) do { \
         eprintf("Error near %s:%d: ", context.filename, context.lineno); \
@@ -245,7 +246,14 @@ constant:
 ;
 
 stringlit:
-    STRING                      {   $$=astn_alloc(ASTN_STRLIT);
+    stringlit STRING            {   $$=$1;
+                                    char *s = safe_calloc(strlen($$->Strlit.strlit.str) + strlen($2.str), sizeof(char));
+                                    strcpy(s, $$->Strlit.strlit.str);
+                                    strcat(s, $2.str);
+                                    $$->Strlit.strlit.str = s;
+                                    $$->Strlit.strlit.len += $2.len;
+                                }
+|   STRING                      {   $$=astn_alloc(ASTN_STRLIT);
                                     $$->Strlit.strlit=$1;
                                 }
 ;
