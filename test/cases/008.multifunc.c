@@ -1,3 +1,7 @@
+//!dtest description "Multiple functions."
+
+#include "../dcc_assert.h"
+
 int add();
 int multiply();
 int multiply_by_adding();
@@ -9,11 +13,16 @@ int main() {
 
     int c;
     c = add(a, b);
-    c = multiply(c, a);
-    c = multiply_by_adding(c, b);
-    c = indirect_add(c, a);
+    dcc_assert(c == 8);
 
-    return c;
+    c = multiply(c, a);
+    dcc_assert(c == 16);
+
+    c = multiply_by_adding(c, b);
+    dcc_assert(c == 96);
+
+    c = indirect_add(c, a);
+    dcc_assert(98);
 }
 
 int add(int a, int b) {

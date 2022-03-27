@@ -1,3 +1,5 @@
+//!dtest skip
+
 #pragma do-dumpsymtab
 int i;
 #pragma do-dumpsymtab
