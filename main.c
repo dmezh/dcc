@@ -14,7 +14,7 @@
 #include "quads.h"
 #include "util.h"
 
-#define DCC_VERSION "0.2.0"
+#define DCC_VERSION "0.3.0"
 #define DCC_ARCHITECTURE "x86_32"
 
 #define BRED "\033[1;31m"
