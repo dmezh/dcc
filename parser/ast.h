@@ -53,7 +53,7 @@ enum astn_types {
 };
 
 struct astn_assign { // could have been binop but separated for clarity
-    // struct astn* left, *right;
+    // struct astn left, *right;
     struct astn *left, *right;
 };
 
@@ -156,8 +156,8 @@ struct astn_decl {
 };
 
 struct astn_fndef {
-    struct astn* decl;
-    struct astn* param_list;
+    struct astn *decl;
+    struct astn *param_list;
     struct symtab* scope;
 };
 
@@ -171,7 +171,7 @@ struct astn_compoundstmt {
 // record of a declaration having occurred
 struct astn_declrec {
     struct st_entry *e;
-    struct astn* init;
+    struct astn *init;
 };
 
 // st_entry pointer from resolved idents
@@ -198,27 +198,27 @@ struct astn_forloop {
 };
 
 struct astn_goto {
-    struct astn* ident;
+    struct astn *ident;
 };
 
 struct astn_break {
-    struct astn* dummy;
+    struct astn *dummy;
 };
 
 struct astn_continue {
-    struct astn* dummy;
+    struct astn *dummy;
 };
 
 struct astn_return {
-    struct astn* ret;
+    struct astn *ret;
 };
 
 struct astn_label {
-    struct astn* ident, *statement;
+    struct astn *ident, *statement;
 };
 
 struct astn_case {
-    struct astn* case_expr, *statement;
+    struct astn *case_expr, *statement;
 };
 
 struct astn_qtemp {
@@ -235,7 +235,7 @@ struct astn_qbbno {
 // allow us to have members like .Sizeof, .Return, etc without clobbering
 // the names to avoid conflicting with keywords.
 
-typedef struct astn {
+struct astn {
     enum astn_types type;
     union {
         struct astn_assign Assign;
@@ -269,48 +269,51 @@ typedef struct astn {
         struct astn_qtemp Qtemp;
         struct astn_qbbno Qbbno;
     };
-} astn;
+};
 
-astn* astn_alloc(enum astn_types type);
+typedef struct astn* astn;
+typedef const struct astn* const_astn;
 
-astn *cassign_alloc(int op, astn *left, astn *right);
-astn *binop_alloc(int op, astn *left, astn *right);
-astn *unop_alloc(int op, astn *target);
+astn astn_alloc(enum astn_types type);
 
-astn *list_alloc(astn* me);
-astn *list_append(astn *new, astn *head);
+astn cassign_alloc(int op, astn left, astn right);
+astn binop_alloc(int op, astn left, astn right);
+astn unop_alloc(int op, astn target);
 
-astn *list_alloc(astn* me);
-astn *list_next(const astn* cur);
-astn *list_data(const astn* n);
-void list_reverse(astn **l);
-unsigned list_measure(const astn *head);
+astn list_alloc(astn me);
+astn list_append(astn new, astn head);
 
-astn *typespec_alloc(enum typespec spec);
-astn *typequal_alloc(enum typequal spec);
-astn *storspec_alloc(enum storspec spec);
-astn *dtype_alloc(astn* target, enum der_types type);
+astn list_alloc(astn me);
+astn list_next(const_astn cur);
+astn list_data(const_astn n);
+void list_reverse(astn *l);
+unsigned list_measure(const_astn head);
 
-astn *decl_alloc(astn *specs, astn *type, astn* init, YYLTYPE context);
-astn *strunion_alloc(struct st_entry *symbol);
+astn typespec_alloc(enum typespec spec);
+astn typequal_alloc(enum typequal spec);
+astn storspec_alloc(enum storspec spec);
+astn dtype_alloc(astn target, enum der_types type);
 
-astn *fndef_alloc(astn* decl, astn* param_list, struct symtab* scope);
-astn *declrec_alloc(struct st_entry *e, astn* init);
-astn *symptr_alloc(struct st_entry *e);
+astn decl_alloc(astn specs, astn type, astn init, YYLTYPE context);
+astn strunion_alloc(struct st_entry *symbol);
 
-astn *ifelse_alloc(astn *cond_s, astn *then_s, astn *else_s);
-astn *whileloop_alloc(astn* cond_s, astn* body_s, bool is_dowhile);
-astn *forloop_alloc(astn *init, astn* condition, astn* oneach, astn* body);
+astn fndef_alloc(astn decl, astn param_list, struct symtab* scope);
+astn declrec_alloc(struct st_entry *e, astn init);
+astn symptr_alloc(struct st_entry *e);
 
-astn *do_decl(astn *decl);
+astn ifelse_alloc(astn cond_s, astn then_s, astn else_s);
+astn whileloop_alloc(astn cond_s, astn body_s, bool is_dowhile);
+astn forloop_alloc(astn init, astn condition, astn oneach, astn body);
 
-void set_dtypechain_target(astn* top, astn* target);
-void reset_dtypechain_target(astn* top, astn* target);
-void merge_dtypechains(astn *parent, astn *child);
+astn do_decl(astn decl);
 
-astn* get_dtypechain_last_link(astn *top);
-astn* get_dtypechain_target(astn* top);
-const char *get_dtypechain_ident(astn *d);
+void set_dtypechain_target(astn top, astn target);
+void reset_dtypechain_target(astn top, astn target);
+void merge_dtypechains(astn parent, astn child);
+
+astn get_dtypechain_last_link(astn top);
+astn get_dtypechain_target(astn top);
+const char *get_dtypechain_ident(astn d);
 
 #define ast_check(node, asttype, msg) \
     do { \

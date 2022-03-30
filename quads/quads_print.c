@@ -40,7 +40,7 @@ char* quad_op_str[] = {
     [Q_BWNOT] = "BWNOT"
 };
 
-void print_node(const astn* qn, FILE* f) {
+void print_node(const_astn qn, FILE* f) {
     switch (qn->type) {
         case ASTN_SYMPTR:   fprintf(f, "%s", qn->Symptr.e->ident); return;
         case ASTN_NUM:      print_number(&qn->Num.number, f); return;

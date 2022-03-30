@@ -17,7 +17,7 @@
 #include "util.h"
 
 static void st_check_linkage(sym e);
-static sym real_begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context);
+static sym real_begin_st_entry(astn decl, enum namespaces ns, YYLTYPE context);
 
 // symtab for this translation unit
 symtab root_symtab = {
@@ -30,7 +30,7 @@ symtab root_symtab = {
 
 symtab *current_scope = &root_symtab;
 
-sym st_define_function(astn* fndef, astn* block, YYLTYPE context) {
+sym st_define_function(astn fndef, astn block, YYLTYPE context) {
     ast_check(fndef, ASTN_DECL, "Expected decl.");
     ast_check(block, ASTN_LIST, "Expected list for fn body.");
 
@@ -61,7 +61,7 @@ sym st_define_function(astn* fndef, astn* block, YYLTYPE context) {
 }
 
 
-sym st_declare_function(astn* decl, YYLTYPE context) {
+sym st_declare_function(astn decl, YYLTYPE context) {
     ast_check(decl, ASTN_DECL, "Expected decl.");
     ast_check(decl->Decl.type, ASTN_TYPE,
               "Invalid non-type astn at top of function declaration type chain.");
@@ -81,7 +81,7 @@ sym st_declare_function(astn* decl, YYLTYPE context) {
         fn = real_begin_st_entry(decl, NS_MISC, decl->Decl.context);
 
     // check the parameter list for ellipses and missing names
-    astn* p = decl_type->derived.param_list;
+    astn p = decl_type->derived.param_list;
     while (p) {
         if (list_data(p)->type == ASTN_ELLIPSIS) {
             fn->variadic = true;
@@ -143,7 +143,7 @@ sym st_declare_struct(const char* ident, bool strict, YYLTYPE context) {
  *
  *  Note: changes would need to be made to support unnamed structs.
  */
-sym st_define_struct(const char *ident, astn *decl_list,
+sym st_define_struct(const char *ident, astn decl_list,
                            YYLTYPE name_context, YYLTYPE closebrace_context, YYLTYPE openbrace_context) {
     sym strunion;
     strunion = st_declare_struct(ident, true, name_context); // strict bc we're about to define!
@@ -223,14 +223,14 @@ void st_reserve_stack(sym e) {
 }
 
 
-static void check_dtypechain_legality(astn *head) {
+static void check_dtypechain_legality(astn head) {
     // TODO: add context
     // not allowed:
     // - array of function
     // - function returning function
     // - function returning array
     while (head && head->type == ASTN_TYPE && head->Type.is_derived) {
-        astn *target = head->Type.derived.target;
+        astn target = head->Type.derived.target;
         switch (head->Type.derived.type) {
             case t_PTR:
                 break;
@@ -267,11 +267,11 @@ static void check_dtypechain_legality(astn *head) {
  * 
  *  TODO: decl is not yet a list
  */
-static sym real_begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
+static sym real_begin_st_entry(astn decl, enum namespaces ns, YYLTYPE context) {
     ast_check(decl, ASTN_DECL, "Expected decl to make new st_entry.");
 
     // Get information from the type chain
-    astn *type_chain = decl->Decl.type;
+    astn type_chain = decl->Decl.type;
     check_dtypechain_legality(type_chain);
 
     const char *name = get_dtypechain_ident(type_chain);
@@ -327,7 +327,7 @@ static sym real_begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) 
 }
 
 
-sym begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
+sym begin_st_entry(astn decl, enum namespaces ns, YYLTYPE context) {
     if (decl->Decl.type->type == ASTN_TYPE && decl->Decl.type->Type.derived.type == t_FN) {
         sym newfn = st_declare_function(decl, context);
         newfn->fn_defined = false;

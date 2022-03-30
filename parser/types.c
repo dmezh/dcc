@@ -33,7 +33,7 @@ const char* der_types_str[] = {
 // sizeof!
 // currently, array sizes are hardcoded to only support regular numbers,
 // we need a bit more machinery, specifically a function to evaluate compile-time constants.
-int get_sizeof(const astn* type) {
+int get_sizeof(const_astn type) {
     //printf("getting size of:\n");
     //print_ast(type);
     if (type->type == ASTN_SYMPTR) return (get_sizeof(type->Symptr.e->type));
@@ -61,7 +61,7 @@ int get_sizeof(const astn* type) {
 
 // get the first target of an array
 // please only call this from the grammar for array_subscript, as it makes assumptions!
-astn *descend_array(const astn *type) {
+astn descend_array(const_astn type) {
     //printf("dumping TYPE in start\n"); print_ast(type);
     if (type->type == ASTN_SYMPTR) return descend_array(type->Symptr.e->type);
     if (type->type == ASTN_UNOP && type->Unop.op == '*') {
@@ -76,10 +76,10 @@ astn *descend_array(const astn *type) {
     return NULL;
 }
 
-static astn *qualify_single(astn *qual, struct astn_type *t);
+static astn qualify_single(astn qual, struct astn_type *t);
 
 // apply type specifiers AND qualifiers to a type, return storage specifier
-enum storspec describe_type(astn *spec, struct astn_type *t) {
+enum storspec describe_type(astn spec, struct astn_type *t) {
     unsigned VOIDs=0, CHARs=0, SHORTs=0, INTs=0, LONGs=0, FLOATs=0;
     unsigned DOUBLEs=0, SIGNEDs=0, UNSIGNEDs=0, BOOLs=0, COMPLEXs=0;
     unsigned tagtypes=0;
@@ -94,7 +94,7 @@ enum storspec describe_type(astn *spec, struct astn_type *t) {
             if (spec->Typespec.is_tagtype) {
                 t->is_tagtype = true;
                 t->tagtype.symbol = spec->Typespec.symbol;
-                astn *old = spec;
+                astn old = spec;
                 spec = spec->Typespec.next;
                 free(old);
                 tagtypes++;
@@ -114,7 +114,7 @@ enum storspec describe_type(astn *spec, struct astn_type *t) {
                     default:    die("invalid typespec");
                 }
                 total_typespecs++;
-                astn* old = spec;
+                astn old = spec;
                 spec = spec->Typespec.next;
                 free(old); // maybe a little memory management
             }
@@ -127,7 +127,7 @@ enum storspec describe_type(astn *spec, struct astn_type *t) {
             storspec = spec->Storspec.spec;
             //printf("dbg - storspec astn has %d, so %s", spec->Storspec.spec, storspec_str[t->scalar.storspec]);
             storspec_set = true;
-            astn* old = spec;
+            astn old = spec;
             spec = spec->Storspec.next;
             free(old);
         } else {
@@ -256,7 +256,7 @@ long_end:
 
 // we expect a chain of ONLY qualifiers - this is used in the grammar.
 // a non-qual astn here is an INTERNAL error!!
-void strict_qualify_type(astn *qual, struct astn_type *t) {
+void strict_qualify_type(astn qual, struct astn_type *t) {
     while (qual) {
         if (qual->type == ASTN_TYPEQUAL) {
             qual = qualify_single(qual, t);
@@ -266,16 +266,16 @@ void strict_qualify_type(astn *qual, struct astn_type *t) {
     }
 }
 
-// qualify a type from a single astn *qual and return the next node
+// qualify a type from a single astn qual and return the next node
 // destroys qual!
-static astn *qualify_single(astn *qual, struct astn_type *t) {
+static astn qualify_single(astn qual, struct astn_type *t) {
     switch (qual->Typequal.qual) {
         case TQ_CONST:      t->is_const = true;       break;
         case TQ_RESTRICT:   t->is_restrict = true;    break;
         case TQ_VOLATILE:   t->is_volatile = true;    break;
         default:    die("invalid typequal");
     }
-    astn *old = qual;
+    astn old = qual;
     qual = qual->Typequal.next;
     free(old);
     return qual;

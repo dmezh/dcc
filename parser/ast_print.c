@@ -11,7 +11,7 @@
 /*
  * Recursively dump AST, starting at n and ending when we can't go any deeper.
  */
-void print_ast(const astn *n) {
+void print_ast(const_astn n) {
     static int tabs = 0;     //     -> __ <- two spaces
     for (int i=0; i<tabs; i++) eprintf("  ");
     if (!n) return; // if we just want to print tabs, pass NULL
@@ -61,7 +61,7 @@ void print_ast(const astn *n) {
 
     case ASTN_FNCALL: // wip
         eprintf("FNCALL w/ %d args\n", n->Fncall.argcount);
-        astn *arg = n->Fncall.args;
+        astn arg = n->Fncall.args;
         tabs++;
             print_ast(n->Fncall.fn);
             for (int i=0; i<n->Fncall.argcount; i++) {
@@ -229,7 +229,7 @@ void print_ast(const astn *n) {
                                 print_ast(NULL);
                                 eprintf("> with param list:\n");
                                 tabs++;
-                                    struct astn *a = n->Type.derived.param_list;
+                                    const_astn a = n->Type.derived.param_list;
                                     while (a) {
                                         print_ast(a->List.me);
                                         if (a->List.me->type != ASTN_ELLIPSIS) {
@@ -312,7 +312,7 @@ void print_ast(const astn *n) {
                 print_ast(NULL);
                 eprintf("> with param list:\n");
                 tabs++;
-                    struct astn *a = n->Fndef.param_list;
+                    const_astn a = n->Fndef.param_list;
                     while (a) {
                         print_ast(a->List.me);
                         if (a->List.me->type != ASTN_ELLIPSIS) {

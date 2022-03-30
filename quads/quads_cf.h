@@ -8,15 +8,15 @@ struct cursor {
     BB *brk, *cont;
 };
 
-void gen_if(astn* ifnode);
-void gen_while(astn* wn);
-void gen_dowhile(astn* dw);
-void gen_for(astn* fl);
+void gen_if(astn ifnode);
+void gen_while(astn wn);
+void gen_dowhile(astn dw);
+void gen_for(astn fl);
 BBL* bbl_next(const BBL* cur);
 BB* bbl_data(const BBL* n);
 void bbl_append(BB* bb);
 void uncond_branch(BB* b);
-void gen_condexpr(astn *cond, BB* Bt, BB* Bf);
+void gen_condexpr(astn cond, BB* Bt, BB* Bf);
 void emit_branch(int op, BB* Bt, BB* Bf);
 
 extern struct cursor cursor;

@@ -16,11 +16,11 @@
 
 unsigned temp_count = 0;
 
-void gen_ret(astn *n);
+void gen_ret(astn n);
 
 // allocate temporary
-astn* qtemp_alloc(unsigned size) {
-    astn* n = astn_alloc(ASTN_QTEMP);
+astn qtemp_alloc(unsigned size) {
+    astn n = astn_alloc(ASTN_QTEMP);
     n->Qtemp.tempno = ++temp_count;
     n->Qtemp.size = size;
     sym f = st_lookup(cursor.fn, NS_MISC);
@@ -49,10 +49,10 @@ enum quad_op binop_to_quad_op(int binop) {
 }
 
 // definitiely leaky
-astn* decay_array(astn* a) {
+astn decay_array(astn a) {
     if (a->type == ASTN_SYMPTR) return decay_array(a->Symptr.e->type);
     if (a->type == ASTN_TYPE && a->Type.is_derived && a->Type.derived.type == t_ARRAY) {
-        astn *n = astn_alloc(ASTN_TYPE);
+        astn n = astn_alloc(ASTN_TYPE);
         n->Type.is_derived = true;
         n->Type.derived.type = t_PTR;
         n->Type.derived.target = a->Type.derived.target;
@@ -63,7 +63,7 @@ astn* decay_array(astn* a) {
 
 // 
 /*
-astn* check_ptr_binop(astn* n) {
+astn check_ptr_binop(astn n) {
     if (n->type == ASTN_SYMPTR) return check_ptr_binop(n->Symptr.e->type);
     if (n->type == ASTN_TYPE && n->Type.is_derived) {
         if (n->Type.derived.type == t_ARRAY) return decay_array(n);
@@ -82,22 +82,22 @@ void quad_error(const char* msg) {
 }
 
 // triggers on either ptr or array
-bool isptr(astn* n) {
+bool isptr(astn n) {
     if (n->type == ASTN_SYMPTR) return isptr(n->Symptr.e->type);
     return (n->type == ASTN_TYPE && n->Type.is_derived);
 }
 
-bool isarr(astn* n) {
+bool isarr(astn n) {
     if (n->type == ASTN_SYMPTR) return isarr(n->Symptr.e->type);
     return (n->type == ASTN_TYPE && n->Type.is_derived && n->Type.derived.type == t_ARRAY);
 }
 
-bool isfn(astn *n) {
+bool isfn(astn n) {
     return (n->type == ASTN_SYMPTR && n->Symptr.e->entry_type == STE_FN);
 }
 
-static astn* const_alloc(int num) {
-    astn* n=astn_alloc(ASTN_NUM);
+static astn const_alloc(int num) {
+    astn n=astn_alloc(ASTN_NUM);
     n->Num.number.integer = num;
     n->Num.number.is_signed = true;
     n->Num.number.aux_type = s_INT;
@@ -105,7 +105,7 @@ static astn* const_alloc(int num) {
 }
 
 // works on arr or ptr
-static astn* ptr_target(astn *n) {
+static astn ptr_target(astn n) {
     if (n->type == ASTN_SYMPTR) return ptr_target(n->Symptr.e->type);
     return n->Type.derived.target;
 }
@@ -115,22 +115,22 @@ _Noreturn void todo(const char* msg) {
     exit(-1);
 }
 
-void cond_rvalue(astn *n, astn* left, astn* right, astn* target);
+void cond_rvalue(astn n, astn left, astn right, astn target);
 
 // emit args in reverse
-void put_args(astn *head) {
+void put_args(astn head) {
     if (!head) return;
     put_args(list_next(head));
     emit(Q_ARG, gen_rvalue(list_data(head), NULL), NULL, NULL);
 }
 
-astn* gen_rvalue(astn* node, astn* target) {
-    astn* temp;
+astn gen_rvalue(astn node, astn target) {
+    astn temp;
     if (node->type == ASTN_FNCALL) {
-        astn *fn = gen_rvalue(node->Fncall.fn, NULL);
+        astn fn = gen_rvalue(node->Fncall.fn, NULL);
 
         emit(Q_ARGBEGIN, NULL, NULL, NULL);
-        astn *arg = node->Fncall.args;
+        astn arg = node->Fncall.args;
 
         put_args(arg);
         /*
@@ -148,12 +148,12 @@ astn* gen_rvalue(astn* node, astn* target) {
         //struct astn_type *type = &node->Symptr.e->type->Type;
         //if (type->is_derived && type->derived.type == t_ARRAY) {
         if (isarr(node)) {
-            astn *temp = qtemp_alloc(4); // address type
+            astn temp = qtemp_alloc(4); // address type
             emit(Q_LEA, node, NULL, temp);
             return temp;
         }
         else if (isfn(node)) {
-            astn *temp = astn_alloc(ASTN_IDENT);
+            astn temp = astn_alloc(ASTN_IDENT);
             temp->Ident.ident = node->Symptr.e->ident;
             return temp;
         }
@@ -166,8 +166,8 @@ astn* gen_rvalue(astn* node, astn* target) {
     if (node->type == ASTN_NUM) return node;
     if (node->type == ASTN_STRLIT) return node;
     if (node->type == ASTN_BINOP) {
-        astn* left = node->Binop.left;
-        astn* right = node->Binop.right;
+        astn left = node->Binop.left;
+        astn right = node->Binop.right;
 
         bool l_isptr = isptr(left);
         bool r_isptr = isptr(right);       
@@ -185,8 +185,8 @@ astn* gen_rvalue(astn* node, astn* target) {
             l_isptr = true; r_isptr = false;
         }
 
-        astn *rval_left = gen_rvalue(left, NULL);
-        astn *rval_right = gen_rvalue(right, NULL);
+        astn rval_left = gen_rvalue(left, NULL);
+        astn rval_right = gen_rvalue(right, NULL);
 
         if (node->Binop.op == '+') {
             if (l_isptr) { // ptr + int
@@ -211,7 +211,7 @@ astn* gen_rvalue(astn* node, astn* target) {
         return target;
     }
     if (node->type == ASTN_UNOP) {
-        astn *utarget = node->Unop.target;
+        astn utarget = node->Unop.target;
 
         switch (node->Unop.op) {
             case '*':
@@ -223,13 +223,13 @@ astn* gen_rvalue(astn* node, astn* target) {
                     return gen_rvalue(ptr_target(utarget), target);
                 }
                 ;
-                astn* addr = gen_rvalue(utarget, NULL);
+                astn addr = gen_rvalue(utarget, NULL);
 
                 if (!target) target = qtemp_alloc(4);
                 emit(Q_LOAD, addr, NULL, target);
                 return target;
 
-            astn *n;
+            astn n;
             case MINUSMINUS:
                 temp = gen_rvalue(utarget, target);
                 n=astn_alloc(ASTN_NUM);
@@ -272,7 +272,7 @@ astn* gen_rvalue(astn* node, astn* target) {
     return NULL;
 }
 
-astn* gen_lvalue(astn *node, enum addr_modes *mode) {
+astn gen_lvalue(astn node, enum addr_modes *mode) {
     if (node->type == ASTN_SYMPTR) { *mode = MODE_DIRECT; return node; }
     if (node->type == ASTN_NUM) return NULL;
     if (node->type == ASTN_UNOP && node->Unop.op == '*') {
@@ -283,29 +283,29 @@ astn* gen_lvalue(astn *node, enum addr_modes *mode) {
 }
 
 
-void gen_assign(astn *node) {
+void gen_assign(astn node) {
     enum addr_modes destmode;
-    astn *dest = gen_lvalue(node->Assign.left, &destmode);
+    astn dest = gen_lvalue(node->Assign.left, &destmode);
     if (!dest) {
         eprintf("Error: not an lvalue: "); die("test");
         print_ast(node->Assign.left);
         exit(-1);
     }
     if (destmode == MODE_DIRECT) {
-        astn *temp = gen_rvalue(node->Assign.right, NULL);
+        astn temp = gen_rvalue(node->Assign.right, NULL);
         emit(Q_MOV, temp, NULL, dest);
     } else {
-        astn *temp = gen_rvalue(node->Assign.right, NULL);
+        astn temp = gen_rvalue(node->Assign.right, NULL);
         emit(Q_STORE, temp, NULL, dest);
     }
 }
 
-void gen_mov_bb(astn* target, int val) {
-    astn *aval = const_alloc(val);
+void gen_mov_bb(astn target, int val) {
+    astn aval = const_alloc(val);
     emit(Q_MOV, aval, NULL, target);
 }
 
-void cond_rvalue(astn *n, astn* left, astn* right, astn* target) {
+void cond_rvalue(astn n, astn left, astn right, astn target) {
     BB* one = bb_alloc();
     BB* zero = bb_alloc();
 
@@ -321,11 +321,11 @@ void cond_rvalue(astn *n, astn* left, astn* right, astn* target) {
     gen_mov_bb(target, 0);
     uncond_branch(future);
 
-    //astn *cond = astn_alloc(ASTN_BINOP);
+    //astn cond = astn_alloc(ASTN_BINOP);
     current_bb = future;
 }
 
-void emit(enum quad_op op, astn* src1, astn* src2, astn* target) {
+void emit(enum quad_op op, astn src1, astn src2, astn target) {
     quad *q = safe_calloc(1, sizeof(quad));
     q->op = op;
     q->src1 = src1;
@@ -357,12 +357,12 @@ void gen_fn(sym e) {
     current_bb = f;
     emit(Q_FNSTART, NULL, NULL, NULL);
 
-    astn* s = e->body;
+    astn s = e->body;
     gen_quads(s);
     if (!last_in_bb(current_bb) || last_in_bb(current_bb)->op != Q_RET) {
         if (e->type->Type.is_derived || e->type->Type.scalar.type != t_VOID) {
             if (!strcmp(e->ident, "main")) {
-                astn *r = astn_alloc(ASTN_RETURN);
+                astn r = astn_alloc(ASTN_RETURN);
                 r->Return.ret = const_alloc(0);
                 gen_ret(r);
             } else {
@@ -376,7 +376,7 @@ void gen_fn(sym e) {
     //asmgen(f);
 }
 
-void gen_ret(astn *n) {
+void gen_ret(astn n) {
     sym e = st_lookup_fq(cursor.fn, &root_symtab, NS_MISC);
     bool non_void = (e->type->Type.is_derived || e->type->Type.scalar.type != t_VOID);
     if (n->Return.ret) {
@@ -391,7 +391,7 @@ void gen_ret(astn *n) {
     }
 }
 
-void gen_quads(astn *n) {
+void gen_quads(astn n) {
     switch (n->type) {
         case ASTN_LIST:
             if (!list_data(n))
@@ -423,8 +423,8 @@ void gen_quads(astn *n) {
                     // ! now (it seems) for globals
                 }
                 // only inside functions one sec
-                astn *i = astn_alloc(ASTN_ASSIGN);
-                astn *s = astn_alloc(ASTN_SYMPTR);
+                astn i = astn_alloc(ASTN_ASSIGN);
+                astn s = astn_alloc(ASTN_SYMPTR);
                 s->Symptr.e = n->Declrec.e;   
                 i->Assign.left = s;
                 i->Assign.right = n->Declrec.init;

@@ -6,10 +6,10 @@
 #include "ast.h"
 #include "types_common.h"
 
-enum storspec describe_type(struct astn *spec, struct astn_type *t);
-void strict_qualify_type(struct astn *qual, struct astn_type *t);
+enum storspec describe_type(astn spec, struct astn_type *t);
+void strict_qualify_type(astn qual, struct astn_type *t);
 
-int get_sizeof(const astn* type);
-astn *descend_array(const astn *type);
+int get_sizeof(const_astn type);
+astn descend_array(const_astn type);
 
 #endif

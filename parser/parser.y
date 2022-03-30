@@ -47,7 +47,7 @@
     struct number number;
     struct strlit strlit;
     char* ident;
-    astn* astn_p;
+    astn astn_p;
     sym st_entry;
 }
 
@@ -273,7 +273,7 @@ array_subscript:
     postfix_expr '[' expr ']'   {   $$=unop_alloc('*', astn_alloc(ASTN_BINOP));
                                     $$->Unop.target->Binop.op='+';
                                     $$->Unop.target->Binop.left=$1;
-                                    //astn *n = astn_alloc(ASTN_NUM);
+                                    //astn n = astn_alloc(ASTN_NUM);
                                     //n->Num.number.integer = ($3->Num.number.integer) * get_sizeof(descend_array($1));
                                     //n->Num.number.aux_type = s_INT;
                                     $$->Unop.target->Binop.right=$3;
@@ -321,13 +321,13 @@ postop:
 unary_expr:
     postfix_expr
 |   unops
-|   PLUSPLUS unary_expr         {   astn *n=astn_alloc(ASTN_NUM);
+|   PLUSPLUS unary_expr         {   astn n=astn_alloc(ASTN_NUM);
                                     n->Num.number.integer=1;
                                     n->Num.number.is_signed=1;
                                     n->Num.number.aux_type=s_INT;
                                     $$=cassign_alloc('+', $2, n);
                                 }
-|   MINUSMINUS unary_expr       {   astn *n=astn_alloc(ASTN_NUM);
+|   MINUSMINUS unary_expr       {   astn n=astn_alloc(ASTN_NUM);
                                     n->Num.number.integer=1;
                                     n->Num.number.is_signed=1;
                                     n->Num.number.aux_type=s_INT;
@@ -541,11 +541,11 @@ decl:                                   // similar issue with arrays was dealt w
 
 // this will be an astn_type, which may or may not be a derived type
 type_name:
-    spec_qual_list                 {    struct astn *n=astn_alloc(ASTN_TYPE);
+    spec_qual_list                 {    astn n=astn_alloc(ASTN_TYPE);
                                         describe_type($1, &n->Type);
                                         $$=n;
                                    }
-|   spec_qual_list abstract_decl   {    struct astn *n=astn_alloc(ASTN_TYPE);
+|   spec_qual_list abstract_decl   {    astn n=astn_alloc(ASTN_TYPE);
                                         describe_type($1, &n->Type);
                                         set_dtypechain_target($2, n);
                                         $$=$2;  }
@@ -561,7 +561,7 @@ abstract_decl:
 direct_abstract_decl:
     '(' abstract_decl ')'                   { $$=$2; }
 |   '[' assign ']'                          { $$=dtype_alloc(NULL, t_ARRAY); $$->Type.derived.size = $2;}
-|   direct_abstract_decl '[' assign ']'     {   astn* n=dtype_alloc(NULL, t_ARRAY);
+|   direct_abstract_decl '[' assign ']'     {   astn n=dtype_alloc(NULL, t_ARRAY);
                                                 n->Type.derived.size = $3;
                                                 set_dtypechain_target($1, n);
                                                 $$=$1;
@@ -574,7 +574,7 @@ direct_decl:
 |   direct_decl_arr
 |   direct_decl '(' param_t_list ')'{   // eprintf("Am here\n");
                                         // print_ast($1);
-                                        astn *n = dtype_alloc(get_dtypechain_target($1), t_FN);
+                                        astn n = dtype_alloc(get_dtypechain_target($1), t_FN);
                                         n->Type.derived.param_list = $3;
                                         n->Type.derived.scope = current_scope;
                                         if ($1->type == ASTN_TYPE) { // derived
@@ -589,7 +589,7 @@ direct_decl:
 |   direct_decl '(' ')'             {   // eprintf("Am here\n");
                                         // print_ast($1);
                                         st_new_scope(SCOPE_FUNCTION, @1);
-                                        astn *n = dtype_alloc(get_dtypechain_target($1), t_FN);
+                                        astn n = dtype_alloc(get_dtypechain_target($1), t_FN);
                                         n->Type.derived.param_list = NULL;
                                         n->Type.derived.scope = current_scope;
                                         if ($1->type == ASTN_TYPE) { // derived
@@ -646,12 +646,12 @@ direct_decl_arr:
     ident '[' arr_size ']'              {   $$=dtype_alloc($1, t_ARRAY);
                                             $$->Type.derived.size = $3;
                                         }
-|   direct_decl_arr '[' arr_size ']'    {   astn *n=dtype_alloc(NULL, t_ARRAY);
+|   direct_decl_arr '[' arr_size ']'    {   astn n=dtype_alloc(NULL, t_ARRAY);
                                             n->Type.derived.size = $3;
                                             merge_dtypechains($1, n);
                                             $$=$1;
                                         }
-|   '(' decl ')' '[' arr_size ']'       {   astn *n=dtype_alloc(NULL, t_ARRAY);
+|   '(' decl ')' '[' arr_size ']'       {   astn n=dtype_alloc(NULL, t_ARRAY);
                                             n->Type.derived.size = $5;
                                             merge_dtypechains($2, n);
                                             $$=$2;

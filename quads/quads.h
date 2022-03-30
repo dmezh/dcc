@@ -54,7 +54,7 @@ enum addr_modes {
 typedef struct quad {
     enum quad_op op;
     struct quad *prev, *next;
-    astn *target, *src1, *src2;
+    astn target, src1, src2;
 } quad;
 
 typedef struct BB {
@@ -79,12 +79,12 @@ extern BBL bb_root;
 
 BB* bb_alloc();
 
-astn* qtemp_alloc(unsigned size);
-astn* gen_rvalue(astn* node, astn* target);
-void emit(enum quad_op op, astn* src1, astn* src2, astn* target);
+astn qtemp_alloc(unsigned size);
+astn gen_rvalue(astn node, astn target);
+void emit(enum quad_op op, astn src1, astn src2, astn target);
 void gen_fn(sym e);
-void gen_quads(astn *n);
-void gen_assign(astn *node);
+void gen_quads(astn n);
+void gen_assign(astn node);
 void todo(const char* msg);
 
 #endif

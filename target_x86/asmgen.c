@@ -24,7 +24,7 @@ const unsigned stack_align = 16; // desired stack alignment
     fprintf(out, "\n"); \
 } while (0);
 
-void all2XXX(astn *n, char* r) {
+void all2XXX(astn n, char* r) {
     switch (n->type) {
         case ASTN_SYMPTR: ; // empty stmt
             sym e = n->Symptr.e;
@@ -60,7 +60,7 @@ void all2XXX(astn *n, char* r) {
     }
 }
 
-void XXX2all(astn *n, char* r) {
+void XXX2all(astn n, char* r) {
     switch (n->type) {
         case ASTN_SYMPTR: ; //empty stmt
             sym e = n->Symptr.e;
@@ -85,12 +85,12 @@ void XXX2all(astn *n, char* r) {
     }
 }
 
-void eax2all(astn *n) { XXX2all(n, "%eax"); }
-void ecx2all(astn *n) { XXX2all(n, "%ecx"); }
-void edx2all(astn *n) { XXX2all(n, "%edx"); }
-void all2eax(astn *n) { all2XXX(n, "%eax"); }
-void all2ecx(astn *n) { all2XXX(n, "%ecx"); }
-void all2edx(astn *n) { all2XXX(n, "%edx"); }
+void eax2all(astn n) { XXX2all(n, "%eax"); }
+void ecx2all(astn n) { XXX2all(n, "%ecx"); }
+void edx2all(astn n) { XXX2all(n, "%edx"); }
+void all2eax(astn n) { all2XXX(n, "%eax"); }
+void all2ecx(astn n) { all2XXX(n, "%ecx"); }
+void all2edx(astn n) { all2XXX(n, "%edx"); }
 
 static int argcount = 0;
 
@@ -236,7 +236,7 @@ void e_cbr(const char *op, quad* q) {
     e_bba(q->src2);
     fprintf(out, "\n");
 }
-void e_bba(const astn *n) { e_bb(n->Qbbno.bb); }
+void e_bba(const_astn n) { e_bb(n->Qbbno.bb); }
 void e_bb(const BB* b) { fprintf(out, "BB.%s.%d", b->fn, b->bbno); }
 
 void asmgen(const BBL* head, FILE* f) {

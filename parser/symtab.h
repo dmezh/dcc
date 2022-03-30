@@ -69,16 +69,16 @@ typedef struct st_entry {
     int stack_offset;
 
     // fn
-    astn* param_list;
+    astn param_list;
     struct symtab* fn_scope;
-    astn* body;
+    astn body;
     bool fn_defined;
     bool variadic;
 
     const char *ident;
     enum namespaces ns;
     enum st_linkage linkage;
-    struct astn *type;
+    astn type;
     struct st_entry *next;
     struct symtab* scope;
     YYLTYPE decl_context, def_context;
@@ -135,13 +135,13 @@ extern symtab* current_scope;
 
 void st_reserve_stack(sym e);
 
-sym st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context);
-sym st_declare_function(astn* fndef, YYLTYPE openbrace_context);
+sym st_define_function(astn fndef, astn block, YYLTYPE openbrace_context);
+sym st_declare_function(astn fndef, YYLTYPE openbrace_context);
 
 sym st_declare_struct(const char* ident, bool strict,  YYLTYPE context);
-sym st_define_struct(const char *ident, astn *decl_list,
+sym st_define_struct(const char *ident, astn decl_list,
                            YYLTYPE name_context, YYLTYPE closebrace_context, YYLTYPE openbrace_context);
 
-sym begin_st_entry(astn *decl, enum namespaces ns,  YYLTYPE context);
+sym begin_st_entry(astn decl, enum namespaces ns,  YYLTYPE context);
 
 #endif
