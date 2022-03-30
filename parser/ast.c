@@ -71,6 +71,8 @@ astn list_alloc(astn me) {
  */
 //              (arg to add)(head of ll)
 astn list_append(astn new, astn head) {
+    ast_check(head, ASTN_LIST, "Expected ASTN_LIST node to append to.");
+
     astn n=list_alloc(new);
     while (head->List.next) head=head->List.next;
     head->List.next = n;
@@ -81,6 +83,8 @@ astn list_append(astn new, astn head) {
  *  get next node of list
  */
 astn list_next(const_astn cur) {
+    ast_check(cur, ASTN_LIST, "Expected ASTN_LIST node.");
+
     return cur->List.next;
 }
 
@@ -88,6 +92,8 @@ astn list_next(const_astn cur) {
  *  get current data element
  */
 astn list_data(const_astn n) {
+    ast_check(n, ASTN_LIST, "Expected ASTN_LIST node.");
+
     return n->List.me;
 }
 
@@ -96,6 +102,8 @@ astn list_data(const_astn n) {
 void list_reverse(astn *l) {
     astn prev=NULL, current=*l, next=NULL;
     while (current) {
+        ast_check(current, ASTN_LIST, "Expected ASTN_LIST node.");
+
         next = list_next(current);
         current->List.next = prev;
         prev = current;
@@ -108,6 +116,8 @@ void list_reverse(astn *l) {
  * return length of AST list starting at head
  */
 unsigned list_measure(const_astn head) {
+    ast_check(head, ASTN_LIST, "Expected ASTN_LIST node.");
+
     int c = 0;
     while ((head=head->List.next)) {
         c++;
