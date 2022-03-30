@@ -23,7 +23,7 @@ astn* qtemp_alloc(unsigned size) {
     astn* n = astn_alloc(ASTN_QTEMP);
     n->Qtemp.tempno = ++temp_count;
     n->Qtemp.size = size;
-    st_entry *f = st_lookup(cursor.fn, NS_MISC);
+    sym f = st_lookup(cursor.fn, NS_MISC);
     //printf("found fn: "); st_dump_entry(f);
     f->fn_scope->stack_total += 4;
     n->Qtemp.stack_offset = f->fn_scope->stack_total;
@@ -349,7 +349,7 @@ quad* last_in_bb(BB* b) {
     return q;
 }
 
-void gen_fn(st_entry *e) {
+void gen_fn(sym e) {
     bb_count = 0;
     cursor.fn = e->ident;
 
@@ -377,7 +377,7 @@ void gen_fn(st_entry *e) {
 }
 
 void gen_ret(astn *n) {
-    st_entry *e = st_lookup_fq(cursor.fn, &root_symtab, NS_MISC);
+    sym e = st_lookup_fq(cursor.fn, &root_symtab, NS_MISC);
     bool non_void = (e->type->Type.is_derived || e->type->Type.scalar.type != t_VOID);
     if (n->Return.ret) {
         if (!non_void)

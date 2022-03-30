@@ -46,7 +46,7 @@ void st_dump_current() {
 /*
  *  Dump a single st_entry with one-line info.
  */
-void st_dump_entry(const st_entry* e) {
+void st_dump_entry(const_sym e) {
     if (!e) return;
     eprintf("%s<%s> <ns:%s> <stor:%s%s> <scope:%s @ %s:%d>",
             st_entry_types_str[e->entry_type],
@@ -77,7 +77,7 @@ void st_dump_entry(const st_entry* e) {
 // kind of fake at the moment
 void st_dump_recursive() {
     eprintf("_- symtab dump for translation unit: -_\n");
-    const st_entry *e = current_scope->first;
+    const_sym e = current_scope->first;
     while (e) {
         st_dump_entry(e);
         st_examine_given(e);
@@ -88,7 +88,7 @@ void st_dump_recursive() {
 
 void st_dump_single_given(const symtab* s) {
     //printf("Dumping symbol table!\n");
-    const st_entry* cur = s->first;
+    const_sym cur = s->first;
     while (cur) {
         st_dump_entry(cur);
         cur = cur->next;
@@ -99,7 +99,7 @@ void st_dump_single_given(const symtab* s) {
  *  Output in-depth info for given st_entry based on entry_type.
  *  Call st_dump_entry() first if you want to get the symbol info line.
  */
-void st_examine_given(const st_entry* e) {
+void st_examine_given(const_sym e) {
     if (e->entry_type == STE_FN) {
         print_ast(e->type);
         if (e->param_list) {
@@ -123,7 +123,7 @@ void st_examine_given(const st_entry* e) {
     }
     if (e->entry_type == STE_STRUNION_DEF && e->members) {
         eprintf("Dumping tag-type mini scope of tag <%s>!\n", e->ident);
-        const st_entry* cur = e->members->first;
+        const_sym cur = e->members->first;
         while (cur) {
             st_dump_entry(cur);
             st_examine_given(cur);
@@ -136,7 +136,7 @@ void st_examine_given(const st_entry* e) {
  *  Search for an ident across all the namespaces and output st_entry info.
  */
 void st_examine(const char* ident) {
-    const st_entry *e;
+    const_sym e;
     int count = 0;       // yeah, weird way of getting the enum size
     for (unsigned i=0; i<sizeof(namespaces_str)/sizeof(namespaces_str[0]); i++) {
         if ((e = st_lookup(ident, i))) {
@@ -157,7 +157,7 @@ void st_examine(const char* ident) {
  *  Search for a member of a tag and output st_entry info.
  */
 void st_examine_member(const char* tag, const char* child) {
-    const st_entry *e = st_lookup(tag, NS_TAGS);
+    const sym e = st_lookup(tag, NS_TAGS);
     if (!e) {
         printf("> I was not able to find tag <%s>.\n\n", tag);
         return;
@@ -168,7 +168,7 @@ void st_examine_member(const char* tag, const char* child) {
         printf("\n");
         return;
     }
-    const st_entry *m = st_lookup_fq(child, e->members, NS_MEMBERS);
+    const sym m = st_lookup_fq(child, e->members, NS_MEMBERS);
     if (!m) {
         printf("> I found tag <%s>, but not the member <%s>:\n", tag, child);
         st_dump_entry(e);

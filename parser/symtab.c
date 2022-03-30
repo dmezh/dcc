@@ -16,8 +16,8 @@
 #include "types.h"
 #include "util.h"
 
-static void st_check_linkage(st_entry* e);
-static st_entry* real_begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context);
+static void st_check_linkage(sym e);
+static sym real_begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context);
 
 // symtab for this translation unit
 symtab root_symtab = {
@@ -30,7 +30,7 @@ symtab root_symtab = {
 
 symtab *current_scope = &root_symtab;
 
-st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE context) {
+sym st_define_function(astn* fndef, astn* block, YYLTYPE context) {
     ast_check(fndef, ASTN_DECL, "Expected decl.");
     ast_check(block, ASTN_LIST, "Expected list for fn body.");
 
@@ -38,7 +38,7 @@ st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE context) {
     const char *name = get_dtypechain_ident(fndef->Decl.type);
 
     // check if function has been declarated and/or defined
-    st_entry *fn = st_lookup(name, NS_MISC);
+    sym fn = st_lookup(name, NS_MISC);
     if (fn) { // found existing entry
         if (fn->entry_type == STE_FN) { // entry is fn
             if (fn->fn_defined) { // fn defined
@@ -61,7 +61,7 @@ st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE context) {
 }
 
 
-st_entry *st_declare_function(astn* decl, YYLTYPE context) {
+sym st_declare_function(astn* decl, YYLTYPE context) {
     ast_check(decl, ASTN_DECL, "Expected decl.");
     ast_check(decl->Decl.type, ASTN_TYPE,
               "Invalid non-type astn at top of function declaration type chain.");
@@ -76,7 +76,7 @@ st_entry *st_declare_function(astn* decl, YYLTYPE context) {
     const char *name = get_dtypechain_ident(decl->Decl.type);
 
     // make new st_entry if needed
-    st_entry *fn = st_lookup_ns(name, NS_MISC);
+    sym fn = st_lookup_ns(name, NS_MISC);
     if (!fn) // check for compatibility with existing declaration here
         fn = real_begin_st_entry(decl, NS_MISC, decl->Decl.context);
 
@@ -108,8 +108,8 @@ st_entry *st_declare_function(astn* decl, YYLTYPE context) {
 /*
  *  Declare (optionally permissively) a struct in the current scope without defining.
  */
-st_entry *st_declare_struct(const char* ident, bool strict, YYLTYPE context) {
-    st_entry *n = st_lookup(ident, NS_TAGS);
+sym st_declare_struct(const char* ident, bool strict, YYLTYPE context) {
+    sym n = st_lookup(ident, NS_TAGS);
     if (n) {
         if (strict && n->members) {
             eprintf("Error: attempted redeclaration of complete tag");
@@ -118,7 +118,7 @@ st_entry *st_declare_struct(const char* ident, bool strict, YYLTYPE context) {
             return n; // "redeclared"
         }
     } else {
-        st_entry *new = stentry_alloc(ident);
+        sym new = stentry_alloc(ident);
         new->ns = NS_TAGS;
         new->entry_type = STE_STRUNION_DEF;
         new->is_union = false;
@@ -143,15 +143,15 @@ st_entry *st_declare_struct(const char* ident, bool strict, YYLTYPE context) {
  *
  *  Note: changes would need to be made to support unnamed structs.
  */
-st_entry* st_define_struct(const char *ident, astn *decl_list,
+sym st_define_struct(const char *ident, astn *decl_list,
                            YYLTYPE name_context, YYLTYPE closebrace_context, YYLTYPE openbrace_context) {
-    st_entry *strunion;
+    sym strunion;
     strunion = st_declare_struct(ident, true, name_context); // strict bc we're about to define!
 
     //printf("creating mini at %s:%d\n", openbrace_context.filename, openbrace_context.lineno);
     st_new_scope(SCOPE_MINI, openbrace_context);
     strunion->members = current_scope; // mini-scope
-    st_entry *member;
+    sym member;
     while (decl_list) {
         member = real_begin_st_entry(list_data(decl_list), NS_MEMBERS, list_data(decl_list)->Decl.context);
         member->linkage = L_NONE;
@@ -182,7 +182,7 @@ symtab* st_parent_function() {
 
 
 // kludge up the linkage and storage specs for globals
-static void st_check_linkage(st_entry* e) {
+static void st_check_linkage(sym e) {
     if (e->scope == &root_symtab) {
         if (e->storspec == SS_UNDEF) { // plain declaration in global scope
             if (e->type->Type.is_const)// top level type
@@ -203,7 +203,7 @@ static void st_check_linkage(st_entry* e) {
 }
 
 
-void st_reserve_stack(st_entry* e) {
+void st_reserve_stack(sym e) {
     if (e->storspec == SS_AUTO) {
         int size;
         if (e->type->Type.is_derived && e->type->Type.derived.type == t_ARRAY) { // only diff size for arrays
@@ -267,7 +267,7 @@ static void check_dtypechain_legality(astn *head) {
  * 
  *  TODO: decl is not yet a list
  */
-static st_entry* real_begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
+static sym real_begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
     ast_check(decl, ASTN_DECL, "Expected decl to make new st_entry.");
 
     // Get information from the type chain
@@ -277,7 +277,7 @@ static st_entry* real_begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE con
     const char *name = get_dtypechain_ident(type_chain);
 
     // allocate a new entry
-    st_entry *new = stentry_alloc(name);
+    sym new = stentry_alloc(name);
 
     // set context, namespace, scope, and entry type
     new->decl_context = context;
@@ -302,7 +302,7 @@ static st_entry* real_begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE con
     // attempt to insert the new entry, check for permitted redeclaration
     if (!st_insert_given(new)) {
         if (new->scope == &root_symtab) {
-            st_entry* prev = st_lookup_ns(new->ident, new->ns);
+            sym prev = st_lookup_ns(new->ident, new->ns);
             // is previous extern? if so, completely replace it.
             // this logic and behavior is total shit, please fix this some day
             // this whole problem can only be described as disgusting
@@ -311,7 +311,7 @@ static st_entry* real_begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE con
             // H&S 4.8.5 was extremely useful on this. I'll try to follow a C++ -like model,
             // in which the only tentative definition is one that's 'extern', and those cannot have initializers.
             if (prev->storspec == SS_EXTERN && new->storspec != SS_EXTERN) {
-                st_entry *next = prev->next;
+                sym next = prev->next;
                 *prev = *new;
                 prev->next = next;
                 return prev;
@@ -327,9 +327,9 @@ static st_entry* real_begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE con
 }
 
 
-st_entry* begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
+sym begin_st_entry(astn *decl, enum namespaces ns, YYLTYPE context) {
     if (decl->Decl.type->type == ASTN_TYPE && decl->Decl.type->Type.derived.type == t_FN) {
-        st_entry *newfn = st_declare_function(decl, context);
+        sym newfn = st_declare_function(decl, context);
         newfn->fn_defined = false;
         newfn->def_context = (YYLTYPE){NULL, 0}; // it's not defined
         return newfn;

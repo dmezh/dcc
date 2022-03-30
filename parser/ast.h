@@ -11,6 +11,8 @@
 #include "semval.h"
 #include "types_common.h"
 
+// Note that struct st_entry* is used in this file as a forward reference.
+
 // If you want to add a new astn type, add it to the enum, add the definition,
 // add it to the union in struct astn, and add it to print_ast in ast_print.c
 enum astn_types {
@@ -104,7 +106,7 @@ struct astn_typespec {
     bool is_tagtype;
     union {
         enum typespec spec;
-        struct st_entry* symbol;
+        struct st_entry *symbol;
     };
     struct astn *next;
 };
@@ -168,14 +170,14 @@ struct astn_compoundstmt {
 
 // record of a declaration having occurred
 struct astn_declrec {
-    struct st_entry* e;
+    struct st_entry *e;
     struct astn* init;
 };
 
 // st_entry pointer from resolved idents
 // similar above but separated for clarity
 struct astn_symptr {
-    struct st_entry* e;
+    struct st_entry *e;
 };
 
 struct astn_ifelse {
@@ -290,11 +292,11 @@ astn *storspec_alloc(enum storspec spec);
 astn *dtype_alloc(astn* target, enum der_types type);
 
 astn *decl_alloc(astn *specs, astn *type, astn* init, YYLTYPE context);
-astn *strunion_alloc(struct st_entry* symbol);
+astn *strunion_alloc(struct st_entry *symbol);
 
 astn *fndef_alloc(astn* decl, astn* param_list, struct symtab* scope);
 astn *declrec_alloc(struct st_entry *e, astn* init);
-astn *symptr_alloc(struct st_entry* e);
+astn *symptr_alloc(struct st_entry *e);
 
 astn *ifelse_alloc(astn *cond_s, astn *then_s, astn *else_s);
 astn *whileloop_alloc(astn* cond_s, astn* body_s, bool is_dowhile);

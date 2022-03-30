@@ -15,8 +15,8 @@
 /* 
  *  Just allocate; we're not checking any kind of context for redeclarations, etc
  */
-st_entry* stentry_alloc(const char *ident) {
-    st_entry *n = safe_calloc(1, sizeof(st_entry));
+sym stentry_alloc(const char *ident) {
+    sym n = safe_calloc(1, sizeof(st_entry));
     n->type = astn_alloc(ASTN_TYPE);
     n->ident = ident;
     return n;
@@ -29,7 +29,7 @@ st_entry* stentry_alloc(const char *ident) {
  *          true - success
  *          false - ident already in symtab
  */
-bool st_insert_given(st_entry *new) {
+bool st_insert_given(sym new) {
     if (st_lookup_ns(new->ident, new->ns)) return false;
     new->next = NULL;
     if (!current_scope->first) { // currently-empty symtab
@@ -47,9 +47,9 @@ bool st_insert_given(st_entry *new) {
  *  Look up the symbol and return it if found, NULL otherwise
  *  // I'm not convinced this is all that's needed yet
  */
-st_entry* st_lookup(const char* ident, enum namespaces ns) {
+sym st_lookup(const char* ident, enum namespaces ns) {
     symtab *cur = current_scope;
-    st_entry* match;
+    sym match;
     while (cur) {
         if ((match = st_lookup_fq(ident, cur, ns)))
             return match;
@@ -63,7 +63,7 @@ st_entry* st_lookup(const char* ident, enum namespaces ns) {
 /*
  *  Lookup in current_scope, with namespace
  */
-st_entry* st_lookup_ns(const char* ident, enum namespaces ns) {
+sym st_lookup_ns(const char* ident, enum namespaces ns) {
     return st_lookup_fq(ident, current_scope, ns);
 }
 
@@ -71,8 +71,8 @@ st_entry* st_lookup_ns(const char* ident, enum namespaces ns) {
 /*
  *  Fully-qualified lookup; give me symtab to check and namespace
  */
-st_entry* st_lookup_fq(const char* ident, const symtab* s, enum namespaces ns) {
-    st_entry* cur = s->first;
+sym st_lookup_fq(const char* ident, const symtab* s, enum namespaces ns) {
+    sym cur = s->first;
     while (cur) {
         if (cur->ns == ns && !strcmp(ident, cur->ident))
             return cur;
@@ -121,8 +121,8 @@ void st_pop_scope() {
  */
 void st_destroy(symtab* target) {
     // free all the entries first
-    st_entry *next = target->first->next;
-    for (st_entry *e=target->first; e!=NULL; e=next) {
+    sym next = target->first->next;
+    for (sym e=target->first; e!=NULL; e=next) {
         next = e->next;
         free(e);
     }

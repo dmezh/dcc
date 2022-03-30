@@ -27,7 +27,7 @@ const unsigned stack_align = 16; // desired stack alignment
 void all2XXX(astn *n, char* r) {
     switch (n->type) {
         case ASTN_SYMPTR: ; // empty stmt
-            st_entry *e = n->Symptr.e;
+            sym e = n->Symptr.e;
             //eprintf("al2xxx examining %s\n", e->ident);
             switch (e->storspec) {
                 case SS_AUTO:
@@ -63,7 +63,7 @@ void all2XXX(astn *n, char* r) {
 void XXX2all(astn *n, char* r) {
     switch (n->type) {
         case ASTN_SYMPTR: ; //empty stmt
-            st_entry *e = n->Symptr.e;
+            sym e = n->Symptr.e;
             switch (e->storspec) {
                 case SS_AUTO:
                     ea("movl\t%s, %d(%%ebp)", r, -(e->stack_offset));
@@ -165,7 +165,7 @@ void asmgen_q(quad* q) {
         case Q_LEA: // similar breakdown as XXX2all
             switch (q->src1->type) {
                 case ASTN_SYMPTR: ; // empty stmt
-                    st_entry *e = q->src1->Symptr.e;
+                    sym e = q->src1->Symptr.e;
                     switch (e->storspec) {
                         case SS_AUTO:
                             ea("leal\t%d(%%ebp), %%eax", -(e->stack_offset));
@@ -245,7 +245,7 @@ void asmgen(const BBL* head, FILE* f) {
     fprintf(out, "# ASM OUTPUT\n# compiled poorly :)\n\n");
 
     // init globals, except functions
-    st_entry* e = root_symtab.first;
+    sym e = root_symtab.first;
     while (e) {
         if (e->entry_type == STE_VAR) {
             if (e->storspec == SS_STATIC) {

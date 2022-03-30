@@ -174,7 +174,7 @@ astn *decl_alloc(astn *specs, astn *type, astn *init, YYLTYPE context) {
 /*
  * allocate strunion variant of astn_typespec
  */
-astn *strunion_alloc(struct st_entry* symbol) {
+astn *strunion_alloc(sym symbol) {
     astn *n=astn_alloc(ASTN_TYPESPEC);
     n->Typespec.is_tagtype = true;
     n->Typespec.symbol = symbol;
@@ -190,14 +190,14 @@ astn *fndef_alloc(astn* decl, astn* param_list, symtab* scope) {
     return n;
 }
 
-astn *declrec_alloc(st_entry* e, astn* init) {
+astn *declrec_alloc(sym e, astn* init) {
     astn *n=astn_alloc(ASTN_DECLREC);
     n->Declrec.e = e;
     n->Declrec.init = init;
     return n;
 }
 
-astn *symptr_alloc(st_entry* e) {
+astn *symptr_alloc(sym e) {
     astn *n=astn_alloc(ASTN_SYMPTR);
     n->Symptr.e = e;
     return n;

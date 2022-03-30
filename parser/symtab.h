@@ -84,6 +84,9 @@ typedef struct st_entry {
     YYLTYPE decl_context, def_context;
 } st_entry;
 
+typedef st_entry* sym;
+typedef const st_entry* const_sym;
+
 /*
  * We will maintain a stack of lexical scopes using a simple linked list of symbol
  * tables. Each symbol table has a pointer to its parent - the scope from which
@@ -123,22 +126,22 @@ typedef struct symtab {
     int stack_total, param_stack_total;
     YYLTYPE context; // when the scope started
     struct symtab *parent;
-    st_entry* parent_func;
-    struct st_entry *first, *last;
+    sym parent_func;
+    sym first, last;
 } symtab;
 
 extern symtab root_symtab;
 extern symtab* current_scope;
 
-void st_reserve_stack(st_entry* e);
+void st_reserve_stack(sym e);
 
-st_entry *st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context);
-st_entry *st_declare_function(astn* fndef, YYLTYPE openbrace_context);
+sym st_define_function(astn* fndef, astn* block, YYLTYPE openbrace_context);
+sym st_declare_function(astn* fndef, YYLTYPE openbrace_context);
 
-st_entry *st_declare_struct(const char* ident, bool strict,  YYLTYPE context);
-st_entry *st_define_struct(const char *ident, astn *decl_list,
+sym st_declare_struct(const char* ident, bool strict,  YYLTYPE context);
+sym st_define_struct(const char *ident, astn *decl_list,
                            YYLTYPE name_context, YYLTYPE closebrace_context, YYLTYPE openbrace_context);
 
-st_entry* begin_st_entry(astn *decl, enum namespaces ns,  YYLTYPE context);
+sym begin_st_entry(astn *decl, enum namespaces ns,  YYLTYPE context);
 
 #endif

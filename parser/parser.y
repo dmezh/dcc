@@ -48,7 +48,7 @@
     struct strlit strlit;
     char* ident;
     astn* astn_p;
-    st_entry* st_entry;
+    sym st_entry;
 }
 
 %token INDSEL PLUSPLUS MINUSMINUS SHL SHR LTEQ GTEQ EQEQ
@@ -112,7 +112,7 @@ external_decln:                             // kludge ish for structs/unions // 
                                             }
                                         }
 |   fn_def                              {   gen_fn($1);  }
-|   internal                            {   $$=(st_entry*)NULL;   }
+|   internal                            {   $$=(sym)NULL;   }
 ;
 
 fn_def:
@@ -221,7 +221,7 @@ debug:
 // ----------------------------------------------------------------------------
 // 6.5.1 Primary expressions
 primary_expr:
-    ident                       {   st_entry *e = st_lookup($1->Ident.ident, NS_MISC);
+    ident                       {   sym e = st_lookup($1->Ident.ident, NS_MISC);
                                     if (!e) 
                                         ps_error(@1, "'%s' undefined", $1->Ident.ident);
                                     else
