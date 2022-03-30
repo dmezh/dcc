@@ -13,7 +13,8 @@ jobs:
       run: |
         python3 -m pip install --upgrade pip
         pip3 install --upgrade toml
-        sudo apt install -y -q gcc-multilib
+        sudo apt-get update
+        sudo apt-get install -y -q gcc-multilib
     
     - uses: actions/checkout@v2
     - name: Make dcc
