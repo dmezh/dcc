@@ -4,3 +4,4 @@ prog
 build
 dcc
 **dSYM
+**/.DS_Store
