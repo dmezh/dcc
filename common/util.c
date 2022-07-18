@@ -5,7 +5,7 @@
  */
 #include "util.h"
 
-#include <features.h> // for __GLIBC__; I'm pretty sure stdio or something includes this anyway
+// #include <features.h> // for __GLIBC__; I'm pretty sure stdio or something includes this anyway
 #include <execinfo.h> // for backtrace
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,7 +56,7 @@ _Noreturn void die(const char* msg) {
 
     eprintf("%s\n", yak);
 
-    #ifdef __GLIBC__
+    // #ifdef __GLIBC__
     eprintf("Trying to print backtrace:\n------------------------------\n");
     void* callstack[BACKTRACE_DEPTH];
     int frames = backtrace(callstack, BACKTRACE_DEPTH);
@@ -64,7 +64,7 @@ _Noreturn void die(const char* msg) {
     for (int i = 0; i<frames; i++) {
         eprintf("%s\n", strings[i]);
     }
-    #endif
+    // #endif
 
     abort();
 }
