@@ -209,11 +209,11 @@ void st_reserve_stack(sym e) {
         if (e->type->Type.is_derived && e->type->Type.derived.type == t_ARRAY) { // only diff size for arrays
             size = get_sizeof(e->type);
             //eprintf("got arr size %d\n", size);
-        } else size = 4;
+        } else size = 8;
         symtab *f = st_parent_function();
         if (e->is_param) {
-            f->param_stack_total -= size;
-            e->stack_offset = f->param_stack_total;
+            e->stack_offset = f->stack_total;
+            f->stack_total += size;
         } else {
             f->stack_total += size;
             e->stack_offset = f->stack_total;

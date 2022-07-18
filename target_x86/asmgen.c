@@ -19,6 +19,8 @@ struct strlit strlits[100]; // can't have more than 100 string literals
 
 const unsigned stack_align = 16; // desired stack alignment
 
+static const char const * argcount_to_reg[] = {"RDI", "RSI", "RDX", "RCX", "R8", "R9"};
+
 #define ea(...) do { \
     fprintf(out, "\t\t" __VA_ARGS__); \
     fprintf(out, "\n"); \
@@ -31,12 +33,13 @@ void all2XXX(astn n, char* r) {
             //eprintf("al2xxx examining %s\n", e->ident);
             switch (e->storspec) {
                 case SS_AUTO:
-                    ea("movl\t%d(%%ebp), %s", -(e->stack_offset), r);
+                    ea("movq\t%d(%%rbp), %s", -(e->stack_offset), r);
+                    // fprintf(stderr, "stack offset of %s: %d\n", e->ident, e->stack_offset);
                     break;
                 case SS_EXTERN:
                 case SS_STATIC:
                     //todo("static local vars");
-                    ea("movl\t%s, %s", e->ident, r);
+                    ea("movq\t%s(%%rip), %s", e->ident, r);
                     break;
                 default:
                     die("invalid storage type for value during asmgen");
@@ -44,14 +47,14 @@ void all2XXX(astn n, char* r) {
             }
             break;
         case ASTN_NUM:
-            ea("movl\t$%ld, %s", (long)n->Num.number.integer, r);
+            ea("movq\t$%ld, %s", (long)n->Num.number.integer, r);
             break;
         case ASTN_QTEMP:
-            ea("movl\t%d(%%ebp), %s", -(n->Qtemp.stack_offset), r);
+            ea("movq\t%d(%%rbp), %s", -(n->Qtemp.stack_offset), r);
             break;
         case ASTN_STRLIT:
             strlits[strlit_count] = n->Strlit.strlit;
-            ea("movl\t$strl.%d, %s", strlit_count, r);
+            ea("leaq\tstrl.%d(%%rip), %s", strlit_count, r);
             strlit_count++;
             break;
 
@@ -66,11 +69,11 @@ void XXX2all(astn n, char* r) {
             sym e = n->Symptr.e;
             switch (e->storspec) {
                 case SS_AUTO:
-                    ea("movl\t%s, %d(%%ebp)", r, -(e->stack_offset));
+                    ea("movq\t%s, %d(%%rbp)", r, -(e->stack_offset));
                     break;
                 case SS_EXTERN:
                 case SS_STATIC:
-                    ea("movl\t%s, %s", r, e->ident);
+                    ea("movq\t%s(%%rip), %s", r, e->ident);
                     break;
                 default:
                     die("invalid storage type for value during asmgen");
@@ -78,67 +81,70 @@ void XXX2all(astn n, char* r) {
             }
             break;
         case ASTN_QTEMP:
-            ea("movl\t%s, %d(%%ebp)", r, -(n->Qtemp.stack_offset));
+            ea("movq\t%s, %d(%%rbp)", r, -(n->Qtemp.stack_offset));
             break;
         default:
             die("invalid astn during asmgen");
     }
 }
 
-void eax2all(astn n) { XXX2all(n, "%eax"); }
-void ecx2all(astn n) { XXX2all(n, "%ecx"); }
-void edx2all(astn n) { XXX2all(n, "%edx"); }
-void all2eax(astn n) { all2XXX(n, "%eax"); }
-void all2ecx(astn n) { all2XXX(n, "%ecx"); }
-void all2edx(astn n) { all2XXX(n, "%edx"); }
+void rax2all(astn n) { XXX2all(n, "%rax"); }
+void rcx2all(astn n) { XXX2all(n, "%rcx"); }
+void rdx2all(astn n) { XXX2all(n, "%rdx"); }
+void all2rax(astn n) { all2XXX(n, "%rax"); }
+void all2rcx(astn n) { all2XXX(n, "%rcx"); }
+void all2rdx(astn n) { all2XXX(n, "%rdx"); }
 
 static int argcount = 0;
 
 void asmgen_q(quad* q) {
     switch (q->op) {
         case Q_FNSTART:
-            ea("pushl\t%%ebp");
-            ea("movl\t%%esp, %%ebp");
-            fprintf(out, "\t\tsubl\t$%d, %%esp\n", stack_offset);
+            ea("pushq\t%%rbp");
+            ea("movq\t%%rsp, %%rbp");
+            fprintf(out, "\t\tsubq\t$%d, %%rsp\n", stack_offset);
+            for (int i = 0; i < q->src1->Symptr.e->fn_scope->param_count; i++) {
+                ea("movq\t%%%s, -%d(%%rbp)", argcount_to_reg[i], (i+1)*8);
+            }
             break;
         case Q_MOV:
-            all2eax(q->src1);
-            eax2all(q->target);
+            all2rax(q->src1);
+            rax2all(q->target);
             break;
         case Q_ADD:
-            all2eax(q->src1);
-            all2edx(q->src2);
-            ea("addl\t%%edx, %%eax");
-            eax2all(q->target);
+            all2rax(q->src1);
+            all2rdx(q->src2);
+            ea("addq\t%%rdx, %%rax");
+            rax2all(q->target);
             break;
         case Q_SUB:
-            all2eax(q->src1);
-            all2edx(q->src2);
-            ea("subl\t%%edx, %%eax");
-            eax2all(q->target);
+            all2rax(q->src1);
+            all2rdx(q->src2);
+            ea("subq\t%%rdx, %%rax");
+            rax2all(q->target);
             break;
         case Q_MUL:
-            all2eax(q->src1);
-            all2edx(q->src2);
-            ea("imul\t%%edx, %%eax");
-            eax2all(q->target);
+            all2rax(q->src1);
+            all2rdx(q->src2);
+            ea("imulq\t%%rdx, %%rax");
+            rax2all(q->target);
             break;
         case Q_DIV:
-            all2eax(q->src1);
-            ea("cdq"); // now edx:eax is src1
-            all2ecx(q->src2);
-            ea("idiv\t%%ecx");
-            eax2all(q->target); // give result
+            all2rax(q->src1);
+            ea("cdq"); // now rdx:rax is src1
+            all2rcx(q->src2);
+            ea("idiv\t%%rcx");
+            rax2all(q->target); // give result
             break;
         case Q_MOD:
-            all2eax(q->src1);
-            ea("cdq"); // now edx:eax is src1
-            all2ecx(q->src2);
-            ea("idiv\t%%ecx");
-            edx2all(q->target); // give remainder
+            all2rax(q->src1);
+            ea("cdq"); // now rdx:rax is src1
+            all2rcx(q->src2);
+            ea("idiv\t%%rcx");
+            rdx2all(q->target); // give remainder
             break;
         case Q_RET:
-            if (q->src1) all2eax(q->src1);
+            if (q->src1) all2rax(q->src1);
             fprintf(out, "\t\tleave\n");
             fprintf(out, "\t\tret\n");
             break;
@@ -146,20 +152,23 @@ void asmgen_q(quad* q) {
             argcount = 0;
             break;
         case Q_ARG:
-            all2eax(q->src1);
-            ea("pushl\t%%eax");
+            if (argcount > 5) {
+                die("I can't handle more than 6 args yet :(\n");
+            }
+            all2rax(q->src1);
+            ea("movq\t%%rax, %%%s", argcount_to_reg[argcount]);
             argcount++;
             break;
         case Q_CALL:
             if (q->src1->type == ASTN_IDENT) { // override default action of all2XXX
-                ea("call\t%s", q->src1->Ident.ident);
+                ea("call\t_%s", q->src1->Ident.ident);
             } else {
                 eprintf("you're trying to call a non-ident - be my guest but you're probably dead\n");
-                all2eax(q->src1);
-                ea("call\t%%eax");
+                all2rax(q->src1);
+                ea("call\t%%rax");
             }
-            eax2all(q->target);
-            ea("addl\t$%d, %%esp", argcount*4);
+            rax2all(q->target);
+            // ea("addq\t$%d, %%rsp", argcount*8);
             argcount = 0;
             break;
         case Q_LEA: // similar breakdown as XXX2all
@@ -168,11 +177,11 @@ void asmgen_q(quad* q) {
                     sym e = q->src1->Symptr.e;
                     switch (e->storspec) {
                         case SS_AUTO:
-                            ea("leal\t%d(%%ebp), %%eax", -(e->stack_offset));
+                            ea("leaq\t%d(%%rbp), %%rax", -(e->stack_offset));
                             break;
                         case SS_EXTERN:
                         case SS_STATIC:
-                            ea("leal\t%s, %%eax", e->ident);
+                            ea("leaq\t%s, %%rax", e->ident);
                             break;
                         default:
                             die("invalid storage type for leal during asmgen");
@@ -180,39 +189,39 @@ void asmgen_q(quad* q) {
                     }
                     break;
                 case ASTN_QTEMP:
-                    ea("leal\t%d(%%ebp), %%eax", -(q->src1->Qtemp.stack_offset));
+                    ea("leaq\t%d(%%rbp), %%rax", -(q->src1->Qtemp.stack_offset));
                     break;
                 default:
                     die("invalid astn during asmgen");
             }
-            eax2all(q->target);
+            rax2all(q->target);
             break;
         case Q_STORE:
-            all2eax(q->src1);
-            all2edx(q->target);
-            ea("movl\t%%eax, (%%edx)"); // store
+            all2rax(q->src1);
+            all2rdx(q->target);
+            ea("movq\t%%rax, (%%rdx)"); // store
             break;
         case Q_LOAD:
             if (q->src1->type != ASTN_SYMPTR && q->src1->type != ASTN_QTEMP)
                 die("encountered non-mem source node for load");
-            all2eax(q->src1);
-            ea("movl\t(%%eax), %%eax"); // load
-            eax2all(q->target);
+            all2rax(q->src1);
+            ea("movq\t(%%rax), %%rax"); // load
+            rax2all(q->target);
             break;
         case Q_NEG:
-            all2eax(q->src1);
-            ea("negl\t%%eax");
-            eax2all(q->target);
+            all2rax(q->src1);
+            ea("negq\t%%rax");
+            rax2all(q->target);
             break;
         case Q_BWNOT:
-            all2eax(q->src1);
-            ea("notl\t%%eax");
-            eax2all(q->target);
+            all2rax(q->src1);
+            ea("notq\t%%rax");
+            rax2all(q->target);
             break;
         case Q_CMP:
-            all2eax(q->src2);
-            all2edx(q->src1);
-            ea("cmpl\t%%eax, %%edx");
+            all2rax(q->src2);
+            all2rdx(q->src1);
+            ea("cmpq\t%%rax, %%rdx");
             break;
         case Q_BR:
             fprintf(out, "\t\tjmp\t"); e_bba(q->src1); fprintf(out, "\n");
@@ -268,8 +277,8 @@ void asmgen(const BBL* head, FILE* f) {
         BB* bb = bbl_data(bbl);
         // "declare" function
         if (bb->bbno == 0) { // function start
-            fprintf(out, ".globl\t%s\n", bb->fn);
-            fprintf(out, "%s:\n", bb->fn);
+            fprintf(out, ".globl\t_%s\n", bb->fn);
+            fprintf(out, "_%s:\n", bb->fn);
             stack_offset = bb->stack_offset_ez;
             // round up to stack_align multiple
             stack_offset = ((stack_offset + (stack_align-1))/stack_align)*stack_align;
@@ -290,7 +299,7 @@ void asmgen(const BBL* head, FILE* f) {
         bbl = bbl_next(bbl);
     }
 
-    fprintf(out, ".section .rodata\n");
+    // fprintf(out, ".section .rodata\n");
     for (int i=0; i<strlit_count; i++) {
         fprintf(out, "strl.%d: .asciz \"", i);
         struct strlit *strl = &strlits[i];

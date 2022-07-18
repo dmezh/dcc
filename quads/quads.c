@@ -25,7 +25,7 @@ astn qtemp_alloc(unsigned size) {
     n->Qtemp.size = size;
     sym f = st_lookup(cursor.fn, NS_MISC);
     //printf("found fn: "); st_dump_entry(f);
-    f->fn_scope->stack_total += 4;
+    f->fn_scope->stack_total += 8;
     n->Qtemp.stack_offset = f->fn_scope->stack_total;
     return n;
 }
@@ -118,10 +118,17 @@ _Noreturn void todo(const char* msg) {
 void cond_rvalue(astn n, astn left, astn right, astn target);
 
 // emit args in reverse
-void put_args(astn head) {
+void put_args_rev(astn head) {
     if (!head) return;
-    put_args(list_next(head));
+    put_args_rev(list_next(head));
     emit(Q_ARG, gen_rvalue(list_data(head), NULL), NULL, NULL);
+}
+
+void put_args(astn head) {
+    while (head) {
+        emit(Q_ARG, gen_rvalue(list_data(head), NULL), NULL, NULL);
+        head = list_next(head);
+    }
 }
 
 astn gen_rvalue(astn node, astn target) {
@@ -140,7 +147,7 @@ astn gen_rvalue(astn node, astn target) {
         }
         */
 
-        if (!target) target = qtemp_alloc(4);
+        if (!target) target = qtemp_alloc(8);
         emit(Q_CALL, fn, NULL, target);
         return target;
     }
@@ -148,7 +155,7 @@ astn gen_rvalue(astn node, astn target) {
         //struct astn_type *type = &node->Symptr.e->type->Type;
         //if (type->is_derived && type->derived.type == t_ARRAY) {
         if (isarr(node)) {
-            astn temp = qtemp_alloc(4); // address type
+            astn temp = qtemp_alloc(8); // address type
             emit(Q_LEA, node, NULL, temp);
             return temp;
         }
@@ -158,7 +165,7 @@ astn gen_rvalue(astn node, astn target) {
             return temp;
         }
         else {
-            target = qtemp_alloc(4); // hardcoded
+            target = qtemp_alloc(8); // hardcoded
             emit(Q_MOV, node, NULL, target);
             return target;
         }
@@ -191,7 +198,7 @@ astn gen_rvalue(astn node, astn target) {
         if (node->Binop.op == '+') {
             if (l_isptr) { // ptr + int
                 if (rval_right->type == ASTN_NUM) { // otherwise we'd emit a constant as an lvalue
-                    temp = qtemp_alloc(4);
+                    temp = qtemp_alloc(8);
                     emit(Q_MUL, rval_right, const_alloc(get_sizeof(ptr_target(left))), temp);
                     rval_right = temp;
                 }
@@ -200,7 +207,7 @@ astn gen_rvalue(astn node, astn target) {
             }
         }
 
-        if (!target) target=qtemp_alloc(4); // hardcoded int!
+        if (!target) target=qtemp_alloc(8); // hardcoded int!
 
         if (node->Binop.op == '<' || node->Binop.op == '>' 
             || node->Binop.op == LTEQ || node->Binop.op == GTEQ ||
@@ -225,7 +232,7 @@ astn gen_rvalue(astn node, astn target) {
                 ;
                 astn addr = gen_rvalue(utarget, NULL);
 
-                if (!target) target = qtemp_alloc(4);
+                if (!target) target = qtemp_alloc(8);
                 emit(Q_LOAD, addr, NULL, target);
                 return target;
 
@@ -245,18 +252,18 @@ astn gen_rvalue(astn node, astn target) {
                 gen_assign(cassign_alloc('+', utarget, n));
                 return temp;
             case '&':
-                temp = qtemp_alloc(4); // address type
+                temp = qtemp_alloc(8); // address type
                 emit(Q_LEA, utarget, NULL, temp);
                 return temp;
             case '+': // no-op for now
                 return utarget;
             case '-':
-                temp = qtemp_alloc(4);
+                temp = qtemp_alloc(8);
                 emit(Q_NEG, gen_rvalue(utarget, NULL), NULL, temp);
                 return temp;
             case '!':           todo("NOT");
             case '~':
-                temp = qtemp_alloc(4);
+                temp = qtemp_alloc(8);
                 emit(Q_BWNOT, gen_rvalue(utarget, NULL), NULL, temp);
                 return temp;
             default:
@@ -355,7 +362,10 @@ void gen_fn(sym e) {
 
     BB *f = bb_alloc();
     current_bb = f;
-    emit(Q_FNSTART, NULL, NULL, NULL);
+
+    astn fn = astn_alloc(ASTN_SYMPTR);
+    fn->Symptr.e = e;
+    emit(Q_FNSTART, fn, NULL, NULL);
 
     astn s = e->body;
     gen_quads(s);

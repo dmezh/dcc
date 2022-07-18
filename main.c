@@ -172,8 +172,8 @@ static void assemble() {
         case 0:
             dup2(fileno(tmp), STDIN_FILENO);
 
-            const char* gcc_argv[] = {"gcc", "-x", "assembler", "-",
-                                "-o", opt.out_file, "-m32", NULL};
+            const char* gcc_argv[] = {"clang", "-x", "assembler", "-",
+                                "-o", opt.out_file, "-mmacosx-version-min=10.15", "-arch", "x86_64", "-Og", NULL};
             execvp(gcc_argv[0], (char**)gcc_argv);
 
             RED_ERROR("Error execing for assembly: %s", strerror(errno))

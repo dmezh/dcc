@@ -1,8 +1,18 @@
-#ifndef DCC_ASSERT_T
+#ifndef DCC_ASSERT_H
 #define DCC_ASSERT_H
 
-void __assert_fail(const char *expr, const char *file, int line, const char *func);
+// #define stderr ___stderrp
 
-#define dcc_assert(expr) if (!(expr)) __assert_fail(#expr, __FILE__, __LINE__, "{unknown}")
+static void __assert_dcc(const char * assertion, const char * file, unsigned int line, const char * function)
+{
+    int printf();
+    // extern void *___stderrp;
+    printf("Assertion failed at %s::%s:%d - failed \"%s\"\n", file, function, line, assertion);
+
+    void exit();
+    exit(-5);
+}
+
+#define dcc_assert(expr) if (!(expr)) __assert_dcc(#expr, __FILE__, __LINE__, "{unknown}")
 
 #endif

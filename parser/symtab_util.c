@@ -89,8 +89,8 @@ void st_new_scope(enum scope_types scope_type, YYLTYPE context) {
     symtab *new = safe_malloc(sizeof(symtab));
     *new = (symtab){
         .scope_type = scope_type,
-        .stack_total= 4, // crime
-        .param_stack_total = -4, // crime
+        .stack_total= 8, // crime
+        .param_stack_total = -8, // crime
         .context    = context,
         .parent     = current_scope,
         .first      = NULL,

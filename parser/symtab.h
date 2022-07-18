@@ -123,7 +123,7 @@ typedef const st_entry* const_sym;
  */
 typedef struct symtab {
     enum scope_types scope_type;
-    int stack_total, param_stack_total;
+    int stack_total, param_stack_total, param_count;
     YYLTYPE context; // when the scope started
     struct symtab *parent;
     sym parent_func;
