@@ -1,0 +1,50 @@
+import os
+
+env = Environment(ENV = {'PATH' : os.environ['PATH']},
+                  YACC_HEADER_FILE = "parser.tab.h")
+
+env['CC'] = 'clang'
+env['ENV']['TERM'] = os.environ['TERM']
+
+dcc_sources = [
+    "parser/ast.c",
+    "parser/ast_print.c",
+    "parser/symtab.c",
+    "parser/symtab_print.c",
+    "parser/symtab_util.c",
+    "parser/types.c",
+    "quads/quads.c",
+    "quads/quads_cf.c",
+    "quads/quads_print.c",
+    "target_x86/asmgen.c",
+    "common/charutil.c",
+    "common/debug.c",
+    "common/semval.c",
+    "common/util.c",
+    "common/yak.ascii.c",
+    "main.c"
+]
+
+generated_parser = env.CFile('gen/parser.tab.c', 'parser/parser.y')
+generated_lexer = env.CFile('gen/lexer.yy.c', 'lexer/lexer.l')
+Depends(generated_parser, generated_lexer)
+generated_sources = ['gen/parser.tab.c', 'gen/lexer.yy.c']
+
+Depends(dcc_sources, generated_sources)
+
+dcc_all_sources = dcc_sources + generated_sources
+
+dcc_include_paths = [
+    "parser/",
+    "lexer/",
+    "common/",
+    "target_x86",
+    "quads/",
+    "./",
+    "build/gen/",
+]
+
+dcc = env.Program('dcc', dcc_all_sources, CPPPATH=dcc_include_paths)
+
+env.Install('../', dcc)
+
