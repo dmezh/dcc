@@ -1,4 +1,4 @@
-env = Environment()
+Import('env')
 
 dtest = env.Command('test', [], 'python3 test/dtest.py')
 env.Depends(dtest, '../dcc')

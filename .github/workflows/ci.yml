@@ -6,19 +6,25 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-20.04
+    runs-on: macos-12
 
     steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
+        cache: 'pip'
+
     - name: Prepare test - get packages
       run: |
-        python3 -m pip install --upgrade pip
-        pip3 install --upgrade toml
-        sudo apt-get update
-        sudo apt-get install -y -q gcc-multilib
-    
-    - uses: actions/checkout@v2
+        pip3 install -q -r requirements.txt
+        brew install llvm flex bison
+        echo "/usr/local/opt/bison/bin" >> $GITHUB_PATH
+        echo "/usr/local/opt/flex/bin" >> $GITHUB_PATH
+
     - name: Make dcc
-      run: make -j$(nproc) all
+      run: scons dcc
 
     - name: Test dcc
-      run: make test
+      run: scons test

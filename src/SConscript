@@ -1,10 +1,6 @@
-import os
+Import('env')
 
-env = Environment(ENV = {'PATH' : os.environ['PATH']},
-                  YACC_HEADER_FILE = "parser.tab.h")
-
-env['CC'] = 'clang'
-env['ENV']['TERM'] = os.environ['TERM']
+env['YACC_HEADER_FILE'] = "parser.tab.h"
 
 dcc_sources = [
     "parser/ast.c",
