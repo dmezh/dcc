@@ -37,20 +37,24 @@ dcc_include_paths = [
 ]
 
 # bison/flex #
-env['YACC_HEADER_FILE'] = "parser.tab.h"
+bison_header = 'parser.tab.h'
+Depends(dcc_sources, bison_header)
 
-GENERATED_PARSER_C = 'gen/parser.tab.c'
-GENERATED_LEXER_C = 'gen/lexer.yy.c'
-
-generated_parser_files = env.CFile(GENERATED_PARSER_C, 'parser/parser.y') # generates YACC_HEADER_FILE
-generated_lexer_files = env.CFile(GENERATED_LEXER_C, 'lexer/lexer.l')
+generated_parser_files = env.CFile('gen/parser.tab.c', 'parser/parser.y', YACC_HEADER_FILE=bison_header)
+generated_lexer_files = env.CFile('gen/lexer.yy.c', 'lexer/lexer.l')
 
 Depends(generated_parser_files, generated_lexer_files)
-Depends(dcc_sources, env['YACC_HEADER_FILE'])
 
-dcc_all_sources = dcc_sources + [GENERATED_PARSER_C, GENERATED_LEXER_C]
+generated_parser_lib = env.Library([generated_parser_files, generated_lexer_files],
+                                   CPPPATH=dcc_include_paths,
+                                   CCFLAGS='-Wall -Werror -fsanitize=undefined -Og'
+)
 
 # dcc #
-dcc = env.Program('dcc', dcc_all_sources, CPPPATH=dcc_include_paths)
+dcc = env.Program('dcc', [dcc_sources, generated_parser_lib],
+                  CPPPATH=dcc_include_paths,
+                  CCFLAGS='-Wall -Wextra -fsanitize=undefined -Wpedantic -Wunused -Og',
+                  LINKFLAGS='-fsanitize=undefined -rdynamic'
+)
 env.Install('../', dcc)
 
