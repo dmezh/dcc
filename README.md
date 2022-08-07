@@ -5,7 +5,7 @@
 
 dcc is a primitive C compiler originally built as a capstone project for a graduate course in compilers at Cooper Union - ECE466, Prof. Jeff Hakner. dcc targets the entire C99 standard, with a subset of C99 features currently available. 
 
-You can compile a sizeable set of programs with dcc (but there's a lot of work to do to get to full C99). The target is x86-32 assembly.
+You can compile a sizeable set of programs with dcc (but there's a lot of work to do to get to full C99). The target is x86-64 assembly.
 
 ## Key info
 
@@ -48,7 +48,7 @@ You can compile a sizeable set of programs with dcc (but there's a lot of work t
   $ ./a.out
   ```
 
-- To test (custom tester called dtest, written in Python 3; please `pip install toml` ):
+- To test:
   ```
   $ scons test
   ```
