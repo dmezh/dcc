@@ -6,3 +6,4 @@ dcc
 **dSYM
 **/.DS_Store
 .sconsign.dblite
+.venv
