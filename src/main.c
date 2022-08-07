@@ -15,7 +15,7 @@
 #include "quads.h"
 #include "util.h"
 
-#define DCC_VERSION "0.3.0"
+#define DCC_VERSION "0.3.1"
 #define DCC_ARCHITECTURE "x86_64"
 
 #define BRED "\033[1;31m"
@@ -44,6 +44,7 @@ static struct opt {
 
 static struct {
     struct utsname uname_data;
+    bool is_darwin;
 } host_info;
 
 static void print_usage_additional() {
@@ -90,9 +91,10 @@ static void get_options(int argc, char** argv) {
             case 'V':
                 eprintf("---- dcc - a C compiler ----"
                         "\n dcc " DCC_VERSION
-                        "\n architecture: " DCC_ARCHITECTURE "\n"
+                        "\n architecture: " DCC_ARCHITECTURE " - on %s" "\n"
                         "\n author: Dan Mezhiborsky"
-                        "\n home: https://github.com/dmezh/dcc\n");
+                        "\n home: https://github.com/dmezh/dcc\n",
+                        host_info.uname_data.sysname);
                 exit(0);
             case 'v':;
                 opt.debug++;
@@ -178,7 +180,7 @@ static void assemble() {
             dup2(fileno(tmp), STDIN_FILENO);
 
 
-            if (!strcmp(host_info.uname_data.sysname, "Darwin")) {
+            if (dcc_is_host_darwin()) {
                 const char* gcc_argv[] = {"clang", "-x", "assembler", "-", "-o", opt.out_file, "-mmacosx-version-min=10.15", "-arch", "x86_64", "-Og", NULL};
                 execvp(gcc_argv[0], (char**)gcc_argv);
             } else {
@@ -214,7 +216,9 @@ static void write_tmp_to_out() {
 
 int main(int argc, char** argv) {
     if (uname(&host_info.uname_data))
-    RED_ERROR("Error calling uname() for host information.");
+        RED_ERROR("Error calling uname() for host information.");
+
+    host_info.is_darwin = !strcmp(host_info.uname_data.sysname, "Darwin");
 
     get_options(argc, argv);
     preprocess(); // now stdin is the preprocessed file
@@ -241,5 +245,5 @@ void parse_done_cb(const BBL* root) {
 }
 
 bool dcc_is_host_darwin(void) {
-    return (!strcmp(host_info.uname_data.sysname, "Darwin"));
+    return host_info.is_darwin;
 }
