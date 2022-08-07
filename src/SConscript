@@ -1,46 +1,56 @@
 Import('env')
 
-env['YACC_HEADER_FILE'] = "parser.tab.h"
-
+# base dcc sources and headers #
 dcc_sources = [
+    "common/charutil.c",
+    "common/debug.c",
+    "common/semval.c",
+    "common/util.c",
+    "common/yak.ascii.c",
+
     "parser/ast.c",
     "parser/ast_print.c",
     "parser/symtab.c",
     "parser/symtab_print.c",
     "parser/symtab_util.c",
     "parser/types.c",
+
     "quads/quads.c",
     "quads/quads_cf.c",
     "quads/quads_print.c",
+
     "target_x86/asmgen.c",
-    "common/charutil.c",
-    "common/debug.c",
-    "common/semval.c",
-    "common/util.c",
-    "common/yak.ascii.c",
+
     "main.c"
 ]
 
-generated_parser = env.CFile('gen/parser.tab.c', 'parser/parser.y')
-generated_lexer = env.CFile('gen/lexer.yy.c', 'lexer/lexer.l')
-Depends(generated_parser, generated_lexer)
-generated_sources = ['gen/parser.tab.c', 'gen/lexer.yy.c']
-
-Depends(dcc_sources, generated_sources)
-
-dcc_all_sources = dcc_sources + generated_sources
-
 dcc_include_paths = [
-    "parser/",
-    "lexer/",
-    "common/",
-    "target_x86",
-    "quads/",
-    "./",
     "build/gen/",
+
+    "common/",
+    "lexer/",
+    "parser/",
+    "quads/",
+    "target_x86",
+
+    "./",
 ]
 
-dcc = env.Program('dcc', dcc_all_sources, CPPPATH=dcc_include_paths)
+# bison/flex #
+env['YACC_HEADER_FILE'] = "parser.tab.h"
 
+GENERATED_PARSER_C = 'gen/parser.tab.c'
+GENERATED_LEXER_C = 'gen/lexer.yy.c'
+
+generated_parser_files = env.CFile(GENERATED_PARSER_C, 'parser/parser.y') # generates YACC_HEADER_FILE
+generated_lexer_files = env.CFile(GENERATED_LEXER_C, 'lexer/lexer.l')
+
+Depends(generated_parser_files, generated_lexer_files)
+Depends(dcc_sources, env['YACC_HEADER_FILE'])
+
+dcc_all_sources = dcc_sources + [GENERATED_PARSER_C, GENERATED_LEXER_C]
+
+# dcc #
+dcc = env.Program('dcc', dcc_all_sources, CPPPATH=dcc_include_paths)
 env.Install('../', dcc)
 

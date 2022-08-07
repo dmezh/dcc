@@ -9,18 +9,17 @@ SetOption('num_jobs', 8)
 # Environment setup
 env = Environment(ENV = {'PATH' : os.environ['PATH']})
 
-env.Tool('compilation_db')
+env.Tool('compilation_db') # compile_commmands.json
 env.CompilationDatabase()
 
 env['CC'] = 'clang'
 
-term = os.environ.get('TERM')
+term = os.environ.get('TERM') # for color
 if term is not None:
     env['ENV']['TERM'] = term
 
 Export('env')
 
 # SConscripts
-
 SConscript('src/SConscript', variant_dir='build', duplicate=0)
 SConscript('test/SConscript')
