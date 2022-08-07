@@ -20,7 +20,7 @@ struct strlit strlits[100]; // can't have more than 100 string literals
 
 const unsigned stack_align = 16; // desired stack alignment
 
-static const char const * argcount_to_reg[] = {"RDI", "RSI", "RDX", "RCX", "R8", "R9"};
+static const char * const argcount_to_reg[] = {"RDI", "RSI", "RDX", "RCX", "R8", "R9"};
 
 #define ea(...) { \
     fprintf(out, "\t\t" __VA_ARGS__); \

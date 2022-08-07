@@ -49,7 +49,7 @@ int get_sizeof(const_astn type) {
         // add t_FN stuff
         else {
             if (!type->Type.derived.size) {
-                return NULL;
+                return 0;
             }
             if (type->Type.derived.size->type != ASTN_NUM) {
                 eprintf("Sorry, can't yet evaluate compile-time constants other than plain numbers\n");
