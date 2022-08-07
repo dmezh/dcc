@@ -1,5 +1,6 @@
 #include "asmgen.h"
 
+#include "main.h"
 #include "quads.h"
 #include "quads_cf.h"
 #include "quads_print.h"
@@ -21,10 +22,10 @@ const unsigned stack_align = 16; // desired stack alignment
 
 static const char const * argcount_to_reg[] = {"RDI", "RSI", "RDX", "RCX", "R8", "R9"};
 
-#define ea(...) do { \
+#define ea(...) { \
     fprintf(out, "\t\t" __VA_ARGS__); \
     fprintf(out, "\n"); \
-} while (0);
+}
 
 void all2XXX(astn n, char* r) {
     switch (n->type) {
@@ -161,7 +162,11 @@ void asmgen_q(quad* q) {
             break;
         case Q_CALL:
             if (q->src1->type == ASTN_IDENT) { // override default action of all2XXX
-                ea("call\t_%s", q->src1->Ident.ident);
+                if (dcc_is_host_darwin()) {
+                    ea("call\t_%s", q->src1->Ident.ident);
+                } else {
+                    ea("call\t%s", q->src1->Ident.ident);
+                }
             } else {
                 eprintf("you're trying to call a non-ident - be my guest but you're probably dead\n");
                 all2rax(q->src1);
@@ -277,8 +282,13 @@ void asmgen(const BBL* head, FILE* f) {
         BB* bb = bbl_data(bbl);
         // "declare" function
         if (bb->bbno == 0) { // function start
-            fprintf(out, ".globl\t_%s\n", bb->fn);
-            fprintf(out, "_%s:\n", bb->fn);
+            if (dcc_is_host_darwin()) {
+                fprintf(out, ".globl\t_%s\n", bb->fn);
+                fprintf(out, "_%s:\n", bb->fn);
+            } else {
+                fprintf(out, ".globl\t%s\n", bb->fn);
+                fprintf(out, "%s:\n", bb->fn);
+            }
             stack_offset = bb->stack_offset_ez;
             // round up to stack_align multiple
             stack_offset = ((stack_offset + (stack_align-1))/stack_align)*stack_align;

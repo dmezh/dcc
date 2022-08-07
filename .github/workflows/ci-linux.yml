@@ -1,0 +1,29 @@
+name: Compile the compiler
+
+on:
+  push:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
+        cache: 'pip'
+
+    - name: Prepare test - get packages
+      run: |
+        pip3 install -q -r requirements.txt
+        sudo apt-get update -qqq
+        sudo apt-get install -yqqq flex bison
+
+    - name: Make dcc
+      run: scons dcc
+
+    - name: Test dcc
+      run: scons test

@@ -6,6 +6,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/utsname.h>
 #include <unistd.h>
 
 #include "asmgen.h"
@@ -15,7 +16,7 @@
 #include "util.h"
 
 #define DCC_VERSION "0.3.0"
-#define DCC_ARCHITECTURE "x86_32"
+#define DCC_ARCHITECTURE "x86_64"
 
 #define BRED "\033[1;31m"
 #define RESET "\033[0m"
@@ -40,6 +41,10 @@ static struct opt {
     .asm_out = false,
     .out_file = NULL,
 };
+
+static struct {
+    struct utsname uname_data;
+} host_info;
 
 static void print_usage_additional() {
     eprintf(
@@ -172,9 +177,14 @@ static void assemble() {
         case 0:
             dup2(fileno(tmp), STDIN_FILENO);
 
-            const char* gcc_argv[] = {"clang", "-x", "assembler", "-",
-                                "-o", opt.out_file, "-mmacosx-version-min=10.15", "-arch", "x86_64", "-Og", NULL};
-            execvp(gcc_argv[0], (char**)gcc_argv);
+
+            if (!strcmp(host_info.uname_data.sysname, "Darwin")) {
+                const char* gcc_argv[] = {"clang", "-x", "assembler", "-", "-o", opt.out_file, "-mmacosx-version-min=10.15", "-arch", "x86_64", "-Og", NULL};
+                execvp(gcc_argv[0], (char**)gcc_argv);
+            } else {
+                const char* gcc_argv[] = {"gcc", "-x", "assembler", "-", "-o", opt.out_file, NULL};
+                execvp(gcc_argv[0], (char**)gcc_argv);
+            }
 
             RED_ERROR("Error execing for assembly: %s", strerror(errno))
 
@@ -203,6 +213,9 @@ static void write_tmp_to_out() {
 }
 
 int main(int argc, char** argv) {
+    if (uname(&host_info.uname_data))
+    RED_ERROR("Error calling uname() for host information.");
+
     get_options(argc, argv);
     preprocess(); // now stdin is the preprocessed file
 
@@ -225,4 +238,8 @@ int main(int argc, char** argv) {
 
 void parse_done_cb(const BBL* root) {
     asmgen(root, tmp);
+}
+
+bool dcc_is_host_darwin(void) {
+    return (!strcmp(host_info.uname_data.sysname, "Darwin"));
 }
