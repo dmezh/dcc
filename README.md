@@ -1,6 +1,7 @@
 # dcc
 
-![Build Action](https://github.com/dmezh/ece466-compilers/actions/workflows/ci.yml/badge.svg)
+[![Build and test dcc - Linux](https://github.com/dmezh/dcc/actions/workflows/ci-linux.yml/badge.svg)](https://github.com/dmezh/dcc/actions/workflows/ci-linux.yml)
+[![Build and test dcc - Darwin](https://github.com/dmezh/dcc/actions/workflows/ci-mac.yml/badge.svg)](https://github.com/dmezh/dcc/actions/workflows/ci-mac.yml)
 
 dcc is a primitive C compiler originally built as a capstone project for a graduate course in compilers at Cooper Union - ECE466, Prof. Jeff Hakner. dcc targets the entire C99 standard, with a subset of C99 features currently available. 
 
@@ -28,18 +29,18 @@ You can compile a sizeable set of programs with dcc (but there's a lot of work t
 - I don't _try_ to leak memory, but I don't really try not to leak memory either.
 - You can summon the oopsies mascot on purpose with the compiler internal
 ```
-_perish;
+#pragma do-perish
 ```
-- You can use `_examine yourvariablename;` and `_dumpsymtab;` to peek at symbols/symbol tables. These internals don't work at the start of a block (grammar needs tuning).
-- There is a lot of cleanup to be done, mostly around symtab.c.
+- You can use `#pragma do-examine yourvariablename` and `#pragma do-dumpsymtab` to peek at symbols/symbol tables. These internals don't work at the start of a block (grammar needs tuning).
+- There is a lot of cleanup to be done.
 - Be gentle
 
 # Usage
-- Dependencies: `make`, `bison`, `flex`, `cmake`. You shouldn't need much else to make it work, but apologies if I did miss something (please let me know).
+- Dependencies: `bison`, `flex`, and `requirements.txt`.
 - To build:
 
   ```
-  $ make
+  $ scons dcc
   ```
 - To use: (`./dcc -h` for usage)
   ```
@@ -49,8 +50,7 @@ _perish;
 
 - To test (custom tester called dtest, written in Python 3; please `pip install toml` ):
   ```
-  $ cd test
-  $ ./dtest.py
+  $ scons test
   ```
 
 # License
