@@ -1,4 +1,4 @@
-name: Compile the compiler
+name: Build and test dcc - Darwin
 
 on:
   push:
