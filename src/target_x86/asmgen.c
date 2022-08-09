@@ -253,6 +253,25 @@ void e_cbr(const char *op, quad* q) {
 void e_bba(const_astn n) { e_bb(n->Qbbno.bb); }
 void e_bb(const BB* b) { fprintf(out, "BB.%s.%d", b->fn, b->bbno); }
 
+static void allocate_qtemps(const BBL* head)
+{
+    if (head == &bb_root)
+        head = bbl_next(head);
+
+    while (head) {
+        BB *bb = bbl_data(head);
+        quad *q = bb->start;
+        while (q) {
+            if (q->op == Q_ALLOCA) {
+                fprintf(out, "\t#%%%d = alloca %d\n", q->target->Qtemp.tempno, q->target->Qtemp.ir_type);
+            }
+            q = q->next;
+        }
+
+        head = bbl_next(head);
+    }
+}
+
 void asmgen(const BBL* head, FILE* f) {
     // init output file
     out = f;
@@ -275,6 +294,8 @@ void asmgen(const BBL* head, FILE* f) {
         }
         e = e->next;
     }
+
+    allocate_qtemps(head);
 
     const BBL *bbl = head;
     if (bbl == &bb_root) bbl = bbl_next(bbl);
@@ -301,7 +322,7 @@ void asmgen(const BBL* head, FILE* f) {
         quad *q = bb->start;
         while (q) {
             fprintf(f, "\t# quad "); print_quad(q, f);
-            asmgen_q(q);
+            // asmgen_q(q);
             q = q->next;
         }
 

@@ -2,10 +2,12 @@
 #define QUADS_H
 
 #include "ast.h"
+#include "ir.h"
 #include "symtab.h"
 
 enum quad_op {
     Q_UNDEF = 0,
+    Q_ALLOCA,
     Q_MOV, // done
     Q_ADD, // done
     Q_SUB, // done
@@ -79,7 +81,7 @@ extern BBL bb_root;
 
 BB* bb_alloc();
 
-astn qtemp_alloc(unsigned size);
+astn qtemp_alloc(ir_type_E ir_type, int how_many);
 astn gen_rvalue(astn node, astn target);
 void emit(enum quad_op op, astn src1, astn src2, astn target);
 void gen_fn(sym e);

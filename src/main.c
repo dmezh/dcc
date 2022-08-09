@@ -15,7 +15,7 @@
 #include "quads.h"
 #include "util.h"
 
-#define DCC_VERSION "0.3.1"
+#define DCC_VERSION "0.4.0-dev"
 #define DCC_ARCHITECTURE "x86_64"
 
 #define BRED "\033[1;31m"
@@ -128,7 +128,8 @@ static void get_options(int argc, char** argv) {
     }
 
     if (!opt.out_file)
-        opt.out_file = opt.asm_out ? "a.S" : "a.out";
+        //opt.out_file = opt.asm_out ? "a.S" : "a.out";
+        opt.out_file = "out.IR";
 
     if (optind >= argc) {
         RED_ERROR("No input file specified!");
@@ -232,10 +233,11 @@ int main(int argc, char** argv) {
 
     fseek(tmp, 0, SEEK_SET);
 
-    if (!opt.asm_out)
-        assemble();
-    else
-        write_tmp_to_out();
+    //if (!opt.asm_out)
+    //    assemble();
+    //else
+
+    write_tmp_to_out();
 
     fclose(tmp);
 }

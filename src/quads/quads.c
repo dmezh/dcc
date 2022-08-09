@@ -3,6 +3,7 @@
 #include "ast.h"
 #include "ast_print.h"
 #include "asmgen.h"
+#include "ir.h"
 #include "parser.tab.h" // for token binop values
 #include "quads_cf.h"
 #include "quads_print.h"
@@ -18,15 +19,17 @@ unsigned temp_count = 0;
 
 void gen_ret(astn n);
 
-// allocate temporary
-astn qtemp_alloc(unsigned size) {
+astn qtemp_alloc(ir_type_E target_ir_type, int how_many) {
     astn n = astn_alloc(ASTN_QTEMP);
     n->Qtemp.tempno = ++temp_count;
-    n->Qtemp.size = size;
-    sym f = st_lookup(cursor.fn, NS_MISC);
-    //printf("found fn: "); st_dump_entry(f);
-    f->fn_scope->stack_total += 8;
-    n->Qtemp.stack_offset = f->fn_scope->stack_total;
+
+    astn a = astn_alloc(ASTN_IRTYPE);
+    a->IRtype.ir_type = target_ir_type;
+
+    astn num = astn_alloc(ASTN_NUM);
+    num->Num.number.integer = how_many;
+
+    emit(Q_ALLOCA, n, a, num);
     return n;
 }
 
@@ -147,7 +150,7 @@ astn gen_rvalue(astn node, astn target) {
         }
         */
 
-        if (!target) target = qtemp_alloc(8);
+        if (!target) target = qtemp_alloc(IR_TYPE_PTR, 1);
         emit(Q_CALL, fn, NULL, target);
         return target;
     }
@@ -155,7 +158,7 @@ astn gen_rvalue(astn node, astn target) {
         //struct astn_type *type = &node->Symptr.e->type->Type;
         //if (type->is_derived && type->derived.type == t_ARRAY) {
         if (isarr(node)) {
-            astn temp = qtemp_alloc(8); // address type
+            astn temp = qtemp_alloc(IR_TYPE_PTR, 1); // address type
             emit(Q_LEA, node, NULL, temp);
             return temp;
         }
@@ -165,7 +168,7 @@ astn gen_rvalue(astn node, astn target) {
             return temp;
         }
         else {
-            target = qtemp_alloc(8); // hardcoded
+            target = qtemp_alloc(IR_TYPE_I64, 1); // hardcoded
             emit(Q_MOV, node, NULL, target);
             return target;
         }
@@ -198,7 +201,7 @@ astn gen_rvalue(astn node, astn target) {
         if (node->Binop.op == '+') {
             if (l_isptr) { // ptr + int
                 if (rval_right->type == ASTN_NUM) { // otherwise we'd emit a constant as an lvalue
-                    temp = qtemp_alloc(8);
+                    temp = qtemp_alloc(IR_TYPE_I64, 1);
                     emit(Q_MUL, rval_right, const_alloc(get_sizeof(ptr_target(left))), temp);
                     rval_right = temp;
                 }
@@ -207,7 +210,7 @@ astn gen_rvalue(astn node, astn target) {
             }
         }
 
-        if (!target) target=qtemp_alloc(8); // hardcoded int!
+        if (!target) target=qtemp_alloc(IR_TYPE_I64, 1); // hardcoded int!
 
         if (node->Binop.op == '<' || node->Binop.op == '>' 
             || node->Binop.op == LTEQ || node->Binop.op == GTEQ ||
@@ -232,7 +235,7 @@ astn gen_rvalue(astn node, astn target) {
                 ;
                 astn addr = gen_rvalue(utarget, NULL);
 
-                if (!target) target = qtemp_alloc(8);
+                if (!target) target = qtemp_alloc(IR_TYPE_PTR, 1);
                 emit(Q_LOAD, addr, NULL, target);
                 return target;
 
@@ -252,18 +255,18 @@ astn gen_rvalue(astn node, astn target) {
                 gen_assign(cassign_alloc('+', utarget, n));
                 return temp;
             case '&':
-                temp = qtemp_alloc(8); // address type
+                temp = qtemp_alloc(IR_TYPE_PTR, 1); // address type
                 emit(Q_LEA, utarget, NULL, temp);
                 return temp;
             case '+': // no-op for now
                 return utarget;
             case '-':
-                temp = qtemp_alloc(8);
+                temp = qtemp_alloc(IR_TYPE_I64, 1);
                 emit(Q_NEG, gen_rvalue(utarget, NULL), NULL, temp);
                 return temp;
             case '!':           todo("NOT");
             case '~':
-                temp = qtemp_alloc(8);
+                temp = qtemp_alloc(IR_TYPE_I64, 1);
                 emit(Q_BWNOT, gen_rvalue(utarget, NULL), NULL, temp);
                 return temp;
             default:
@@ -356,6 +359,32 @@ quad* last_in_bb(BB* b) {
     return q;
 }
 
+void gen_base_allocations(sym e) {
+    if (!e->fn_scope || e->fn_scope->scope_type != SCOPE_FUNCTION)
+        quad_error("Missing function scope symtab while generating IR allocations.");
+
+    sym v = e->fn_scope->first;
+
+    while (v) {
+        ir_type_E size = IR_TYPE_UNDEF;
+
+        // check for actual intness!
+        switch (get_sizeof(symptr_alloc(v)))
+        {
+            case 8:
+                size = IR_TYPE_I64;
+                break;
+            default:
+                quad_error("Unsupported type size :(");
+                break;
+        }
+
+        astn q = qtemp_alloc(IR_TYPE_I64, 1);
+        e->ptr_qtemp = q;
+        v = v->next;
+    }
+}
+
 void gen_fn(sym e) {
     bb_count = 0;
     cursor.fn = e->ident;
@@ -365,6 +394,8 @@ void gen_fn(sym e) {
 
     astn fn = astn_alloc(ASTN_SYMPTR);
     fn->Symptr.e = e;
+
+    gen_base_allocations(e);
     emit(Q_FNSTART, fn, NULL, NULL);
 
     astn s = e->body;

@@ -7,6 +7,7 @@
 #ifndef AST_H
 #define AST_H
 
+#include "ir.h"
 #include "location.h"
 #include "semval.h"
 #include "types_common.h"
@@ -49,6 +50,7 @@ enum astn_types {
     ASTN_CASE,
     ASTN_QTEMP,
     ASTN_QBBNO,
+    ASTN_IRTYPE,
     ASTN_NOOP // has no associated struct
 };
 
@@ -222,8 +224,13 @@ struct astn_case {
 };
 
 struct astn_qtemp {
-    unsigned tempno, size;
+    unsigned tempno;
+    ir_type_E ir_type;
     int stack_offset;
+};
+
+struct astn_irtype {
+    ir_type_E ir_type;
 };
 
 struct BB;
@@ -268,6 +275,7 @@ struct astn {
         struct astn_case Case;
         struct astn_qtemp Qtemp;
         struct astn_qbbno Qbbno;
+        struct astn_irtype IRtype;
     };
 };
 

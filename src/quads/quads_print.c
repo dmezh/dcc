@@ -54,6 +54,7 @@ void print_node(const_astn qn, FILE* f) {
         case ASTN_QTEMP:    fprintf(f, "%%T%05d.%d", qn->Qtemp.tempno, qn->Qtemp.stack_offset); return;
         case ASTN_QBBNO:    fprintf(f, "BB.%s.%d", qn->Qbbno.bb->fn, qn->Qbbno.bb->bbno); return;
         case ASTN_IDENT:    fprintf(f, "%s", qn->Ident.ident); return;
+        case ASTN_IRTYPE:   fprintf(f, "IR type: %d", qn->IRtype.ir_type); return;
         default: eprintf("couldnt't handle node %d\n", qn->type); die("eh");
     }
 }

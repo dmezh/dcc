@@ -204,22 +204,6 @@ static void st_check_linkage(sym e) {
 
 
 void st_reserve_stack(sym e) {
-    if (e->storspec == SS_AUTO) {
-        int size;
-        if (e->type->Type.is_derived && e->type->Type.derived.type == t_ARRAY) { // only diff size for arrays
-            size = get_sizeof(e->type);
-            //eprintf("got arr size %d\n", size);
-        } else size = 8;
-        symtab *f = st_parent_function();
-        if (e->is_param) {
-            e->stack_offset = f->stack_total;
-            f->stack_total += size;
-        } else {
-            f->stack_total += size;
-            e->stack_offset = f->stack_total;
-            //printf("inres stack total is now %d\n", f->stack_total);
-        }
-    }
 }
 
 

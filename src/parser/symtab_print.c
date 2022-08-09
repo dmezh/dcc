@@ -70,7 +70,6 @@ void st_dump_entry(const_sym e) {
     if (e->def_context.filename) {
         eprintf(" <def %s:%d>", e->def_context.filename, e->def_context.lineno);
     }
-    eprintf("STACK: %d", e->stack_offset);
     eprintf("\n");
 }
 

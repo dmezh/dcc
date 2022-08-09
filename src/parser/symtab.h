@@ -67,6 +67,7 @@ typedef struct st_entry {
         struct strlit strinit;
     };
     int stack_offset;
+    astn ptr_qtemp;
 
     // fn
     astn param_list;
