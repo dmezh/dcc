@@ -15,11 +15,7 @@ dcc_sources = [
     "parser/symtab_util.c",
     "parser/types.c",
 
-    "quads/quads.c",
-    "quads/quads_cf.c",
-    "quads/quads_print.c",
-
-    "target_x86/asmgen.c",
+    "ir/ir.c",
 
     "main.c"
 ]
@@ -28,10 +24,11 @@ dcc_include_paths = [
     "build/gen/",
 
     "common/",
+    "ir/",
     "lexer/",
     "parser/",
     "quads/",
-    "target_x86",
+    "target/",
 
     "./",
 ]

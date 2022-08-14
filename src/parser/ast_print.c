@@ -5,7 +5,6 @@
 #include "ast.h"
 #include "charutil.h"
 #include "parser.tab.h"
-#include "quads_print.h"
 #include "symtab.h"
 
 /*
@@ -13,7 +12,8 @@
  */
 void print_ast(const_astn n) {
     static int tabs = 0;     //     -> __ <- two spaces
-    for (int i=0; i<tabs; i++) eprintf("  ");
+    for (int i=0; i<tabs-1; i++) eprintf("  ");
+    if (tabs > 0) eprintf(" `");
     if (!n) return; // if we just want to print tabs, pass NULL
     switch (n->type) {
     case ASTN_NUM:
@@ -341,8 +341,8 @@ void print_ast(const_astn n) {
         break;
 
     case ASTN_SYMPTR:
-        eprintf("symbol ");
-        st_dump_entry(n->Symptr.e);
+        eprintf("symbol <%s>\n", n->Symptr.e->ident);
+        //st_dump_entry(n->Symptr.e);
         break;
 
     case ASTN_IFELSE:
@@ -419,7 +419,7 @@ void print_ast(const_astn n) {
         break;
     case ASTN_RETURN:
         if (n->Return.ret) {
-            eprintf("RETURN");
+            eprintf("RETURN\n");
             tabs++; print_ast(n->Return.ret); tabs--;
         } else
             eprintf("RETURN;");
@@ -434,9 +434,6 @@ void print_ast(const_astn n) {
         } else
             eprintf("DEFAULT:\n");
         print_ast(n->Case.statement);
-        break;
-    case ASTN_QTEMP:
-        print_node(n, stderr);
         break;
     case ASTN_NOOP:
         eprintf("(NOOP)\n");

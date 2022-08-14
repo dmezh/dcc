@@ -9,10 +9,8 @@
 #include <sys/utsname.h>
 #include <unistd.h>
 
-#include "asmgen.h"
 #include "debug.h"
 #include "parser.tab.h"
-#include "quads.h"
 #include "util.h"
 
 #define DCC_VERSION "0.4.0-dev"
@@ -240,10 +238,7 @@ int main(int argc, char** argv) {
     write_tmp_to_out();
 
     fclose(tmp);
-}
-
-void parse_done_cb(const BBL* root) {
-    asmgen(root, tmp);
+    (void)assemble;
 }
 
 bool dcc_is_host_darwin(void) {

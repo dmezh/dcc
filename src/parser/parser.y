@@ -5,13 +5,12 @@
  */
 
 %code requires {
-    #include "asmgen.h"
     #include "ast.h"
     #include "ast_print.h"
     #include "debug.h"
+    #include "ir.h"
     #include "location.h"
     #include "main.h"
-    #include "quads.h"
     #include "semval.h"
     #include "symtab.h"
     #include "symtab_print.h"
@@ -96,7 +95,7 @@
 %%
 
 done:
-    translation_unit                    {   parse_done_cb(&bb_root);     }
+    translation_unit                    {  fprintf(stderr, "Translation unit done.\n");     }
 ;
 
 // maybe make quads here one day if you dont mind that would be good no rush
