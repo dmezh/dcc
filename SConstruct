@@ -7,9 +7,10 @@ SetOption('silent', True)
 SetOption('num_jobs', 8)
 
 # Environment setup
-env = Environment(ENV = {'PATH' : os.environ['PATH']})
+env = Environment(ENV = {'PATH' : os.environ['PATH']},
+                  COMPILATIONDB_USE_ABSPATH=True,
+                  tools=["default", "compilation_db"])
 
-env.Tool('compilation_db')
 env.CompilationDatabase('build/compile_commands.json')
 
 env['CC'] = 'clang'
