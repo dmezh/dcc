@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "debug.h"
+#include "ir_print.h"
 #include "parser.tab.h"
 #include "util.h"
 
@@ -27,7 +28,7 @@
     exit(-1);                                       \
 } while(0);
 
-FILE* tmp;
+FILE *tmp, *tmp2;
 
 static struct opt {
     int debug;
@@ -176,11 +177,10 @@ static void assemble() {
             RED_ERROR("Error forking for assembly: %s", strerror(errno));
 
         case 0:
-            dup2(fileno(tmp), STDIN_FILENO);
-
+            dup2(fileno(tmp2), STDIN_FILENO);
 
             if (dcc_is_host_darwin()) {
-                const char* gcc_argv[] = {"clang", "-x", "assembler", "-", "-o", opt.out_file, "-mmacosx-version-min=10.15", "-arch", "x86_64", "-Og", NULL};
+                const char* gcc_argv[] = {"clang", "-x", "assembler", "-", "-o", opt.out_file, /*"-mmacosx-version-min=10.15",*/ "-arch", "x86_64", "-Og", NULL};
                 execvp(gcc_argv[0], (char**)gcc_argv);
             } else {
                 const char* gcc_argv[] = {"gcc", "-x", "assembler", "-", "-o", opt.out_file, NULL};
@@ -194,6 +194,33 @@ static void assemble() {
             wait(&status);
             if (status)
                 RED_ERROR("Error during assembly");
+    }
+}
+
+static void llvm_convert() {
+    tmp2 = new_tmpfile();
+
+    switch(fork()) {
+        case -1:
+            RED_ERROR("Error forking for llcing: %s", strerror(errno));
+
+        case 0:
+            dup2(fileno(tmp), STDIN_FILENO);
+            dup2(fileno(tmp2), STDOUT_FILENO);
+
+            const char* llc_argv[] = {"llc", "--march", "x86-64", "-", "-o", "-", NULL};
+            execvp(llc_argv[0], (char**)llc_argv);
+
+            RED_ERROR("Error execing for llcing: %s", strerror(errno));
+
+        default:;
+            int status;
+            wait(&status);
+            if (status)
+                RED_ERROR("Error during llcing");
+
+            fseek(tmp2, 0, SEEK_SET);
+            dup2(fileno(tmp2), STDIN_FILENO);
     }
 }
 
@@ -231,11 +258,12 @@ int main(int argc, char** argv) {
 
     fseek(tmp, 0, SEEK_SET);
 
-    //if (!opt.asm_out)
-    //    assemble();
-    //else
-
-    write_tmp_to_out();
+    if (!opt.asm_out) {
+        llvm_convert();
+        assemble();
+    } else {
+        write_tmp_to_out();
+    }
 
     fclose(tmp);
     (void)assemble;
@@ -243,4 +271,10 @@ int main(int argc, char** argv) {
 
 bool dcc_is_host_darwin(void) {
     return host_info.is_darwin;
+}
+
+void parse_done_cb(void) {
+    fprintf(stderr, "Parse done!\n");
+    quads_dump_llvm(tmp);
+    quads_dump_llvm(stderr);
 }

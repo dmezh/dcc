@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "main.h"
 #include "yak.ascii.h"
 
 /* 
@@ -51,18 +52,23 @@ void *safe_realloc(void* old, size_t size) {
  */
 #define BACKTRACE_DEPTH 128
 
-_Noreturn void die(const char* msg) {
+_Noreturn __attribute__((noreturn)) void die(const char* msg) {
     eprintf("\nInternal error: %s\n", msg);
 
     eprintf("%s\n", yak);
 
     // #ifdef __GLIBC__
     eprintf("Trying to print backtrace:\n------------------------------\n");
-    void* callstack[BACKTRACE_DEPTH];
-    int frames = backtrace(callstack, BACKTRACE_DEPTH);
-    char** strings = backtrace_symbols(callstack, frames);
-    for (int i = 0; i<frames; i++) {
-        eprintf("%s\n", strings[i]);
+    if (dcc_is_host_darwin()) {
+        void __sanitizer_print_stack_trace(void);
+        __sanitizer_print_stack_trace();
+    } else {
+        void* callstack[BACKTRACE_DEPTH];
+        int frames = backtrace(callstack, BACKTRACE_DEPTH);
+        char** strings = backtrace_symbols(callstack, frames);
+        for (int i = 0; i<frames; i++) {
+            eprintf("%s\n", strings[i]);
+        }
     }
     // #endif
 

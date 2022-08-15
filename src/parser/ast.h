@@ -7,6 +7,7 @@
 #ifndef AST_H
 #define AST_H
 
+#include "ir_types.h"
 #include "location.h"
 #include "semval.h"
 #include "types_common.h"
@@ -50,6 +51,7 @@ enum astn_types {
     ASTN_CASE,
     ASTN_QTEMP,
     ASTN_QBBNO,
+    ASTN_QTYPE,
     ASTN_NOOP // has no associated struct
 };
 
@@ -232,6 +234,10 @@ struct astn_qbbno {
     struct BB* bb;
 };
 
+struct astn_qtype {
+    ir_type_E qtype;
+};
+
 // uppercase member names are a style decision; they're clear and they also
 // allow us to have members like .Sizeof, .Return, etc without clobbering
 // the names to avoid conflicting with keywords.
@@ -269,6 +275,7 @@ struct astn {
         struct astn_case Case;
         struct astn_qtemp Qtemp;
         struct astn_qbbno Qbbno;
+        struct astn_qtype Qtype;
     };
 };
 
@@ -315,6 +322,9 @@ void merge_dtypechains(astn parent, astn child);
 astn get_dtypechain_last_link(astn top);
 astn get_dtypechain_target(astn top);
 const char *get_dtypechain_ident(astn d);
+
+astn qtemp_alloc(int tempno);
+astn qtype_alloc(ir_type_E t);
 
 #define ast_check(node, asttype, msg) \
     do { \

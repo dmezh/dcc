@@ -95,7 +95,7 @@
 %%
 
 done:
-    translation_unit                    {  fprintf(stderr, "Translation unit done.\n");     }
+    translation_unit                    {  fprintf(stderr, "Translation unit done parsing.\n"); parse_done_cb();  }
 ;
 
 // maybe make quads here one day if you dont mind that would be good no rush

@@ -16,6 +16,8 @@ dcc_sources = [
     "parser/types.c",
 
     "ir/ir.c",
+    "ir/ir_print.c",
+    "ir/ir_util.c",
 
     "main.c"
 ]
@@ -50,8 +52,8 @@ generated_parser_lib = env.Library([generated_parser_files, generated_lexer_file
 # dcc #
 dcc = env.Program('dcc', [dcc_sources, generated_parser_lib],
                   CPPPATH=dcc_include_paths,
-                  CCFLAGS='-Wall -Wextra -fsanitize=undefined -Wpedantic -Wunused -Og',
-                  LINKFLAGS='-fsanitize=undefined -rdynamic'
+                  CCFLAGS='-Wall -Wextra -fsanitize=undefined -Wpedantic -Wunused -Og -g3',
+                  LINKFLAGS='-fsanitize=undefined -rdynamic -g3'
 )
 env.Install('../', dcc)
 

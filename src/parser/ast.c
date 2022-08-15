@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "ir_types.h"
 #include "symtab.h"
 #include "util.h"
 
@@ -314,4 +315,22 @@ const char *get_dtypechain_ident(astn d) {
     astn i = get_dtypechain_target(d);
     ast_check(i, ASTN_IDENT, "Expected ident at end of dtypechain.");
     return i->Ident.ident;
+}
+
+/*
+ * Allocate Qtemp astn
+ */
+astn qtemp_alloc(int tempno) {
+    astn q = astn_alloc(ASTN_QTEMP);
+    q->Qtemp.tempno = tempno;
+    return q;
+}
+
+/*
+ * Allocate Qtype astn
+ */
+astn qtype_alloc(ir_type_E t) {
+    astn q = astn_alloc(ASTN_QTYPE);
+    q->Qtype.qtype = t;
+    return q;
 }
