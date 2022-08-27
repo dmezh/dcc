@@ -32,7 +32,7 @@ const char *astn_kind_str(const_astn a) {
     if (!a)
         die("Passed null astn to astn_kind_str!");
 
-    if (a->type < 1 || a->type > ASTN_KIND_MAX) {
+    if (a->type <= ASTN_KIND_UNDEF || a->type >= ASTN_KIND_MAX) {
         eprintf("Invalid astn kind: %d\n", a->type);
         die("Passed invalid astn kind to astn_kind_str!");
     }
