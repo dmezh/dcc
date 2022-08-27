@@ -158,6 +158,10 @@ void gen_quads(astn a) {
         case ASTN_NOOP:
             break;
 
+        case ASTN_ASSIGN:
+            gen_assign(a);
+            break;
+
         default:
             print_ast(a);
             die("Unimplemented astn for quad generation");

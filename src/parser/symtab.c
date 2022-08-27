@@ -78,7 +78,7 @@ sym st_declare_function(astn decl, YYLTYPE context) {
     // make new st_entry if needed
     sym fn = st_lookup_ns(name, NS_MISC);
     if (!fn) // check for compatibility with existing declaration here
-        fn = real_begin_st_entry(decl, NS_MISC, decl->Decl.context);
+        fn = real_begin_st_entry(decl, NS_MISC, decl->context);
 
     // check the parameter list for ellipses and missing names
     astn p = decl_type->derived.param_list;
@@ -153,7 +153,7 @@ sym st_define_struct(const char *ident, astn decl_list,
     strunion->members = current_scope; // mini-scope
     sym member;
     while (decl_list) {
-        member = real_begin_st_entry(list_data(decl_list), NS_MEMBERS, list_data(decl_list)->Decl.context);
+        member = real_begin_st_entry(list_data(decl_list), NS_MEMBERS, list_data(decl_list)->context);
         member->linkage = L_NONE;
         member->storspec = SS_NONE;
         decl_list = list_next(decl_list);

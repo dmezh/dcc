@@ -107,7 +107,7 @@ translation_unit:
 external_decln:                             // kludge ish for structs/unions // NOTE: why is $1 invalid after begin_st_entry()?
     decln                               {   if ($1->type == ASTN_DECL) {
                                                 if (DBGLVL_DEBUG()) print_ast($1);
-                                                $$=begin_st_entry($1, NS_MISC, $1->Decl.context);
+                                                $$=begin_st_entry($1, NS_MISC, $1->context);
                                             }
                                         }
 |   fn_def                              {   gen_fn($1);  }
@@ -241,6 +241,7 @@ ident:
 constant:
     NUMBER                      {   $$=astn_alloc(ASTN_NUM);
                                     $$->Num.number=$1;
+                                    $$->context=@1;
                                 }
 ;
 
@@ -324,12 +325,14 @@ unary_expr:
                                     n->Num.number.integer=1;
                                     n->Num.number.is_signed=1;
                                     n->Num.number.aux_type=s_INT;
+                                    n->context = @1;
                                     $$=cassign_alloc('+', $2, n);
                                 }
 |   MINUSMINUS unary_expr       {   astn n=astn_alloc(ASTN_NUM);
                                     n->Num.number.integer=1;
                                     n->Num.number.is_signed=1;
                                     n->Num.number.aux_type=s_INT;
+                                    n->context = @1;
                                     $$=cassign_alloc('-', $2, n);
                                 }
 // todo: casts
@@ -348,9 +351,12 @@ unops:
 sizeof:
     SIZEOF unary_expr           {   $$=astn_alloc(ASTN_NUM); $$->Num.number.integer=get_sizeof($2); 
                                     $$->Num.number.is_signed=false; $$->Num.number.aux_type=s_INT;
+                                    $$->context = @1;
                                 }
 |   SIZEOF '(' type_name ')'    {   $$=astn_alloc(ASTN_NUM); $$->Num.number.integer=get_sizeof($3); 
-                                    $$->Num.number.is_signed=false; $$->Num.number.aux_type=s_INT; }
+                                    $$->Num.number.is_signed=false; $$->Num.number.aux_type=s_INT;
+                                    $$->context = @1;
+                                }
 ;
 // ----------------------------------------------------------------------------
 // 6.5.4 Cast operators
@@ -425,6 +431,7 @@ assign:
 |   unary_expr '=' assign       {   $$=astn_alloc(ASTN_ASSIGN);
                                     $$->Assign.left=$1;
                                     $$->Assign.right=$3;
+                                    $$->context = @2;
                                 }
 |   unary_expr TIMESEQ assign   {   $$=cassign_alloc('*', $1, $3);  }
 |   unary_expr DIVEQ assign     {   $$=cassign_alloc('/', $1, $3);  }
@@ -610,13 +617,13 @@ param_t_list:
 param_list:
     param_decl                      {   st_new_scope(SCOPE_FUNCTION, @1);
                                         current_scope->param_count++;
-                                        $$=declrec_alloc(begin_st_entry($1, NS_MISC, $1->Decl.context), NULL);
+                                        $$=declrec_alloc(begin_st_entry($1, NS_MISC, $1->context), NULL);
                                         $$->Declrec.e->is_param = true;
                                         st_reserve_stack($$->Declrec.e);
                                         $$=list_alloc($$);
                                     }
 |   param_list ',' param_decl       {   current_scope->param_count++;
-                                        $$=declrec_alloc(begin_st_entry($3, NS_MISC, $3->Decl.context), NULL);
+                                        $$=declrec_alloc(begin_st_entry($3, NS_MISC, $3->context), NULL);
                                         $$->Declrec.e->is_param = true;
                                         st_reserve_stack($$->Declrec.e);
                                         list_append($$, $1);

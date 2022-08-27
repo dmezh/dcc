@@ -163,7 +163,6 @@ struct astn_type {
 
 // as described in parser.y @ decl
 struct astn_decl {
-    YYLTYPE context;
     struct astn *specs, *type;
     struct astn *init;
 };
@@ -254,6 +253,7 @@ struct astn_qtype {
 
 struct astn {
     enum astn_types type;
+    YYLTYPE context;
     union {
         struct astn_assign Assign;
         struct astn_num Num;

@@ -207,8 +207,8 @@ astn decl_alloc(astn specs, astn type, astn init, YYLTYPE context) {
     astn n=astn_alloc(ASTN_DECL);
     n->Decl.specs=specs;
     n->Decl.type=type;
-    n->Decl.context=context;
     n->Decl.init = init;
+    n->context=context;
     return n;
 }
 
@@ -273,7 +273,7 @@ astn forloop_alloc(astn init, astn condition, astn oneach, astn body) {
 astn do_decl(astn decl) {
     astn n = NULL;
     if (decl->type == ASTN_DECL) {
-        n = declrec_alloc(begin_st_entry(decl, NS_MISC, decl->Decl.context), decl->Decl.init);
+        n = declrec_alloc(begin_st_entry(decl, NS_MISC, decl->context), decl->Decl.init);
         st_reserve_stack(n->Declrec.e);
     }
     return n;

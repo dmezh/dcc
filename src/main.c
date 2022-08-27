@@ -17,17 +17,6 @@
 #define DCC_VERSION "0.4.0-dev"
 #define DCC_ARCHITECTURE "x86_64"
 
-#define BRED "\033[1;31m"
-#define RESET "\033[0m"
-
-#define RED_ERROR(...) do {                         \
-    eprintf(BRED);                          \
-    eprintf(__VA_ARGS__);                   \
-    eprintf(RESET "\n");                    \
-    eprintf("\nCompilation failed :(\n");   \
-    exit(-1);                                       \
-} while(0);
-
 FILE *tmp, *tmp2;
 
 static struct opt {

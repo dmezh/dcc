@@ -3,7 +3,9 @@
 #include "ast.h"
 #include "ir.h"
 #include "ir_arithmetic.h"
+#include "ir_print.h"
 #include "ir_util.h"
+#include "lexer.h" // for print_context
 #include "util.h"
 
 astn gen_load(astn a, astn target) {
@@ -19,8 +21,17 @@ astn gen_load(astn a, astn target) {
 }
 
 astn gen_lvalue(astn a) {
-    ast_check(a, ASTN_SYMPTR, "Can only lvalue a symptr rn");
-    return a->Symptr.e->ptr_qtemp;
+    switch (a->type) {
+        case ASTN_SYMPTR:
+            return a->Symptr.e->ptr_qtemp;
+
+        case ASTN_NUM:
+            qprintcontext(a->context);
+            qerror("Expression is not assignable!");
+
+        default:
+            qunimpl(a, "Unimplemented astn kind for gen_lvalue!");
+    }
 }
 
 astn gen_store(astn target, astn val) {
