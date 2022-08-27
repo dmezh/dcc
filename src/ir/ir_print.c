@@ -45,7 +45,7 @@ const char *quad_astn_oneword_str(const_astn a) {
             break;
 
         default:
-            die("Unable to get oneword for astn");
+            qunimpl(a, "Unable to get oneword for astn :(");
             return 0;
     }
 

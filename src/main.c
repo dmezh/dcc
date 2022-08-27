@@ -275,6 +275,6 @@ bool dcc_is_host_darwin(void) {
 
 void parse_done_cb(void) {
     fprintf(stderr, "Parse done!\n");
-    quads_dump_llvm(tmp);
     quads_dump_llvm(stderr);
+    quads_dump_llvm(tmp);
 }

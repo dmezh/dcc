@@ -16,6 +16,7 @@ dcc_sources = [
     "parser/types.c",
 
     "ir/ir.c",
+    "ir/ir_arithmetic.c",
     "ir/ir_print.c",
     "ir/ir_util.c",
 

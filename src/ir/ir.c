@@ -1,4 +1,5 @@
 #include "ir.h"
+#include "ir_arithmetic.h"
 #include "ir_print.h"
 #include "ir_state.h"
 #include "ir_util.h"
@@ -7,6 +8,7 @@
 
 #include "ast.h"
 #include "ast_print.h"
+#include "parser.tab.h"
 #include "symtab.h"
 #include "types.h"
 #include "util.h"
@@ -16,118 +18,84 @@ struct ir_state irst = {
     .bb = &(struct BB){0},
 };
 
-astn get_qtype(const_astn t) {
-    ir_type_E ret;
 
-    if (t->type == ASTN_NUM) {
-        switch (t->Num.number.aux_type) {
-            case s_INT:
-                ret = IR_i32;
-                break;
-            case s_LONG:
-                ret = IR_i64;
-                break;
-            case s_CHARLIT:
-                ret = IR_i8;
-                break;
-            default:
-                ret = IR_TYPE_UNDEF;
-                qunimpl(t, "Unsupported number literal int_type in IR:(");
-        }
-
-        return qtype_alloc(ret);
+/**
+ * Prepare target by allocating if necessary.
+ * We don't always need a target, so this is split off
+ * (e.g. ASTN_NUM).
+ */
+astn qprepare_target(astn target, astn qtype) {
+    if (!target) {
+        target = new_qtemp(qtype);
+        qwarn("Allocated qtemp %d\n", target->Qtemp.tempno);
+    } else {
+        qwarn("Using existing target.");
     }
-
-    if (t->type == ASTN_SYMPTR)
-        return get_qtype(t->Symptr.e->type);
-
-    ast_check(t, ASTN_TYPE, "");
-
-    if (t->Type.is_derived && t->Type.derived.type == t_PTR)
-        ret = IR_ptr;
-
-    switch (t->Type.scalar.type) {
-        case t_INT:
-            ret = IR_i32;
-            break;
-        case t_LONG:
-            ret = IR_i64;
-            break;
-        case t_CHAR:
-            ret = IR_i8;
-            break;
-        case t_SHORT:
-            ret = IR_i16;
-            break;
-        default:
-            qunimpl(t, "Unsupported type in IR :(");
-    }
-
-    return qtype_alloc(ret);
-}
-
-// 6.2.5.18 - Integer and floating types are collectively called arithmetic types.
-bool type_is_arithmetic(astn a) {
-    switch (a->type) {
-        case ASTN_SYMPTR:
-            return type_is_arithmetic(a->Symptr.e->type);
-
-       case ASTN_TYPE:
-            return (!a->Type.is_derived && !a->Type.is_tagtype);
-
-        case ASTN_NUM:
-            return true;
-
-        case ASTN_STRLIT:
-            die("Unsupported arithmetic type - string literal");
-            return true;
-
-        default:
-            qunimpl(a, "Unsupported astn for type_is_arithmetic :(");
-    }
-
-    die("Unreachable");
-    return false;
-}
-
-astn gen_add_rvalue(astn a, astn target) {
-    // 6.5.6 Additive operators
-    // constraints - addition:
-    // - either both operands will have arithmetic type,
-    //   or one operand shall be a pointer to an object
-    //   type and the other shall have integer type.
-    astn l = a->Binop.left;
-    astn r = a->Binop.right;
-
-    if (type_is_arithmetic(l) && type_is_arithmetic(r)) {
-        // check here for type of operation
-        if (get_qtype(l)->Qtype.qtype != get_qtype(r)->Qtype.qtype)
-        {
-            // lift types here
-            die("Unimplemented: type lifting :(");
-        }
-
-        if (!target)
-            target = new_qtemp(get_qtype(l));
-
-        emit(IR_OP_ADD, target, l, r);
-    }
-
 
     return target;
 }
 
-astn gen_sub_rvalue(astn a, astn target) {
-    (void)target;
-    qwarn("UH OH:\n:");
-    print_ast(a);
-    die("Unimplemented: gen_sub_rvalue :(");
-    return NULL;
+astn get_qtype(const_astn t) {
+    ir_type_E ret;
+
+    switch (t->type) {
+        case ASTN_NUM:
+            switch (t->Num.number.aux_type) {
+                case s_INT:
+                    ret = IR_i32;
+                    break;
+                case s_LONG:
+                    ret = IR_i64;
+                    break;
+                case s_CHARLIT:
+                    ret = IR_i8;
+                    break;
+                default:
+                    ret = IR_TYPE_UNDEF;
+                    qunimpl(t, "Unsupported number literal int_type in IR:(");
+            }
+
+            return qtype_alloc(ret);
+
+        case ASTN_SYMPTR:
+            return get_qtype(t->Symptr.e->type);
+
+        case ASTN_TYPE:
+            if (t->Type.is_derived && t->Type.derived.type == t_PTR)
+                ret = IR_ptr;
+
+            switch (t->Type.scalar.type) {
+                case t_INT:
+                    ret = IR_i32;
+                    break;
+                case t_LONG:
+                    ret = IR_i64;
+                    break;
+                case t_CHAR:
+                    ret = IR_i8;
+                    break;
+                case t_SHORT:
+                    ret = IR_i16;
+                    break;
+                default:
+                    qunimpl(t, "Unsupported type in IR :(");
+            }
+            return qtype_alloc(ret);
+
+        case ASTN_BINOP:
+            // get resultant type
+            // for now, just return i32 if it's arithmetic
+            if (type_is_arithmetic(t))
+                return qtype_alloc(IR_i32);
+
+        default:
+            qunimpl(t, "Unimplemented astn type in get_qtype :(");
+    }
+
+    die("Unreachable");
 }
 
 astn gen_rvalue(astn a, astn target) {
-    (void)target;
-
     switch (a->type) {
         case ASTN_NUM:
             return a;
@@ -143,7 +111,7 @@ astn gen_rvalue(astn a, astn target) {
                     print_ast(a);
                     die("Unhandled binop type for gen_rvalue :(");
             }
-            break;
+            die("Unreachable");
 
         default:
             qwarn("UH OH:\n");
@@ -151,7 +119,7 @@ astn gen_rvalue(astn a, astn target) {
             die("Unhandled astn for gen_rvalue :(");
     }
 
-    return NULL;
+    qunimpl(a, "Unimplemented astn in gen_rvalue :(");
 }
 
 void gen_quads(astn a) {
