@@ -142,6 +142,9 @@ void gen_quads(astn a) {
             gen_rvalue(a, NULL);
             break;
 
+        case ASTN_NOOP:
+            break;
+
         default:
             print_ast(a);
             die("Unimplemented astn for quad generation");
@@ -167,6 +170,7 @@ void gen_fn(sym e) {
     astn a = e->body;
     ast_check(a, ASTN_LIST, "");
 
+    // generate body quads
     while (a && list_data(a)) {
         gen_quads(list_data(a));
         a = list_next(a);
