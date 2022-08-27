@@ -7,3 +7,8 @@ dcc
 **/.DS_Store
 .sconsign.dblite
 .venv
+**/_test*
+**/a.S
+**/out.IR
+.cache
+src/target
