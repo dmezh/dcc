@@ -10,4 +10,12 @@ const char *quad_astn_oneword_str(const_astn a);
 void quad_print(quad first);
 void quads_dump_llvm(FILE *o);
 
+#define qwarn(...)  fprintf(stderr, "\n" __VA_ARGS__);
+#define qunimpl(node, msg)  \
+    {                       \
+        qwarn("UH OH:\n");  \
+        print_ast(node);    \
+        die(msg);           \
+    }
+
 #endif

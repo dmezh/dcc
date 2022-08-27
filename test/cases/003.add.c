@@ -1,7 +1,6 @@
 //!dtest description "Basic addition."
-
-#include "../dcc_assert.h"
+//!dtest expect returncode 2
 
 int main() {
-	dcc_assert((1 + 1) == 2);
+    return 1 + 1;
 }

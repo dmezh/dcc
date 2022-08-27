@@ -7,6 +7,7 @@ typedef enum {
     IR_OP_FNDECL,
     IR_OP_ALLOCA,
     IR_OP_RETURN,
+    IR_OP_ADD,
 
     IR_OP_COUNT,
 } ir_op_E;
@@ -28,6 +29,7 @@ static const char *ir_op_str[IR_OP_COUNT] = {
     [IR_OP_UNKNOWN] = 0,
     [IR_OP_FNDECL] = "fndecl",
     [IR_OP_ALLOCA] = "alloca",
+    [IR_OP_ADD]    = "add",
 };
 
 static const char *ir_type_str[IR_TYPE_COUNT] = {

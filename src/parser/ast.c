@@ -26,6 +26,25 @@ astn astn_alloc(enum astn_types type) {
 }
 
 /*
+ * Return string version of astn's kind (e.g. ASTN_DECL)
+ */
+const char *astn_kind_str(const_astn a) {
+    if (!a)
+        die("Passed null astn to astn_kind_str!");
+
+    if (a->type < 1 || a->type > ASTN_KIND_MAX) {
+        eprintf("Invalid astn kind: %d\n", a->type);
+        die("Passed invalid astn kind to astn_kind_str!");
+    }
+
+    static const char *astn_kinds_str[] = {
+        FOREACH_ASTN_KIND(GENERATE_STRING)
+    };
+
+    return astn_kinds_str[a->type];
+}
+
+/*
  * allocate complex assignment (*=, /=, etc) - 6.5.16
  */
 astn cassign_alloc(int op, astn left, astn right) {
@@ -320,9 +339,10 @@ const char *get_dtypechain_ident(astn d) {
 /*
  * Allocate Qtemp astn
  */
-astn qtemp_alloc(int tempno) {
+astn qtemp_alloc(int tempno, astn qtype) {
     astn q = astn_alloc(ASTN_QTEMP);
     q->Qtemp.tempno = tempno;
+    q->Qtemp.qtype = qtype;
     return q;
 }
 

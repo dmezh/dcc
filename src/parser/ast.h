@@ -9,51 +9,61 @@
 
 #include "ir_types.h"
 #include "location.h"
+#include "macro_util.h"
 #include "semval.h"
 #include "types_common.h"
 #include "util.h"
 
 // Note that struct st_entry* is used in this file as a forward reference.
 
-// If you want to add a new astn type, add it to the enum, add the definition,
+// If you want to add a new astn type, add it here, add the definition,
 // add it to the union in struct astn, and add it to print_ast in ast_print.c
+
+// KIND_UNDEF, KIND_MAX, and NOOP have no associated struct
+#define FOREACH_ASTN_KIND(MAKER)    \
+    MAKER(ASTN_KIND_UNDEF),     \
+    MAKER(ASTN_ASSIGN),         \
+    MAKER(ASTN_NUM),            \
+    MAKER(ASTN_IDENT),          \
+    MAKER(ASTN_STRLIT),         \
+    MAKER(ASTN_BINOP),          \
+    MAKER(ASTN_FNCALL),         \
+    MAKER(ASTN_SELECT),         \
+    MAKER(ASTN_UNOP),           \
+    MAKER(ASTN_SIZEOF),         \
+    MAKER(ASTN_TERN),           \
+    MAKER(ASTN_LIST),           \
+    MAKER(ASTN_TYPESPEC),       \
+    MAKER(ASTN_TYPEQUAL),       \
+    MAKER(ASTN_STORSPEC),       \
+    MAKER(ASTN_TYPE),           \
+    MAKER(ASTN_DECL),           \
+    MAKER(ASTN_FNDEF),          \
+    MAKER(ASTN_ELLIPSIS),       \
+    MAKER(ASTN_COMPOUNDSTMT),   \
+    MAKER(ASTN_DECLREC),        \
+    MAKER(ASTN_SYMPTR),         \
+    MAKER(ASTN_IFELSE),         \
+    MAKER(ASTN_SWITCH),         \
+    MAKER(ASTN_WHILELOOP),      \
+    MAKER(ASTN_FORLOOP),        \
+    MAKER(ASTN_GOTO),           \
+    MAKER(ASTN_BREAK),          \
+    MAKER(ASTN_CONTINUE),       \
+    MAKER(ASTN_RETURN),         \
+    MAKER(ASTN_LABEL),          \
+    MAKER(ASTN_CASE),           \
+    MAKER(ASTN_QTEMP),          \
+    MAKER(ASTN_QBBNO),          \
+    MAKER(ASTN_QTYPE),          \
+    MAKER(ASTN_NOOP),           \
+    MAKER(ASTN_KIND_MAX)
+
 enum astn_types {
-    ASTN_ASSIGN,
-    ASTN_NUM,
-    ASTN_IDENT,
-    ASTN_STRLIT,
-    ASTN_BINOP,
-    ASTN_FNCALL,
-    ASTN_SELECT,
-    ASTN_UNOP,
-    ASTN_SIZEOF,
-    ASTN_TERN,
-    ASTN_LIST,
-    ASTN_TYPESPEC,
-    ASTN_TYPEQUAL,
-    ASTN_STORSPEC,
-    ASTN_TYPE,
-    ASTN_DECL,
-    ASTN_FNDEF,
-    ASTN_ELLIPSIS,
-    ASTN_COMPOUNDSTMT,
-    ASTN_DECLREC,
-    ASTN_SYMPTR,
-    ASTN_IFELSE,
-    ASTN_SWITCH,
-    ASTN_WHILELOOP,
-    ASTN_FORLOOP,
-    ASTN_GOTO,
-    ASTN_BREAK,
-    ASTN_CONTINUE,
-    ASTN_RETURN,
-    ASTN_LABEL,
-    ASTN_CASE,
-    ASTN_QTEMP,
-    ASTN_QBBNO,
-    ASTN_QTYPE,
-    ASTN_NOOP // has no associated struct
+    FOREACH_ASTN_KIND(GENERATE_ENUM)
 };
+
+
 
 struct astn_assign { // could have been binop but separated for clarity
     // struct astn left, *right;
@@ -226,7 +236,7 @@ struct astn_case {
 
 struct astn_qtemp {
     unsigned tempno;
-    int stack_offset;
+    struct astn *qtype;
 };
 
 struct BB;
@@ -283,6 +293,7 @@ typedef struct astn* astn;
 typedef const struct astn* const_astn;
 
 astn astn_alloc(enum astn_types type);
+const char *astn_kind_str(const_astn a);
 
 astn cassign_alloc(int op, astn left, astn right);
 astn binop_alloc(int op, astn left, astn right);
@@ -323,16 +334,19 @@ astn get_dtypechain_last_link(astn top);
 astn get_dtypechain_target(astn top);
 const char *get_dtypechain_ident(astn d);
 
-astn qtemp_alloc(int tempno);
+astn qtemp_alloc(int tempno, astn qtype);
 astn qtype_alloc(ir_type_E t);
 
-#define ast_check(node, asttype, msg) \
-    do { \
-        if (node->type != asttype) { \
-            eprintf("FAILED ASTN CHECK AT %s:%d: ", __FILE__, __LINE__); \
-            eprintf("Expected type %s and got type %d\n", #asttype, node->type); \
-            die(msg); \
-        } \
-    } while (0); \
+void print_ast(); // fwd-decl
+#define ast_check(node, asttype, msg)                                       \
+    {                                                                       \
+        if (node->type != asttype) {                                        \
+            eprintf("FAILED ASTN CHECK AT %s:%d: ", __FILE__, __LINE__);    \
+            eprintf("Expected type %s and got type %s:\n",                  \
+                    #asttype, astn_kind_str(node));                         \
+            print_ast(node);                                                \
+            die(msg);                                                       \
+        }                                                                   \
+    }
 
 #endif

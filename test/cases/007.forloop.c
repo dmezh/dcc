@@ -1,3 +1,4 @@
+//!dtest skip
 //!dtest description "For loops."
 
 #include "../dcc_assert.h"

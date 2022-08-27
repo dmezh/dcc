@@ -1,5 +1,7 @@
 #include "ir_print.h"
+
 #include "ir.h"
+#include "ir_state.h"
 
 #include "ast.h"
 #include "symtab.h"
@@ -14,6 +16,7 @@ static FILE *f;
                             \
         fprintf(o, __VA_ARGS__); \
     }
+
 
 const char *quad_astn_oneword_str(const_astn a) {
     char *ret;
@@ -54,7 +57,7 @@ void quad_print(quad first) {
         case IR_OP_UNKNOWN: die("IR op is UNKNOWN"); break;
 
         case IR_OP_ALLOCA:
-            qprintf("    %s = alloca %s\n", quad_astn_oneword_str(first->target), quad_astn_oneword_str(first->src1));
+            qprintf("    %s = alloca %s\n", quad_astn_oneword_str(first->target), quad_astn_oneword_str(first->target->Qtemp.qtype));
             break;
 
         case IR_OP_RETURN:
@@ -63,6 +66,10 @@ void quad_print(quad first) {
             } else {
                 qprintf("    ret i32 %s\n", quad_astn_oneword_str(first->src1)); 
             }
+            break;
+
+        case IR_OP_ADD:
+            qprintf("    %s = add i32 %s, %s\n", quad_astn_oneword_str(first->target), quad_astn_oneword_str(first->src1), quad_astn_oneword_str(first->src2));
             break;
 
         default:
@@ -76,9 +83,9 @@ void quads_dump_llvm(FILE *o) {
 
     // fix for multiple bbs
 
-    qprintf("define %s @%s() {\n", ir_type_str[type_to_ir(current_bb->fn->type->Type.derived.target)], current_bb->fn->ident);
+    qprintf("define %s @%s() {\n", ir_type_str[get_qtype(irst.bb->fn->type->Type.derived.target)->Qtype.qtype], irst.bb->fn->ident);
 
-    quad q = current_bb->current;
+    quad q = irst.bb->first;
     while (q) {
         quad_print(q);
         q = q->next;

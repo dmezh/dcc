@@ -8,6 +8,8 @@
 extern struct BB bb_root;
 extern BB current_bb;
 
+astn get_qtype(const_astn t);
+
 ir_type_E type_to_ir(const_astn t);
 void gen_fn(sym e);
 

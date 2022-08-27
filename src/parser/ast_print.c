@@ -439,6 +439,7 @@ void print_ast(const_astn n) {
         eprintf("(NOOP)\n");
         break;
     default:
-        die("Unhandled AST node type");
+        eprintf("Unhandled astn kind in print_astn: %s\n", astn_kind_str(n));
+        die("");
 }
 }

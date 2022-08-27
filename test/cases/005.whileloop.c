@@ -1,3 +1,4 @@
+//!dtest skip
 //!dtest description "While loops."
 
 #include "../dcc_assert.h"

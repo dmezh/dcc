@@ -64,6 +64,7 @@ def get_test_cfg(p):
 
 fails = 0
 skips = 0
+passes = 0
 
 os.chdir(sys.path[0])
 
@@ -95,13 +96,14 @@ for test in tests:
     compile = subprocess.run(command, shell=True)
     if compile.returncode:
         print(bcolors.WARNING + bcolors.BOLD + '[FAIL]' + bcolors.ENDC)
-        print('Error: Failed compiling test {t}!')
+        print(f'Error: Failed compiling test {test.name}!')
         fails += 1
         continue
 
     result = subprocess.run(projinfo['exec'])
     if result.returncode == test.expect_returncode:
         print(bcolors.OKCYAN + bcolors.BOLD + '[PASS]' + bcolors.ENDC)
+        passes += 1
 
     else:
         print(bcolors.WARNING + bcolors.BOLD + '[FAIL]' + bcolors.ENDC)
@@ -119,7 +121,7 @@ print(bcolors.OKBLUE + bcolors.BOLD + '-- TESTING COMPLETE --' + bcolors.ENDC)
 print('')
 
 if fails:
-    print(bcolors.FAIL + bcolors.BOLD + f"[ SUITE FAIL ]: {fails} tests failed." + bcolors.ENDC)
+    print(bcolors.FAIL + bcolors.BOLD + f"[ SUITE FAIL ]: {passes} tests passed, {fails} tests failed." + bcolors.ENDC)
     exit(-9)
 else:
     print(bcolors.OKGREEN + bcolors.BOLD + "[ SUITE PASS ]: All tests passed!" + bcolors.ENDC)

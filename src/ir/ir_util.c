@@ -1,6 +1,67 @@
 #include "ir_util.h"
 
 #include "ir.h"
+#include "ir_state.h"
+
+/**
+ * Allocate and append new basic block to end of BBL.
+ */
+BB bb_alloc(void) {
+    BB n = safe_calloc(1, sizeof(struct BB));
+    n->bbno = irst.bb_count;
+    n->fn = irst.fn;
+    bbl_append(n);
+    return n;
+}
+
+/**
+ * Get next BBL of this BBL.
+ */
+BBL bbl_next(const BBL bbl) {
+    return bbl->next;
+}
+
+/**
+ * Get BB at this BBL.
+ */
+BB bbl_this(const BBL bbl) {
+    return bbl->me;
+}
+
+/**
+ * Append given BB to end of the global BBL.
+ */
+void bbl_append(BB bb) {
+    BBL new = safe_calloc(1, sizeof(struct BBL));
+    new->me = bb;
+
+    // this is fucking dumb; keep a pointer to the end of the
+    // global BBL chain in irst instead.
+    BBL head = irst.root_bbl;
+    while (head->next) head = head->next;
+
+    head->next = new;
+    return;
+}
+
+/**
+ * Allocate and return a new qtemp.
+ */
+astn new_qtemp(astn qtype) {
+    return qtemp_alloc(++irst.tempno, qtype);
+}
+
+/**
+ * Get last quad in basic block.
+ */
+quad last_in_bb(BB b) {
+    quad q = b->current;
+    if (!q) return NULL;
+
+    while (q->next) q = q->next;
+
+    return q;
+}
 
 quad emit(ir_op_E op, astn target, astn src1, astn src2) {
     quad q = safe_calloc(1, sizeof(struct quad));
@@ -14,13 +75,13 @@ quad emit(ir_op_E op, astn target, astn src1, astn src2) {
         .src2 = src2,
     };
 
-    if (!current_bb->first) {
-        current_bb->first = q;
-        current_bb->current = q;
+    if (!irst.bb->first) {
+        irst.bb->first = q;
+        irst.bb->current = q;
     } else {
-        current_bb->current->next = q;
-        q->prev = current_bb->current;
-        current_bb->current = q;
+        irst.bb->current->next = q;
+        q->prev = irst.bb->current;
+        irst.bb->current = q;
     }
 
     return q;

@@ -1,3 +1,5 @@
+//!dtest skip
+//!dtest skip
 //!dtest description "Test implicit return of 0 from main."
 
 int main() {

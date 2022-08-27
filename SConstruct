@@ -23,4 +23,4 @@ Export('env')
 
 # SConscripts
 SConscript('src/SConscript', variant_dir='build', duplicate=0)
-# SConscript('test/SConscript')
+SConscript('test/SConscript')

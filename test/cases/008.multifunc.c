@@ -1,3 +1,4 @@
+//!dtest skip
 //!dtest description "Multiple functions."
 
 #include "../dcc_assert.h"

@@ -33,4 +33,11 @@ struct BB {
 
 typedef struct BB *BB;
 
+struct BBL {
+    BB me;
+    struct BBL *next;
+};
+
+typedef struct BBL *BBL;
+
 #endif
