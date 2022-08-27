@@ -152,8 +152,9 @@ static void preprocess() {
         default:;
             int status;
             wait(&status);
-            if (status)
+            if (WIFEXITED(status) && WEXITSTATUS(status)) {
                 RED_ERROR("Error during preprocessing");
+            }
             fseek(f, 0, SEEK_SET);
             dup2(fileno(f), STDIN_FILENO);
             break;
@@ -181,8 +182,9 @@ static void assemble() {
         default:;
             int status;
             wait(&status);
-            if (status)
+            if (WIFEXITED(status) && WEXITSTATUS(status)) {
                 RED_ERROR("Error during assembly");
+            }
     }
 }
 
@@ -205,8 +207,9 @@ static void llvm_convert() {
         default:;
             int status;
             wait(&status);
-            if (status)
+            if (WIFEXITED(status) && WEXITSTATUS(status)) {
                 RED_ERROR("Error during llcing");
+            }
 
             fseek(tmp2, 0, SEEK_SET);
             dup2(fileno(tmp2), STDIN_FILENO);
