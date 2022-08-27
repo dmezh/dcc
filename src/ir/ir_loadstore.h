@@ -4,5 +4,8 @@
 #include "ast.h"
 
 astn gen_load(astn a, astn target);
+astn gen_lvalue(astn a);
+astn get_store(astn target, astn val);
+astn gen_assign(astn a);
 
 #endif

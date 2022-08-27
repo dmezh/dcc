@@ -619,13 +619,11 @@ param_list:
                                         current_scope->param_count++;
                                         $$=declrec_alloc(begin_st_entry($1, NS_MISC, $1->context), NULL);
                                         $$->Declrec.e->is_param = true;
-                                        st_reserve_stack($$->Declrec.e);
                                         $$=list_alloc($$);
                                     }
 |   param_list ',' param_decl       {   current_scope->param_count++;
                                         $$=declrec_alloc(begin_st_entry($3, NS_MISC, $3->context), NULL);
                                         $$->Declrec.e->is_param = true;
-                                        st_reserve_stack($$->Declrec.e);
                                         list_append($$, $1);
                                         $$=$1;
                                     }

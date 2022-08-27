@@ -274,7 +274,6 @@ astn do_decl(astn decl) {
     astn n = NULL;
     if (decl->type == ASTN_DECL) {
         n = declrec_alloc(begin_st_entry(decl, NS_MISC, decl->context), decl->Decl.init);
-        st_reserve_stack(n->Declrec.e);
     }
     return n;
 }

@@ -203,10 +203,6 @@ static void st_check_linkage(sym e) {
 }
 
 
-void st_reserve_stack(sym e) {
-}
-
-
 static void check_dtypechain_legality(astn head) {
     // TODO: add context
     // not allowed:

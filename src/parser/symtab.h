@@ -134,8 +134,6 @@ typedef struct symtab {
 extern symtab root_symtab;
 extern symtab* current_scope;
 
-void st_reserve_stack(sym e);
-
 sym st_define_function(astn fndef, astn block, YYLTYPE openbrace_context);
 sym st_declare_function(astn fndef, YYLTYPE openbrace_context);
 
