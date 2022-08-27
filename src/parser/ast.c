@@ -45,6 +45,17 @@ const char *astn_kind_str(const_astn a) {
 }
 
 /*
+ * Allocate basic signed constant.
+ */
+astn simple_constant_alloc(int num) {
+    astn n=astn_alloc(ASTN_NUM);
+    n->Num.number.integer = num;
+    n->Num.number.is_signed = true;
+    n->Num.number.aux_type = s_INT;
+    return n;
+}
+
+/*
  * allocate complex assignment (*=, /=, etc) - 6.5.16
  */
 astn cassign_alloc(int op, astn left, astn right) {

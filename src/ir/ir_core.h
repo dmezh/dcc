@@ -18,6 +18,7 @@ struct quad {
 };
 
 typedef struct quad *quad;
+typedef const struct quad *const_quad;
 
 struct BB {
     quad first;
@@ -32,6 +33,7 @@ struct BB {
 };
 
 typedef struct BB *BB;
+typedef const struct BB *const_BB;
 
 struct BBL {
     BB me;
@@ -39,5 +41,6 @@ struct BBL {
 };
 
 typedef struct BBL *BBL;
+typedef const struct BBL *const_BBL;
 
 #endif

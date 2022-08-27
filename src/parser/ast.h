@@ -295,6 +295,8 @@ typedef const struct astn* const_astn;
 astn astn_alloc(enum astn_types type);
 const char *astn_kind_str(const_astn a);
 
+astn simple_constant_alloc(int num);
+
 astn cassign_alloc(int op, astn left, astn right);
 astn binop_alloc(int op, astn left, astn right);
 astn unop_alloc(int op, astn target);

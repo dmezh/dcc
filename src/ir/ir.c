@@ -171,5 +171,14 @@ void gen_fn(sym e) {
         gen_quads(list_data(a));
         a = list_next(a);
     }
+
+    // check return - should check non-main too
+    const_quad const last = last_in_bb(irst.bb);
+    if (!last || last->op != IR_OP_RETURN) {
+        if (!strcmp(irst.fn->ident, "main")) {
+            qwarn("Detected implicit return\n");
+            emit(IR_OP_RETURN, NULL, gen_rvalue(simple_constant_alloc(0), NULL), NULL);
+        }
+    }
 }
 
