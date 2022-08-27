@@ -18,7 +18,7 @@ static FILE *f;
     }
 
 
-const char *quad_astn_oneword_str(const_astn a) {
+const char *qoneword(const_astn a) {
     char *ret;
 
     if (!a) die("gave null astn to quad_print?");
@@ -26,7 +26,7 @@ const char *quad_astn_oneword_str(const_astn a) {
     switch (a->type) {
         case ASTN_LIST:
             a = list_data(a);
-            return quad_astn_oneword_str(a);
+            return qoneword(a);
 
         case ASTN_QTEMP:
             asprintf(&ret, "%%%d", a->Qtemp.tempno);
@@ -57,19 +57,28 @@ void quad_print(quad first) {
         case IR_OP_UNKNOWN: die("IR op is UNKNOWN"); break;
 
         case IR_OP_ALLOCA:
-            qprintf("    %s = alloca %s\n", quad_astn_oneword_str(first->target), quad_astn_oneword_str(first->target->Qtemp.qtype));
+            qprintf("    %s = alloca %s\n", qoneword(first->target), qoneword(first->target->Qtemp.qtype));
             break;
 
         case IR_OP_RETURN:
             if (!first->src1) {
                 qprintf("    ret void\n");
             } else {
-                qprintf("    ret i32 %s\n", quad_astn_oneword_str(first->src1)); 
+                qprintf("    ret i32 %s\n", qoneword(first->src1));
             }
             break;
 
+        case IR_OP_LOAD:
+            qprintf("    %s = load %s, ptr %s\n", qoneword(first->target), qoneword(first->target->Qtemp.qtype), qoneword(first->src1));
+            break;
+
+        case IR_OP_STORE:
+            ast_check(first->target, ASTN_QTEMP, "");
+            qprintf("    store %s %s, ptr %s\n", qoneword(first->target->Qtemp.qtype), qoneword(first->src1), qoneword(first->target));
+            break;
+
         case IR_OP_ADD:
-            qprintf("    %s = add i32 %s, %s\n", quad_astn_oneword_str(first->target), quad_astn_oneword_str(first->src1), quad_astn_oneword_str(first->src2));
+            qprintf("    %s = add i32 %s, %s\n", qoneword(first->target), qoneword(first->src1), qoneword(first->src2));
             break;
 
         default:

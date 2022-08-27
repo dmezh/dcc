@@ -1,5 +1,6 @@
 #include "ir.h"
 #include "ir_arithmetic.h"
+#include "ir_loadstore.h"
 #include "ir_print.h"
 #include "ir_state.h"
 #include "ir_util.h"
@@ -85,6 +86,7 @@ astn get_qtype(const_astn t) {
         case ASTN_BINOP:
             // get resultant type
             // for now, just return i32 if it's arithmetic
+            qwarn("Am at binop!\n");
             if (type_is_arithmetic(t))
                 return qtype_alloc(IR_i32);
 
@@ -113,6 +115,9 @@ astn gen_rvalue(astn a, astn target) {
             }
             die("Unreachable");
 
+        case ASTN_SYMPTR: // loading!
+            return gen_load(a, target);
+
         default:
             qwarn("UH OH:\n");
             print_ast(a);
@@ -129,6 +134,14 @@ void gen_quads(astn a) {
             break;
 
         case ASTN_DECLREC:
+            // generate initializers
+            // assuming local scope
+            if (a->Declrec.init) {
+                astn ass = astn_alloc(ASTN_ASSIGN);
+                ass->Assign.left = symptr_alloc(a->Declrec.e);
+                ass->Assign.right = a->Declrec.init;
+                gen_assign(ass);
+            }
             break;
 
         case ASTN_BINOP:
@@ -160,6 +173,7 @@ void gen_fn(sym e) {
     while (n) {
         if (n->entry_type == STE_VAR && n->storspec == SS_AUTO) {
             astn qtemp = new_qtemp(get_qtype(symptr_alloc(n)));
+            n->ptr_qtemp = qtemp;
 
             emit(IR_OP_ALLOCA, qtemp, NULL, NULL);
         }

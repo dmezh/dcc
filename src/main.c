@@ -208,7 +208,7 @@ static void llvm_convert() {
             dup2(fileno(tmp), STDIN_FILENO);
             dup2(fileno(tmp2), STDOUT_FILENO);
 
-            const char* llc_argv[] = {"llc", "--march", "x86-64", "-", "-o", "-", NULL};
+            const char* llc_argv[] = {"llc", "--march", "x86-64", "-opaque-pointers", "-", "-o", "-", NULL};
             execvp(llc_argv[0], (char**)llc_argv);
 
             RED_ERROR("Error execing for llcing: %s", strerror(errno));
