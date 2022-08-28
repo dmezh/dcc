@@ -53,6 +53,18 @@ bool type_is_arithmetic(const_astn a) {
             }
             break;
 
+        case ASTN_UNOP:
+            switch (a->Unop.op) {
+                case '*':; // deref
+                    astn d = get_qtype(a)->Qtype.derived_type;
+                    if (d)
+                        return type_is_arithmetic(d);
+                    else
+                        return true;
+                default:
+                    qunimpl(a, "Unhandled unop in type_is_arithmetic :(");
+            }
+
         default:
             qunimpl(a, "Unsupported astn for type_is_arithmetic :(");
     }
