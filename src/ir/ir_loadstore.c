@@ -12,6 +12,7 @@
  * Load and return value.
  */
 astn gen_load(astn a, astn target) {
+    qwarn("DOING gen_load -----------------\n");
     // assuming local non-parameter variables right now.
     astn addr = NULL;
 
@@ -21,14 +22,19 @@ astn gen_load(astn a, astn target) {
             break;
 
         case ASTN_UNOP:
-            addr = gen_rvalue(a->Unop.target, NULL);
+            addr = a->Unop.target;
             break;
 
         default:
             qunimpl(a, "Bizarre type to try to load...");
     }
 
+    addr = gen_rvalue(addr, NULL);
+    qwarn("CONT gen_load -----------------\n");
+
     target = qprepare_target(target, get_qtype(a));
+    qwarn("gen_load: Target type is %s, a follows\n", ir_type_str[target->Qtemp.qtype->Qtype.qtype]);
+    print_ast(a);
 
     // may need revision for globals
     ast_check(addr, ASTN_QTEMP, "Expected qtemp for loading!");

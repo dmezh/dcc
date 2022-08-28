@@ -48,14 +48,14 @@ Depends(generated_parser_files, generated_lexer_files)
 
 generated_parser_lib = env.Library([generated_parser_files, generated_lexer_files],
                                    CPPPATH=dcc_include_paths,
-                                   CCFLAGS='-Wall -Werror -fsanitize=undefined -Og'
+                                   CCFLAGS='-Wall -Werror -fsanitize=undefined -O0'
 )
 
 # dcc #
 dcc = env.Program('dcc', [dcc_sources, generated_parser_lib],
                   CPPPATH=dcc_include_paths,
-                  CCFLAGS='-Wall -Wextra -fsanitize=undefined -Wpedantic -Wunused -Og -g3',
-                  LINKFLAGS='-fsanitize=undefined -rdynamic -g3'
+                  CCFLAGS='-Wall -Wextra -fsanitize=undefined -Wpedantic -Wunused -O0 -g3',
+                  LINKFLAGS='-fsanitize=undefined -rdynamic -g3 -O0'
 )
 env.Install('../', dcc)
 

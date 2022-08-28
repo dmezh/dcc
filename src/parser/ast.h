@@ -245,6 +245,7 @@ struct astn_qbbno {
 
 struct astn_qtype {
     ir_type_E qtype;
+    struct astn *derived_type;
 };
 
 // uppercase member names are a style decision; they're clear and they also

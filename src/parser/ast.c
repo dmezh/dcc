@@ -1,9 +1,9 @@
 /*
  * ast.c
- * 
+ *
  * This file contains functions for the construction and manipulation of the AST.
  * x_alloc functions all allocate, potentially populate, and return new AST nodes.
- * All AST node allocation should be done internally with astn_alloc. 
+ * All AST node allocation should be done internally with astn_alloc.
  */
 
 #include "ast.h"
@@ -357,10 +357,11 @@ astn qtemp_alloc(int tempno, astn qtype) {
 }
 
 /*
- * Allocate Qtype astn
+ * Allocate Qtype astn, with no derived type by default
  */
 astn qtype_alloc(ir_type_E t) {
     astn q = astn_alloc(ASTN_QTYPE);
     q->Qtype.qtype = t;
+    q->Qtype.derived_type = NULL;
     return q;
 }

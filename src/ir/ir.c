@@ -37,6 +37,7 @@ astn qprepare_target(astn target, astn qtype) {
 
 astn get_qtype(const_astn t) {
     ir_type_E ret;
+    astn ret_der = NULL;
 
     switch (t->type) {
         case ASTN_NUM:
@@ -57,12 +58,15 @@ astn get_qtype(const_astn t) {
 
             return qtype_alloc(ret);
 
-        case ASTN_SYMPTR:
-            return get_qtype(t->Symptr.e->type);
+        case ASTN_SYMPTR:;
+            astn qt = get_qtype(t->Symptr.e->type);
+            // qt->Qtype.derived_type = t->Symptr.e->type;
+            return qt;
 
         case ASTN_TYPE:
             if (t->Type.is_derived && t->Type.derived.type == t_PTR) {
                 ret = IR_ptr;
+                ret_der = t->Type.derived.target;
             } else {
                 switch (t->Type.scalar.type) {
                     case t_INT:
@@ -81,7 +85,9 @@ astn get_qtype(const_astn t) {
                         qunimpl(t, "Unsupported type in IR :(");
                 }
             }
-            return qtype_alloc(ret);
+            astn q = qtype_alloc(ret);
+            q->Qtype.derived_type = ret_der;
+            return q;
 
         case ASTN_BINOP:
             // get resultant type
@@ -100,22 +106,67 @@ astn get_qtype(const_astn t) {
             if (t->Unop.op != '*')
                 qunimpl(t, "Unsupported unop type in get_qtype");
 
-            switch (utarget->type) {
-                case ASTN_SYMPTR:; // a symbol is next; take its type
-                    qwarn("Hit bottom of unop chain for ident %s\n", utarget->Symptr.e->ident);
-                    astn type = utarget->Symptr.e->type;
-                    ast_check(type, ASTN_TYPE, ""); // paranoid
+            // HOO BOY
+            // let's construct a qtype that has the actual derived chain.
+            // we'll need to go down and get the following type,
+            // and then when we eventually get to the base type or qtemp,
+            // recursion stops.
 
-                    if (type->Type.is_derived) {
-                        qwarn("Type is derived.");
-                        return get_qtype(get_dtypechain_target(type));
+            // int **i;
+            // deref                       -> INT
+            //   deref                     -> PTR to INT
+            //     PTR to PTR to INT
+
+            switch (utarget->type) {
+                case ASTN_SYMPTR:;
+                    // the target is a variable.
+                    // Say we had int *i;
+                    //            *i;
+                    //
+                    // The AST is:
+                    // UNOP DEREF
+                    //    sym i
+                    //
+                    // The type of i is:
+                    // PTR TO
+                    //    int
+
+                    // so where if we just got i we'd go get_qtype(i), now
+                    // we want get_qtype(i->derived target), which is int.
+                    // So let's get the type of i as usual and then see.
+                    astn n = get_qtype(utarget); // should be ptr, PTR TO int
+                    if (n->Qtype.derived_type) {
+                        // there's a derived type! get the next.
+                        ast_check(n->Qtype.derived_type, ASTN_TYPE, "");
+                        return get_qtype(n->Qtype.derived_type->Type.derived.target);
                     } else {
-                        qwarn("Type is not derived");
-                        return get_qtype(type);
+                        qerror("Dereferenced non-pointer symbol!");
                     }
+                    break;
+
+                case ASTN_UNOP:;
+                    // the target is another deref.
+                    // Say we have int **i;
+                    //             **i;
+
+                    astn u = get_qtype(utarget); // should be ptr, PTR TO PTR TO int
+
+                    if (u->Qtype.derived_type) {
+                        ast_check(u->Qtype.derived_type, ASTN_TYPE, "");
+                        //if (!u->Qtype.derived_type->Type.is_derived)
+                            //qunimpl(u->Qtype.derived_type, "Non-derived type");
+                        //    return u;
+                        return get_qtype(utarget);
+
+                        //return get_qtype(u->Qtype.derived_type->Type.derived.target);
+                    } else {
+                        qunimpl(utarget, "Dereferenced non-pointer object!");
+                        qerror("Dereferenced non-pointer object!");
+                    }
+                    die("Unreachable");
 
                 default:
-                    return get_qtype(utarget);
+                    qunimpl(utarget, "Invalid target of unop deref in get_qtype");
             }
 
         default:
@@ -178,6 +229,9 @@ astn gen_rvalue(astn a, astn target) {
 
         case ASTN_SYMPTR: // loading!
             return gen_load(a, target);
+
+        case ASTN_QTEMP:
+            return a;
 
         default:
             qunimpl(a, "Unhandled astn for gen_rvalue :(");
