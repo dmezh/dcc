@@ -8,6 +8,7 @@
 
 const char *qoneword(const_astn a);
 void quad_print(quad first);
+void quad_print_blankline(void);
 void quads_dump_llvm(FILE *o);
 
 #define qwarn(...)  fprintf(stderr, "\n" __VA_ARGS__);

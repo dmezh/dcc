@@ -28,9 +28,8 @@ struct ir_state irst = {
 astn qprepare_target(astn target, astn qtype) {
     if (!target) {
         target = new_qtemp(qtype);
-        qwarn("Allocated qtemp %d\n", target->Qtemp.tempno);
     } else {
-        qwarn("Using existing target.");
+        // left for debug
     }
 
     return target;
@@ -62,33 +61,62 @@ astn get_qtype(const_astn t) {
             return get_qtype(t->Symptr.e->type);
 
         case ASTN_TYPE:
-            if (t->Type.is_derived && t->Type.derived.type == t_PTR)
+            if (t->Type.is_derived && t->Type.derived.type == t_PTR) {
                 ret = IR_ptr;
-
-            switch (t->Type.scalar.type) {
-                case t_INT:
-                    ret = IR_i32;
-                    break;
-                case t_LONG:
-                    ret = IR_i64;
-                    break;
-                case t_CHAR:
-                    ret = IR_i8;
-                    break;
-                case t_SHORT:
-                    ret = IR_i16;
-                    break;
-                default:
-                    qunimpl(t, "Unsupported type in IR :(");
+            } else {
+                switch (t->Type.scalar.type) {
+                    case t_INT:
+                        ret = IR_i32;
+                        break;
+                    case t_LONG:
+                        ret = IR_i64;
+                        break;
+                    case t_CHAR:
+                        ret = IR_i8;
+                        break;
+                    case t_SHORT:
+                        ret = IR_i16;
+                        break;
+                    default:
+                        qunimpl(t, "Unsupported type in IR :(");
+                }
             }
             return qtype_alloc(ret);
 
         case ASTN_BINOP:
             // get resultant type
             // for now, just return i32 if it's arithmetic
-            qwarn("Am at binop!\n");
             if (type_is_arithmetic(t))
                 return qtype_alloc(IR_i32);
+            else
+                qunimpl(t, "Haven't implemented non-arithmetic binops");
+
+        case ASTN_QTEMP:
+            return t->Qtemp.qtype;
+
+        case ASTN_UNOP:; // the type of a unop deref is special.
+            astn utarget = t->Unop.target;
+
+            if (t->Unop.op != '*')
+                qunimpl(t, "Unsupported unop type in get_qtype");
+
+            switch (utarget->type) {
+                case ASTN_SYMPTR:; // a symbol is next; take its type
+                    qwarn("Hit bottom of unop chain for ident %s\n", utarget->Symptr.e->ident);
+                    astn type = utarget->Symptr.e->type;
+                    ast_check(type, ASTN_TYPE, ""); // paranoid
+
+                    if (type->Type.is_derived) {
+                        qwarn("Type is derived.");
+                        return get_qtype(get_dtypechain_target(type));
+                    } else {
+                        qwarn("Type is not derived");
+                        return get_qtype(type);
+                    }
+
+                default:
+                    return get_qtype(utarget);
+            }
 
         default:
             qunimpl(t, "Unimplemented astn type in get_qtype :(");
@@ -97,7 +125,31 @@ astn get_qtype(const_astn t) {
     die("Unreachable");
 }
 
+astn ptr_target(astn a) {
+    switch (a->type) {
+        case ASTN_SYMPTR:
+            return ptr_target(a->Symptr.e->type);
+
+        case ASTN_TYPE:
+            if (!a->Type.is_derived)
+                qunimpl(a, "Non-derived type given to ptr_target!");
+
+            return (a->Type.derived.target);
+
+        case ASTN_UNOP:
+            if (a->Unop.op != '*')
+                qunimpl(a, "Non-derived type given to ptr_target!");
+
+            return (a->Unop.target);
+
+        default:
+            qunimpl(a, "Unsupported astn in ptr_target :(");
+    }
+}
+
 astn gen_rvalue(astn a, astn target) {
+    qwarn("Doing gen_rvalue\n");
+
     switch (a->type) {
         case ASTN_NUM:
             return a;
@@ -115,13 +167,23 @@ astn gen_rvalue(astn a, astn target) {
             }
             die("Unreachable");
 
+        case ASTN_UNOP:
+            switch (a->Unop.op) {
+                case '*':;
+                    astn addr = gen_rvalue(a->Unop.target, NULL);
+                    target = qprepare_target(target, get_qtype(a));
+                    emit(IR_OP_LOAD, target, addr, NULL);
+                    return target;
+
+                default:
+                    qunimpl(a, "Unhandled unop in gen_rvalue :(");
+            }
+
         case ASTN_SYMPTR: // loading!
             return gen_load(a, target);
 
         default:
-            qwarn("UH OH:\n");
-            print_ast(a);
-            die("Unhandled astn for gen_rvalue :(");
+            qunimpl(a, "Unhandled astn for gen_rvalue :(");
     }
 
     qunimpl(a, "Unimplemented astn in gen_rvalue :(");

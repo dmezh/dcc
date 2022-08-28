@@ -14,12 +14,14 @@ astn gen_load(astn a, astn target) {
 
     target = qprepare_target(target, get_qtype(a));
 
-    if (type_is_arithmetic(a)) {    // simple load/store
-        emit(IR_OP_LOAD, target, a->Symptr.e->ptr_qtemp, NULL);
-    }
+    // we may need some more checking here?
+    emit(IR_OP_LOAD, target, a->Symptr.e->ptr_qtemp, NULL);
     return target;
 }
 
+/*
+ * Return address/object to write to.
+ */
 astn gen_lvalue(astn a) {
     switch (a->type) {
         case ASTN_SYMPTR:
@@ -28,6 +30,12 @@ astn gen_lvalue(astn a) {
         case ASTN_NUM:
             qprintcontext(a->context);
             qerror("Expression is not assignable!");
+
+        case ASTN_UNOP:
+            if (a->Unop.op == '*')
+                return gen_rvalue(a->Unop.target, NULL);
+
+            qunimpl(a, "Unimplemented unop for gen_lvalue!");
 
         default:
             qunimpl(a, "Unimplemented astn kind for gen_lvalue!");

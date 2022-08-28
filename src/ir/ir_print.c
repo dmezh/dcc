@@ -17,6 +17,9 @@ static FILE *f;
         fprintf(o, __VA_ARGS__); \
     }
 
+void quad_print_blankline(void) {
+    qprintf("\n");
+}
 
 const char *qoneword(const_astn a) {
     char *ret;
@@ -57,28 +60,40 @@ void quad_print(quad first) {
         case IR_OP_UNKNOWN: die("IR op is UNKNOWN"); break;
 
         case IR_OP_ALLOCA:
-            qprintf("    %s = alloca %s\n", qoneword(first->target), qoneword(first->target->Qtemp.qtype));
+            qprintf("    %s = alloca %s\n",
+                    qoneword(first->target),
+                    qoneword(first->target->Qtemp.qtype));
             break;
 
         case IR_OP_RETURN:
             if (!first->src1) {
                 qprintf("    ret void\n");
             } else {
-                qprintf("    ret i32 %s\n", qoneword(first->src1));
+                qprintf("    ret i32 %s\n",
+                        qoneword(first->src1));
             }
             break;
 
         case IR_OP_LOAD:
-            qprintf("    %s = load %s, ptr %s\n", qoneword(first->target), qoneword(first->target->Qtemp.qtype), qoneword(first->src1));
+            qprintf("    %s = load %s, ptr %s\n",
+                    qoneword(first->target),
+                    qoneword(get_qtype(first->src1)),
+                    qoneword(first->src1));
             break;
 
         case IR_OP_STORE:
             ast_check(first->target, ASTN_QTEMP, "");
-            qprintf("    store %s %s, ptr %s\n", qoneword(first->target->Qtemp.qtype), qoneword(first->src1), qoneword(first->target));
+            qprintf("    store %s %s, ptr %s\n",
+                    qoneword(get_qtype(first->src1)),
+                    qoneword(first->src1),
+                    qoneword(first->target));
             break;
 
         case IR_OP_ADD:
-            qprintf("    %s = add i32 %s, %s\n", qoneword(first->target), qoneword(first->src1), qoneword(first->src2));
+            qprintf("    %s = add i32 %s, %s\n",
+                    qoneword(first->target),
+                    qoneword(first->src1),
+                    qoneword(first->src2));
             break;
 
         default:
