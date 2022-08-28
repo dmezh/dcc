@@ -138,32 +138,65 @@ astn get_qtype(const_astn t) {
                     if (n->Qtype.derived_type) {
                         // there's a derived type! get the next.
                         ast_check(n->Qtype.derived_type, ASTN_TYPE, "");
-                        return get_qtype(n->Qtype.derived_type->Type.derived.target);
+                        qwarn("True bottom of chain, printing type\n");
+                        print_ast(n->Qtype.derived_type);
+                        return get_qtype(n->Qtype.derived_type);
                     } else {
                         qerror("Dereferenced non-pointer symbol!");
                     }
                     break;
 
                 case ASTN_UNOP:;
-                    // the target is another deref.
-                    // Say we have int **i;
-                    //             **i;
+                    // Say we have
+                    // deref
+                    //   deref
+                    //     sym i
+                    //
+                    // and i has:
+                    // PTR TO
+                    //   PTR TO
+                    //     INT
+                    //
+                    // top deref should see another deref below it.
+                    // get its type. Then, deref that. That's our type.
+                    // If it's not a derived type, we ran out of stuff
+                    // in the type chain and this is not a valid indirection.
+                    astn next_deref_qtype = get_qtype(utarget); // recurse and get end
+                        //qunimpl(t, "Fell off the end of derived type chain.");
+                    qwarn("UNOP level, type before: %s\n", ir_type_str[next_deref_qtype->Qtype.qtype]);
+                    print_ast(next_deref_qtype->Qtype.derived_type);
+                    if (next_deref_qtype->Qtype.derived_type->Type.is_derived)
+                        next_deref_qtype->Qtype.derived_type = next_deref_qtype->Qtype.derived_type->Type.derived.target;
+                    else // not derived!
+                        next_deref_qtype = get_qtype(next_deref_qtype->Qtype.derived_type);
 
-                    astn u = get_qtype(utarget); // should be ptr, PTR TO PTR TO int
+                    qwarn("UNOP level, type after: %s\n", ir_type_str[next_deref_qtype->Qtype.qtype]);
+                    print_ast(next_deref_qtype->Qtype.derived_type);
+                    return next_deref_qtype;
+                    //}
 
-                    if (u->Qtype.derived_type) {
-                        ast_check(u->Qtype.derived_type, ASTN_TYPE, "");
-                        //if (!u->Qtype.derived_type->Type.is_derived)
-                            //qunimpl(u->Qtype.derived_type, "Non-derived type");
-                        //    return u;
-                        return get_qtype(utarget);
-
-                        //return get_qtype(u->Qtype.derived_type->Type.derived.target);
+                    // what the hell are we doing peeking into the NEXT NEXT unop??
+/*
+                    if (!next_deref_qtype->Qtype.derived_type->Type.is_derived) {
+                        qwarn("GOT HERE!!!!!!!!!!!!!!!!!!!!!!\n");
+                        print_ast(next_deref_qtype->Qtype.derived_type);
+                        return next_deref_qtype;
                     } else {
-                        qunimpl(utarget, "Dereferenced non-pointer object!");
-                        qerror("Dereferenced non-pointer object!");
+                        qunimpl(next_deref_qtype->Qtype.derived_type, "Failed to get to bottom of derived type chain.");
                     }
-                    die("Unreachable");
+                    */
+
+                    //astn this_deref_qtype = get_qtype(next_deref_qtype->Qtype.derived_type);
+
+                   //  return this_deref_qtype;
+
+                    /*
+                    if (q->Qtype.derived_type)
+                        return get_qtype(q->Qtype.derived_type);
+                    else
+                        return q;
+                    */
+
 
                 default:
                     qunimpl(utarget, "Invalid target of unop deref in get_qtype");
