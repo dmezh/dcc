@@ -39,6 +39,7 @@ astn get_qtype(const_astn t) {
     ir_type_E ret;
     astn ret_der = NULL;
 
+    astn n;
     switch (t->type) {
         case ASTN_NUM:
             switch (t->Num.number.aux_type) {
@@ -59,9 +60,7 @@ astn get_qtype(const_astn t) {
             return qtype_alloc(ret);
 
         case ASTN_SYMPTR:;
-            astn qt = get_qtype(t->Symptr.e->type);
-            // qt->Qtype.derived_type = t->Symptr.e->type;
-            return qt;
+            return get_qtype(t->Symptr.e->type);
 
         case ASTN_TYPE:
             if (t->Type.is_derived && t->Type.derived.type == t_PTR) {
@@ -106,97 +105,27 @@ astn get_qtype(const_astn t) {
             if (t->Unop.op != '*')
                 qunimpl(t, "Unsupported unop type in get_qtype");
 
-            // HOO BOY
-            // let's construct a qtype that has the actual derived chain.
-            // we'll need to go down and get the following type,
-            // and then when we eventually get to the base type or qtemp,
-            // recursion stops.
-
-            // int **i;
-            // deref                       -> INT
-            //   deref                     -> PTR to INT
-            //     PTR to PTR to INT
-
             switch (utarget->type) {
                 case ASTN_SYMPTR:;
-                    // the target is a variable.
-                    // Say we had int *i;
-                    //            *i;
-                    //
-                    // The AST is:
-                    // UNOP DEREF
-                    //    sym i
-                    //
-                    // The type of i is:
-                    // PTR TO
-                    //    int
+                    n = get_qtype(utarget); // should be ptr, PTR TO int
 
-                    // so where if we just got i we'd go get_qtype(i), now
-                    // we want get_qtype(i->derived target), which is int.
-                    // So let's get the type of i as usual and then see.
-                    astn n = get_qtype(utarget); // should be ptr, PTR TO int
                     if (n->Qtype.derived_type) {
-                        // there's a derived type! get the next.
                         ast_check(n->Qtype.derived_type, ASTN_TYPE, "");
-                        qwarn("True bottom of chain, printing type\n");
-                        print_ast(n->Qtype.derived_type);
                         return get_qtype(n->Qtype.derived_type);
                     } else {
                         qerror("Dereferenced non-pointer symbol!");
                     }
+
                     break;
 
                 case ASTN_UNOP:;
-                    // Say we have
-                    // deref
-                    //   deref
-                    //     sym i
-                    //
-                    // and i has:
-                    // PTR TO
-                    //   PTR TO
-                    //     INT
-                    //
-                    // top deref should see another deref below it.
-                    // get its type. Then, deref that. That's our type.
-                    // If it's not a derived type, we ran out of stuff
-                    // in the type chain and this is not a valid indirection.
-                    astn next_deref_qtype = get_qtype(utarget); // recurse and get end
-                        //qunimpl(t, "Fell off the end of derived type chain.");
-                    qwarn("UNOP level, type before: %s\n", ir_type_str[next_deref_qtype->Qtype.qtype]);
-                    print_ast(next_deref_qtype->Qtype.derived_type);
-                    if (next_deref_qtype->Qtype.derived_type->Type.is_derived)
-                        next_deref_qtype->Qtype.derived_type = next_deref_qtype->Qtype.derived_type->Type.derived.target;
+                    n = get_qtype(utarget); // recurse and get end
+
+                    if (n->Qtype.derived_type->Type.is_derived)
+                        n->Qtype.derived_type = n->Qtype.derived_type->Type.derived.target;
                     else // not derived!
-                        next_deref_qtype = get_qtype(next_deref_qtype->Qtype.derived_type);
-
-                    qwarn("UNOP level, type after: %s\n", ir_type_str[next_deref_qtype->Qtype.qtype]);
-                    print_ast(next_deref_qtype->Qtype.derived_type);
-                    return next_deref_qtype;
-                    //}
-
-                    // what the hell are we doing peeking into the NEXT NEXT unop??
-/*
-                    if (!next_deref_qtype->Qtype.derived_type->Type.is_derived) {
-                        qwarn("GOT HERE!!!!!!!!!!!!!!!!!!!!!!\n");
-                        print_ast(next_deref_qtype->Qtype.derived_type);
-                        return next_deref_qtype;
-                    } else {
-                        qunimpl(next_deref_qtype->Qtype.derived_type, "Failed to get to bottom of derived type chain.");
-                    }
-                    */
-
-                    //astn this_deref_qtype = get_qtype(next_deref_qtype->Qtype.derived_type);
-
-                   //  return this_deref_qtype;
-
-                    /*
-                    if (q->Qtype.derived_type)
-                        return get_qtype(q->Qtype.derived_type);
-                    else
-                        return q;
-                    */
-
+                        n = get_qtype(n->Qtype.derived_type);
+                    return n;
 
                 default:
                     qunimpl(utarget, "Invalid target of unop deref in get_qtype");
@@ -232,8 +161,6 @@ astn ptr_target(astn a) {
 }
 
 astn gen_rvalue(astn a, astn target) {
-    qwarn("Doing gen_rvalue\n");
-
     switch (a->type) {
         case ASTN_NUM:
             return a;
@@ -322,7 +249,8 @@ void gen_fn(sym e) {
     sym n = e->fn_scope->first;
     while (n) {
         if (n->entry_type == STE_VAR && n->storspec == SS_AUTO) {
-            astn qtemp = new_qtemp(get_qtype(symptr_alloc(n)));
+            astn qtemp = new_qtemp(qtype_alloc(IR_ptr));
+            qtemp->Qtemp.qtype->Qtype.derived_type = get_qtype(symptr_alloc(n));
             n->ptr_qtemp = qtemp;
 
             emit(IR_OP_ALLOCA, qtemp, NULL, NULL);

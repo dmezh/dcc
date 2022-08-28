@@ -75,9 +75,10 @@ void quad_print(quad first) {
             break;
 
         case IR_OP_LOAD:
-            qprintf("    %s = load %s, ptr %s\n",
+            qprintf("    %s = load %s, %s %s\n",
                     qoneword(first->target),
                     qoneword(get_qtype(first->target)),
+                    qoneword(get_qtype(first->src1)),
                     qoneword(first->src1));
             break;
 
