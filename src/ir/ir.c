@@ -169,11 +169,8 @@ astn gen_rvalue(astn a, astn target) {
 
         case ASTN_UNOP:
             switch (a->Unop.op) {
-                case '*':;
-                    astn addr = gen_rvalue(a->Unop.target, NULL);
-                    target = qprepare_target(target, get_qtype(a));
-                    emit(IR_OP_LOAD, target, addr, NULL);
-                    return target;
+                case '*':
+                    return gen_load(a, target);
 
                 default:
                     qunimpl(a, "Unhandled unop in gen_rvalue :(");

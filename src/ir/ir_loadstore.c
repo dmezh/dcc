@@ -8,14 +8,31 @@
 #include "lexer.h" // for print_context
 #include "util.h"
 
+/**
+ * Load and return value.
+ */
 astn gen_load(astn a, astn target) {
     // assuming local non-parameter variables right now.
-    ast_check(a, ASTN_SYMPTR, "Expected symptr for gen_load!");
+    astn addr = NULL;
+
+    switch (a->type) {
+        case ASTN_SYMPTR:
+            addr = a->Symptr.e->ptr_qtemp;
+            break;
+
+        case ASTN_UNOP:
+            addr = gen_rvalue(a->Unop.target, NULL);
+            break;
+
+        default:
+            qunimpl(a, "Bizarre type to try to load...");
+    }
 
     target = qprepare_target(target, get_qtype(a));
 
-    // we may need some more checking here?
-    emit(IR_OP_LOAD, target, a->Symptr.e->ptr_qtemp, NULL);
+    // may need revision for globals
+    ast_check(addr, ASTN_QTEMP, "Expected qtemp for loading!");
+    emit(IR_OP_LOAD, target, addr, NULL);
     return target;
 }
 
