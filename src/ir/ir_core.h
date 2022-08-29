@@ -15,6 +15,7 @@ struct quad {
     astn target;
     astn src1;
     astn src2;
+    astn src3;
 };
 
 typedef struct quad *quad;

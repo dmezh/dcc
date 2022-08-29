@@ -3,6 +3,6 @@
 
 #include "ast.h"
 
-astn get_qtype(const_astn t);
+astn get_qtype(astn t);
 
 #endif

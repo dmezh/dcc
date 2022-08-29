@@ -23,6 +23,12 @@ void quad_print_blankline(void) {
     qprintf("\n");
 }
 
+const char *qonewordt(astn a) {
+    char *ret;
+    asprintf(&ret, "%s %s", qoneword(get_qtype(a)), qoneword(a));
+    return ret;
+}
+
 const char *qoneword(const_astn a) {
     char *ret;
 
@@ -42,7 +48,18 @@ const char *qoneword(const_astn a) {
             break;
 
         case ASTN_QTYPE:
-            asprintf(&ret, "%s", ir_type_str[a->Qtype.qtype]);
+            if (a->Qtype.qtype == IR_arr) {
+                // we're going to stop at the first non-array type.
+                ast_check(a->Qtype.derived_type, ASTN_TYPE, "");
+                if (!a->Qtype.derived_type->Type.derived.size)
+                    die("Expected array to have size.");
+                if (!a->Qtype.derived_type->Type.derived.target)
+                    die("Expected array to have target.");
+
+                asprintf(&ret, "[%s x %s]", qoneword(a->Qtype.derived_type->Type.derived.size), qoneword(get_qtype(a->Qtype.derived_type->Type.derived.target)));
+            } else {
+                asprintf(&ret, "%s", ir_type_str[a->Qtype.qtype]);
+            }
             break;
 
         case ASTN_NUM: // needs work for correctness, print numbers as intended
@@ -64,7 +81,7 @@ void quad_print(quad first) {
         case IR_OP_ALLOCA:
             qprintf("    %s = alloca %s\n",
                     qoneword(first->target),
-                    qoneword(first->target->Qtemp.qtype));
+                    qoneword(first->target->Qtemp.qtype->Qtype.derived_type));
             break;
 
         case IR_OP_RETURN:
@@ -97,6 +114,13 @@ void quad_print(quad first) {
                     qoneword(first->target),
                     qoneword(first->src1),
                     qoneword(first->src2));
+            break;
+
+        case IR_OP_GEP:
+            qprintf("    getelementptr %s, %s\n",
+                    qoneword(get_qtype(first->target)->Qtype.derived_type),
+                    qonewordt(first->src1));
+
             break;
 
         default:

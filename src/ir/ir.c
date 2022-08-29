@@ -41,8 +41,26 @@ astn ptr_target(astn a) {
             qunimpl(a, "Unsupported astn in ptr_target :(");
     }
 }
+/*
+static astn lvalue_to_rvalue(astn a, astn target) {
+    // hoo wee
+    switch (a->type) {
+        case ASTN_SYMPTR:;
+            astn t = get_qtype(a);
+            if (t->Qtype.qtype == IR_arr) { // array lvalue to rvalue
+                // assuming local storage?
+                qprepare_target(target, get_qtype(t->Qtype.derived_type));
+                emit(IR_OP_GEP, target, a,
+            }
+            break;
 
-astn gen_rvalue(astn a, astn target) {
+        default:
+            die("");
+    }
+}
+*/
+
+static astn _gen_rvalue(astn a, astn target) {
     switch (a->type) {
         case ASTN_NUM:
             return a;
@@ -63,13 +81,15 @@ astn gen_rvalue(astn a, astn target) {
         case ASTN_UNOP:
             switch (a->Unop.op) {
                 case '*':
+                    qwarn("Unop deref\n");
+                    print_ast(a);
                     return gen_load(a, target);
 
                 default:
                     qunimpl(a, "Unhandled unop in gen_rvalue :(");
             }
 
-        case ASTN_SYMPTR: // loading!
+        case ASTN_SYMPTR: // lvalue to rvalue conversion
             return gen_load(a, target);
 
         case ASTN_QTEMP:
@@ -80,6 +100,51 @@ astn gen_rvalue(astn a, astn target) {
     }
 
     qunimpl(a, "Unimplemented astn in gen_rvalue :(");
+}
+
+// 6.3.2.1.3
+/*
+    Except when it is the operand of the sizeof operator or the unary & operator, or is a
+    string literal used to initialize an array, an expression that has type ‘‘array of type’’ is
+    converted to an expression with type ‘‘pointer to type’’ that points to the initial element of
+    the array object and is not an lvalue. If the array object has register storage class, the
+    behavior is undefined.
+*/
+astn try_decay(astn a) {
+    if (a->type != ASTN_QTEMP)
+        return a;
+
+    astn t = a->Qtemp.qtype;
+    if (t->Qtype.qtype != IR_arr)
+        return a;
+
+    qwarn("DECAYING\n");
+    // change from (array of X) to (pointer to X)
+    ast_check(t->Qtype.derived_type, ASTN_TYPE, "");
+
+    if (!t->Qtype.derived_type->Type.is_derived)
+        die("Expected derived type for qtemp with IR type arr!");
+
+    astn targ = t->Qtype.derived_type->Type.derived.target;
+    t->Qtype.derived_type = targ;
+    t->Qtype.qtype = IR_ptr;
+    //astn ptr = new_qtemp(qtype_alloc(IR_ptr));
+    //ptr->Qtemp.qtype->Qtype.derived_type = targ;
+    emit(IR_OP_GEP, t, simple_constant_alloc(0), simple_constant_alloc(0));
+
+    return a;
+}
+
+astn gen_rvalue(astn a, astn target) {
+    astn r = _gen_rvalue(a, target);
+    qwarn("Before decay:\n");
+    if (r->type == ASTN_QTEMP && r->Qtemp.qtype->Qtype.derived_type)
+        print_ast(r->Qtemp.qtype->Qtype.derived_type), print_ast(r);
+    r = try_decay(r);
+    qwarn("After decay:\n");
+    if (r->type == ASTN_QTEMP && r->Qtemp.qtype->Qtype.derived_type)
+        print_ast(r->Qtemp.qtype->Qtype.derived_type), print_ast(r);
+    return r;
 }
 
 void gen_quads(astn a) {

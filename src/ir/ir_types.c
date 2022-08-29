@@ -7,7 +7,7 @@
 /**
  * Get the ASTN_QTYPE for the given node.
  */
-astn get_qtype(const_astn t) {
+astn get_qtype(astn t) {
     ir_type_E ret;
     astn ret_der = NULL;
 
@@ -35,9 +35,19 @@ astn get_qtype(const_astn t) {
             return get_qtype(t->Symptr.e->type);
 
         case ASTN_TYPE:
-            if (t->Type.is_derived && t->Type.derived.type == t_PTR) {
-                ret = IR_ptr;
-                ret_der = t->Type.derived.target;
+            if (t->Type.is_derived) {
+                switch (t->Type.derived.type) {
+                    case t_PTR:
+                        ret = IR_ptr;
+                        ret_der = t->Type.derived.target;
+                        break;
+                    case t_ARRAY:
+                        ret = IR_arr;
+                        ret_der = t; // special for arrays - derived_type is the array
+                        break;
+                    default:
+                        die("Invalid derived type in get_qtype");
+                }
             } else {
                 switch (t->Type.scalar.type) {
                     case t_INT:
@@ -63,6 +73,7 @@ astn get_qtype(const_astn t) {
         case ASTN_BINOP:
             // get resultant type
             // for now, just return i32 if it's arithmetic
+            die("Tried to get type of binop!");
             if (type_is_arithmetic(t))
                 return qtype_alloc(IR_i32);
             else
@@ -71,6 +82,9 @@ astn get_qtype(const_astn t) {
         case ASTN_QTEMP:
             return t->Qtemp.qtype;
 
+        case ASTN_QTYPE:
+            return t;
+
         case ASTN_UNOP:; // the type of a unop deref is special.
             astn utarget = t->Unop.target;
 
@@ -78,6 +92,8 @@ astn get_qtype(const_astn t) {
                 qunimpl(t, "Unsupported unop type in get_qtype");
 
             switch (utarget->type) {
+                // things that can yield a pointer
+                case ASTN_BINOP:
                 case ASTN_SYMPTR:;
                     n = get_qtype(utarget); // should be ptr, PTR TO int
 
@@ -94,7 +110,7 @@ astn get_qtype(const_astn t) {
                     n = get_qtype(utarget); // recurse and get end
 
                     if (n->Qtype.derived_type->Type.is_derived)
-                        n->Qtype.derived_type = n->Qtype.derived_type->Type.derived.target;
+                        n->Qtype.derived_type = get_qtype(n->Qtype.derived_type->Type.derived.target);
                     else // not derived!
                         n = get_qtype(n->Qtype.derived_type);
                     return n;

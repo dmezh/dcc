@@ -4,6 +4,7 @@
 
 #include "ast.h"
 #include "charutil.h"
+#include "ir_print.h"
 #include "parser.tab.h"
 #include "symtab.h"
 
@@ -434,6 +435,12 @@ void print_ast(const_astn n) {
         } else
             eprintf("DEFAULT:\n");
         print_ast(n->Case.statement);
+        break;
+    case ASTN_QTEMP:
+        eprintf("%%%d %s\n", n->Qtemp.tempno, qoneword(n->Qtemp.qtype));
+        break;
+    case ASTN_QTYPE:
+        eprintf("QTYPE: %s\n", qoneword(n));
         break;
     case ASTN_NOOP:
         eprintf("(NOOP)\n");
