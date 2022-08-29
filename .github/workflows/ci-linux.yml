@@ -20,7 +20,7 @@ jobs:
       run: |
         pip3 install -q -r requirements.txt
         sudo apt-get update -qqq
-        sudo apt-get install -yqqq flex bison
+        sudo apt-get install -yqqq flex bison clang llvm
 
     - name: Make dcc
       run: scons dcc

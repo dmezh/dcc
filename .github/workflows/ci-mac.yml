@@ -19,9 +19,11 @@ jobs:
     - name: Prepare test - get packages
       run: |
         pip3 install -q -r requirements.txt
-        brew install llvm flex bison
+        brew install llvm flex bison llvm
+        brew info llvm
         echo "/usr/local/opt/bison/bin" >> $GITHUB_PATH
         echo "/usr/local/opt/flex/bin" >> $GITHUB_PATH
+        echo "/usr/local/opt/llvm/bin" >> $GITHUB_PATH
 
     - name: Make dcc
       run: scons dcc
