@@ -2,10 +2,8 @@
 
 #include "ast.h"
 #include "ir.h"
-#include "ir_arithmetic.h"
-#include "ir_print.h"
 #include "ir_util.h"
-#include "ir_state.h"
+#include "ir_types.h"
 #include "lexer.h" // for print_context
 #include "util.h"
 

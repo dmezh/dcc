@@ -3,7 +3,7 @@
 
 #include "ast.h"
 #include "symtab.h"
-#include "ir_types.h"
+#include "ir_defs.h"
 
 struct astn_list;
 struct quad {

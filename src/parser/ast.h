@@ -7,7 +7,7 @@
 #ifndef AST_H
 #define AST_H
 
-#include "ir_types.h"
+#include "ir_defs.h"
 #include "location.h"
 #include "macro_util.h"
 #include "semval.h"

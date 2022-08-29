@@ -1,7 +1,9 @@
 #include "ir_print.h"
 
 #include "ir.h"
-#include "ir_state.h"
+#include "ir_state.h" // to be removed
+#include "ir_types.h"
+#include "ir_util.h"
 
 #include "ast.h"
 #include "symtab.h"

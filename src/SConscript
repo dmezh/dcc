@@ -19,6 +19,7 @@ dcc_sources = [
     "ir/ir_arithmetic.c",
     "ir/ir_loadstore.c",
     "ir/ir_print.c",
+    "ir/ir_types.c",
     "ir/ir_util.c",
 
     "main.c"

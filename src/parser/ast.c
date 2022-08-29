@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "ir_types.h"
+#include "ir_defs.h"
 #include "symtab.h"
 #include "util.h"
 

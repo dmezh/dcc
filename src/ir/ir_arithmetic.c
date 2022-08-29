@@ -1,7 +1,7 @@
 #include "ir_arithmetic.h"
 
 #include "ir.h"
-#include "ir_print.h"
+#include "ir_types.h"
 #include "ir_util.h"
 #include "parser.tab.h"
 

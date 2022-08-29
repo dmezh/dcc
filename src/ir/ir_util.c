@@ -52,6 +52,21 @@ astn new_qtemp(astn qtype) {
 }
 
 /**
+ * Prepare target by allocating if necessary.
+ * We don't always need a target, so this is split off
+ * (e.g. ASTN_NUM).
+ */
+astn qprepare_target(astn target, astn qtype) {
+    if (!target) {
+        target = new_qtemp(qtype);
+    } else {
+        // left for debug
+    }
+
+    return target;
+}
+
+/**
  * Get last quad in basic block.
  */
 quad last_in_bb(BB b) {
