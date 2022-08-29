@@ -23,7 +23,13 @@ void quad_print_blankline(void) {
     qprintf("\n");
 }
 
-const char *qoneword(const_astn a) {
+const char *qonewordt(astn a) {
+    char *ret;
+    asprintf(&ret, "%s %s", qoneword(get_qtype(a)), qoneword(a));
+    return ret;
+}
+
+const char *qoneword(astn a) {
     char *ret;
 
     if (!a) die("gave null astn to quad_print?");
@@ -42,12 +48,29 @@ const char *qoneword(const_astn a) {
             break;
 
         case ASTN_QTYPE:
-            asprintf(&ret, "%s", ir_type_str[a->Qtype.qtype]);
+            if (ir_type_matches(a, IR_arr)) {
+                // we're going to stop at the first non-array type.
+                ast_check(a->Qtype.derived_type, ASTN_TYPE, "");
+                if (!a->Qtype.derived_type->Type.derived.size)
+                    die("Expected array to have size.");
+                if (!a->Qtype.derived_type->Type.derived.target)
+                    die("Expected array to have target.");
+
+                asprintf(&ret, "[%s x %s]", qoneword(ir_dtype(a)->Type.derived.size), qoneword(get_qtype(ir_dtype(a)->Type.derived.target)));
+            } else {
+                asprintf(&ret, "%s", ir_type_str[ir_type(a)]);
+            }
             break;
 
         case ASTN_NUM: // needs work for correctness, print numbers as intended
             asprintf(&ret, "%d", (int)a->Num.number.integer);
             break;
+
+        case ASTN_TYPE:
+            return qoneword(get_qtype(a));
+
+        case ASTN_SYMPTR:
+            return a->Symptr.e->ident;
 
         default:
             qunimpl(a, "Unable to get oneword for astn :(");
@@ -64,7 +87,7 @@ void quad_print(quad first) {
         case IR_OP_ALLOCA:
             qprintf("    %s = alloca %s\n",
                     qoneword(first->target),
-                    qoneword(first->target->Qtemp.qtype));
+                    qoneword(ir_dtype(first->target)));
             break;
 
         case IR_OP_RETURN:
@@ -99,6 +122,20 @@ void quad_print(quad first) {
                     qoneword(first->src2));
             break;
 
+        case IR_OP_GEP:
+            qprintf("    %s = getelementptr %s, %s, %s",
+                    qoneword(first->target),
+                    qoneword(ir_dtype(first->src1)),
+                    qonewordt(first->src1),
+                    qonewordt(first->src2));
+
+            if (first->src3)
+                qprintf(", %s", qonewordt(first->src3));
+
+            qprintf("\n");
+
+            break;
+
         default:
             die("Unhandled quad in quad_print");
             break;
@@ -110,7 +147,7 @@ void quads_dump_llvm(FILE *o) {
 
     // fix for multiple bbs
 
-    qprintf("define %s @%s() {\n", ir_type_str[get_qtype(irst.bb->fn->type->Type.derived.target)->Qtype.qtype], irst.bb->fn->ident);
+    qprintf("define %s @%s() {\n", ir_type_str[ir_type(irst.bb->fn->type->Type.derived.target)], irst.bb->fn->ident);
 
     quad q = irst.bb->first;
     while (q) {

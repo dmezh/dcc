@@ -3,6 +3,10 @@
 
 #include "ast.h"
 
-astn get_qtype(const_astn t);
+bool is_integer(astn a);
+ir_type_E ir_type(astn a);
+astn ir_dtype(astn t);
+bool ir_type_matches(astn a, ir_type_E t);
+astn get_qtype(astn t);
 
 #endif

@@ -361,7 +361,7 @@ astn qtemp_alloc(int tempno, astn qtype) {
  */
 astn qtype_alloc(ir_type_E t) {
     astn q = astn_alloc(ASTN_QTYPE);
-    q->Qtype.qtype = t;
+    q->Qtype.ir_type = t;
     q->Qtype.derived_type = NULL;
     return q;
 }

@@ -78,7 +78,7 @@ quad last_in_bb(BB b) {
     return q;
 }
 
-quad emit(ir_op_E op, astn target, astn src1, astn src2) {
+quad emit4(ir_op_E op, astn target, astn src1, astn src2, astn src3) {
     quad q = safe_calloc(1, sizeof(struct quad));
 
     *q = (struct quad){
@@ -88,6 +88,7 @@ quad emit(ir_op_E op, astn target, astn src1, astn src2) {
         .target = target,
         .src1 = src1,
         .src2 = src2,
+        .src3 = src3,
     };
 
     if (!irst.bb->first) {
@@ -100,4 +101,8 @@ quad emit(ir_op_E op, astn target, astn src1, astn src2) {
     }
 
     return q;
+}
+
+quad emit(ir_op_E op, astn target, astn src1, astn src2) {
+    return emit4(op, target, src1, src2, NULL);
 }

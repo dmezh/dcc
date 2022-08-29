@@ -9,6 +9,7 @@ typedef enum {
     IR_OP_LOAD,
     IR_OP_STORE,
     IR_OP_RETURN,
+    IR_OP_GEP,
 
     IR_OP_ADD,
 
@@ -18,12 +19,15 @@ typedef enum {
 typedef enum {
     IR_TYPE_UNDEF = 0,
 
+    IR_arr,
     IR_ptr,
 
+    IR_TYPE_INTEGER_MIN,
     IR_i8,
     IR_i16,
     IR_i32,
     IR_i64,
+    IR_TYPE_INTEGER_MAX,
 
     IR_TYPE_COUNT,
 } ir_type_E;
@@ -36,6 +40,7 @@ static const char *ir_op_str[IR_OP_COUNT] = {
     [IR_OP_LOAD] = "load",
     [IR_OP_STORE] = "store",
     [IR_OP_RETURN] = "ret",
+    [IR_OP_GEP] = "getelementptr",
 
     [IR_OP_ADD]    = "add",
 };

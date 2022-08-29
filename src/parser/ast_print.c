@@ -4,13 +4,14 @@
 
 #include "ast.h"
 #include "charutil.h"
+#include "ir_print.h"
 #include "parser.tab.h"
 #include "symtab.h"
 
 /*
  * Recursively dump AST, starting at n and ending when we can't go any deeper.
  */
-void print_ast(const_astn n) {
+void print_ast(astn n) {
     static int tabs = 0;     //     -> __ <- two spaces
     for (int i=0; i<tabs-1; i++) eprintf("  ");
     if (tabs > 0) eprintf(" `");
@@ -434,6 +435,12 @@ void print_ast(const_astn n) {
         } else
             eprintf("DEFAULT:\n");
         print_ast(n->Case.statement);
+        break;
+    case ASTN_QTEMP:
+        eprintf("%%%d %s\n", n->Qtemp.tempno, qoneword(n->Qtemp.qtype));
+        break;
+    case ASTN_QTYPE:
+        eprintf("QTYPE: %s\n", qoneword(n));
         break;
     case ASTN_NOOP:
         eprintf("(NOOP)\n");

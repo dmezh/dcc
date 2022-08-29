@@ -12,30 +12,22 @@
  */
 astn gen_load(astn a, astn target) {
     // assuming local non-parameter variables right now.
-    astn addr = NULL;
+    astn addr = a;
 
     switch (a->type) {
-        case ASTN_SYMPTR:
-            // addr = a->Symptr.e->ptr_qtemp;
-            addr = gen_lvalue(a);
-            break;
-
-        case ASTN_UNOP:
-            addr = gen_lvalue(a);
+        case ASTN_QTEMP:
             break;
 
         default:
-            qunimpl(a, "Bizarre type to try to load...");
+            qunimpl(a, "Unexpected non-qtemp astn in gen_load!");
     }
 
-    if (get_qtype(addr)->Qtype.qtype != IR_ptr) {
-       qerror("Dereferenced non-pointer object!");
+    if (!ir_type_matches(addr, IR_ptr)) {
+       qunimpl(addr, "Dereferenced non-pointer object!");
     }
 
-    target = qprepare_target(target, get_qtype(a));
+    target = qprepare_target(target, get_qtype(ir_dtype(addr)));
 
-    // may need revision for globals
-    ast_check(addr, ASTN_QTEMP, "Expected qtemp for loading!");
     emit(IR_OP_LOAD, target, addr, NULL);
     return target;
 }
@@ -47,7 +39,6 @@ astn gen_lvalue(astn a) {
     switch (a->type) {
         case ASTN_SYMPTR:;
             astn n = a->Symptr.e->ptr_qtemp;
-            n->Qtemp.qtype = get_qtype(n);
             return n;
 
         case ASTN_NUM:
@@ -60,6 +51,9 @@ astn gen_lvalue(astn a) {
 
             astn l = gen_rvalue(a->Unop.target, NULL); // get the rvalue of the target
             return l;
+
+        case ASTN_QTEMP:
+            return gen_rvalue(a, NULL);
 
         default:
             qunimpl(a, "Unimplemented astn kind for gen_lvalue!");

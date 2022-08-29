@@ -244,7 +244,7 @@ struct astn_qbbno {
 };
 
 struct astn_qtype {
-    ir_type_E qtype;
+    ir_type_E ir_type;
     struct astn *derived_type;
 };
 

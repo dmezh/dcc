@@ -20,29 +20,59 @@ struct ir_state irst = {
 };
 
 
-astn ptr_target(astn a) {
+astn gen_indirection(astn a) {
+    ast_check(a, ASTN_UNOP, "");
+    if (a->Unop.op != '*')
+        die("Passed wrong unop type to gen_indirection");
+
+    astn targ_rval = gen_rvalue(a->Unop.target, NULL);
+
+    if (!ir_type_matches(targ_rval, IR_ptr))
+        qerror("Object to be dereferenced is not a pointer.");
+
+    // if the operand points to a function, the result is a function designator.
+    // TODO
+
+    // if it points to an object, the result is an lvalue designating the object.
+    return gen_lvalue(targ_rval);
+}
+
+astn lvalue_to_rvalue(astn a, astn target) {
     switch (a->type) {
-        case ASTN_SYMPTR:
-            return ptr_target(a->Symptr.e->type);
+        case ASTN_QTEMP:;
+            astn obj_type = ir_dtype(a); // e.g. a is alloca, obj_type is the array
+            obj_type = get_qtype(obj_type);
 
-        case ASTN_TYPE:
-            if (!a->Type.is_derived)
-                qunimpl(a, "Non-derived type given to ptr_target!");
+            if (ir_type_matches(obj_type, IR_arr)) {
 
-            return (a->Type.derived.target);
+                // decay the underlying type
+                // ptr -> array[...]
+                // to
+                // ptr -> ...
+                astn arr = ir_dtype(obj_type);
+                ast_check(arr, ASTN_TYPE, "");
 
-        case ASTN_UNOP:
-            if (a->Unop.op != '*')
-                qunimpl(a, "Non-derived type given to ptr_target!");
+                astn arr_targ = arr->Type.derived.target;
 
-            return (a->Unop.target);
+                astn ptr_type = qtype_alloc(IR_ptr);
+                ptr_type->Qtype.derived_type = arr_targ;
+
+                if (target)
+                    die("why target non-null");
+
+                target = qprepare_target(target, ptr_type);
+                emit4(IR_OP_GEP, target, a, simple_constant_alloc(0), simple_constant_alloc(0));
+                return target;
+            }
+
+            return gen_load(a, target);
 
         default:
-            qunimpl(a, "Unsupported astn in ptr_target :(");
+            qunimpl(a, "Unsupported astn type for lvalue_to_rvalue!");
     }
 }
 
-astn gen_rvalue(astn a, astn target) {
+static astn _gen_rvalue(astn a, astn target) {
     switch (a->type) {
         case ASTN_NUM:
             return a;
@@ -54,23 +84,20 @@ astn gen_rvalue(astn a, astn target) {
                 case '-':
                     return gen_sub_rvalue(a, target);
                 default:
-                    qwarn("UH OH:\n");
-                    print_ast(a);
-                    die("Unhandled binop type for gen_rvalue :(");
+                    qunimpl(a, "Unhandled binop type for gen_rvalue :(");
             }
-            die("Unreachable");
 
         case ASTN_UNOP:
             switch (a->Unop.op) {
                 case '*':
-                    return gen_load(a, target);
+                    return lvalue_to_rvalue(gen_indirection(a), target);
 
                 default:
                     qunimpl(a, "Unhandled unop in gen_rvalue :(");
             }
 
-        case ASTN_SYMPTR: // loading!
-            return gen_load(a, target);
+        case ASTN_SYMPTR:
+           return lvalue_to_rvalue(gen_lvalue(a), target);
 
         case ASTN_QTEMP:
             return a;
@@ -80,6 +107,11 @@ astn gen_rvalue(astn a, astn target) {
     }
 
     qunimpl(a, "Unimplemented astn in gen_rvalue :(");
+}
+
+astn gen_rvalue(astn a, astn target) {
+    astn r = _gen_rvalue(a, target);
+    return r;
 }
 
 void gen_quads(astn a) {
@@ -154,7 +186,6 @@ void gen_fn(sym e) {
     const_quad const last = last_in_bb(irst.bb);
     if (!last || last->op != IR_OP_RETURN) {
         if (!strcmp(irst.fn->ident, "main")) {
-            qwarn("Detected implicit return\n");
             emit(IR_OP_RETURN, NULL, gen_rvalue(simple_constant_alloc(0), NULL), NULL);
         }
     }
