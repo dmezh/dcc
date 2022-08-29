@@ -29,7 +29,7 @@ const char *qonewordt(astn a) {
     return ret;
 }
 
-const char *qoneword(const_astn a) {
+const char *qoneword(astn a) {
     char *ret;
 
     if (!a) die("gave null astn to quad_print?");
@@ -65,6 +65,12 @@ const char *qoneword(const_astn a) {
         case ASTN_NUM: // needs work for correctness, print numbers as intended
             asprintf(&ret, "%d", (int)a->Num.number.integer);
             break;
+
+        case ASTN_TYPE:
+            return qoneword(get_qtype(a));
+
+        case ASTN_SYMPTR:
+            return a->Symptr.e->ident;
 
         default:
             qunimpl(a, "Unable to get oneword for astn :(");
@@ -117,9 +123,16 @@ void quad_print(quad first) {
             break;
 
         case IR_OP_GEP:
-            qprintf("    getelementptr %s, %s\n",
+            qprintf("    %s = getelementptr %s, %s, %s",
+                    qoneword(first->target),
                     qoneword(get_qtype(first->target)->Qtype.derived_type),
-                    qonewordt(first->src1));
+                    qonewordt(first->src1),
+                    qonewordt(first->src2));
+
+            if (first->src3)
+                qprintf(", %s", qonewordt(first->src3));
+
+            qprintf("\n");
 
             break;
 

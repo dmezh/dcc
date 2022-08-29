@@ -11,7 +11,7 @@
 /*
  * Recursively dump AST, starting at n and ending when we can't go any deeper.
  */
-void print_ast(const_astn n) {
+void print_ast(astn n) {
     static int tabs = 0;     //     -> __ <- two spaces
     for (int i=0; i<tabs-1; i++) eprintf("  ");
     if (tabs > 0) eprintf(" `");

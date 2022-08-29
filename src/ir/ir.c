@@ -89,7 +89,10 @@ static astn _gen_rvalue(astn a, astn target) {
                     qunimpl(a, "Unhandled unop in gen_rvalue :(");
             }
 
-        case ASTN_SYMPTR: // lvalue to rvalue conversion
+        case ASTN_SYMPTR: // decay array symbols to pointers.
+            if (a->Symptr.e->type->Type.is_derived && a->Symptr.e->type->Type.derived.type == t_ARRAY)
+                return try_decay(a);
+
             return gen_load(a, target);
 
         case ASTN_QTEMP:
@@ -110,11 +113,28 @@ static astn _gen_rvalue(astn a, astn target) {
     the array object and is not an lvalue. If the array object has register storage class, the
     behavior is undefined.
 */
-astn try_decay(astn a) {
-    if (a->type != ASTN_QTEMP)
-        return a;
 
-    astn t = a->Qtemp.qtype;
+// try decay.
+// The expression must have qtemp type.
+astn try_decay(astn a) {
+    astn t;
+
+    switch (a->type) {
+        case ASTN_QTEMP:
+            t = a->Qtemp.qtype;
+            break;
+
+        case ASTN_SYMPTR:
+            t = get_qtype(gen_lvalue(a))->Qtype.derived_type;
+            a = gen_lvalue(a);
+            qwarn("********** Got:");
+            print_ast(t);
+            break;
+
+        default:
+            return a;
+    }
+
     if (t->Qtype.qtype != IR_arr)
         return a;
 
@@ -125,16 +145,19 @@ astn try_decay(astn a) {
     if (!t->Qtype.derived_type->Type.is_derived)
         die("Expected derived type for qtemp with IR type arr!");
 
-    astn targ = t->Qtype.derived_type->Type.derived.target;
-    t->Qtype.derived_type = targ;
-    t->Qtype.qtype = IR_ptr;
-    //astn ptr = new_qtemp(qtype_alloc(IR_ptr));
-    //ptr->Qtemp.qtype->Qtype.derived_type = targ;
-    emit(IR_OP_GEP, t, simple_constant_alloc(0), simple_constant_alloc(0));
+    astn targ = t->Qtype.derived_type;
+    astn ptr = new_qtemp(qtype_alloc(IR_ptr));
+    ptr->Qtemp.qtype->Qtype = (struct astn_qtype){
+        .derived_type = targ,
+        .qtype = IR_ptr,
+    };
+    //t->Qtype.derived_type = targ;
+    //t->Qtype.qtype = IR_ptr;
+    emit4(IR_OP_GEP, ptr, a, simple_constant_alloc(0), simple_constant_alloc(0));
 
-    return a;
+    return ptr;
 }
-
+*/
 astn gen_rvalue(astn a, astn target) {
     astn r = _gen_rvalue(a, target);
     qwarn("Before decay:\n");

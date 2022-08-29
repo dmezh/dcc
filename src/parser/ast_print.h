@@ -3,6 +3,6 @@
 
 #include "ast.h"
 
-void print_ast(const_astn n);
+void print_ast(astn n);
 
 #endif
