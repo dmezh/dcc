@@ -57,6 +57,9 @@ astn get_qtype(astn t) {
                 case s_LONG:
                     ret = IR_i64;
                     break;
+                case s_LONGLONG:
+                    ret = IR_i64;
+                    break;
                 case s_CHARLIT:
                     ret = IR_i8;
                     break;
@@ -90,6 +93,9 @@ astn get_qtype(astn t) {
                         ret = IR_i32;
                         break;
                     case t_LONG:
+                        ret = IR_i64;
+                        break;
+                    case t_LONGLONG:
                         ret = IR_i64;
                         break;
                     case t_CHAR:

@@ -110,7 +110,7 @@ void quad_print(quad first) {
         case IR_OP_STORE:
             ast_check(first->target, ASTN_QTEMP, "");
             qprintf("    store %s %s, ptr %s\n",
-                    qoneword(get_qtype(first->src1)),
+                    qoneword(get_qtype(ir_dtype(first->target))),
                     qoneword(first->src1),
                     qoneword(first->target));
             break;
