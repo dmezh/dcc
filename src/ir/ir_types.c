@@ -4,6 +4,26 @@
 #include "ir_arithmetic.h"
 #include "ir_util.h"
 
+bool is_integer(astn a) {
+    if (a->type != ASTN_QTYPE)
+        return is_integer(get_qtype(a));
+
+    ir_type_E t = a->Qtype.qtype;
+
+    return IR_TYPE_INTEGER_MIN < t && t < IR_TYPE_INTEGER_MAX;
+}
+
+ir_type_E ir_type(astn a) {
+    if (a->type != ASTN_QTYPE)
+        return ir_type(get_qtype(a));
+
+    return a->Qtype.qtype;
+}
+
+bool ir_type_matches(astn a, ir_type_E t) {
+    return ir_type(a) == t;
+}
+
 /**
  * Get the ASTN_QTYPE for the given node.
  */

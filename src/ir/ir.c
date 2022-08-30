@@ -60,7 +60,61 @@ static astn lvalue_to_rvalue(astn a, astn target) {
 }
 */
 
+astn gen_indirection(astn a) {
+    ast_check(a, ASTN_UNOP, "");
+    if (a->Unop.op != '*')
+        die("Passed wrong unop type to gen_indirection");
+
+    astn targ_rval = gen_rvalue(a->Unop.target, NULL);
+
+    if (!ir_type_matches(targ_rval, IR_ptr))
+        qerror("Object to be dereferenced is not a pointer.");
+
+    // if the operand points to a function, the result is a function designator.
+    // TODO
+
+    // if it points to an object, the result is an lvalue designating the object.
+    return gen_lvalue(targ_rval);
+}
+
+astn lvalue_to_rvalue(astn a, astn target) {
+    switch (a->type) {
+        case ASTN_QTEMP:;
+            astn obj_type = get_qtype(a)->Qtype.derived_type; // e.g. a is alloca, obj_type is the array
+            obj_type = get_qtype(obj_type);
+
+            if (ir_type_matches(obj_type, IR_arr)) {
+
+                // decay the underlying type
+                // ptr -> array[...]
+                // to
+                // ptr -> ...
+                astn arr = obj_type->Qtype.derived_type;
+                ast_check(arr, ASTN_TYPE, "");
+
+                astn arr_targ = arr->Type.derived.target;
+
+                astn ptr_type = qtype_alloc(IR_ptr);
+                ptr_type->Qtype.derived_type = arr_targ;
+
+                if (target)
+                    die("why target non-null");
+
+                target = qprepare_target(target, ptr_type);
+                emit4(IR_OP_GEP, target, a, simple_constant_alloc(0), simple_constant_alloc(0));
+                return target;
+            }
+
+            return gen_load(a, target);
+
+        default:
+            qunimpl(a, "Unsupported astn type for lvalue_to_rvalue!");
+    }
+}
+
 static astn _gen_rvalue(astn a, astn target) {
+    //a = try_decay(a);
+
     switch (a->type) {
         case ASTN_NUM:
             return a;
@@ -83,14 +137,14 @@ static astn _gen_rvalue(astn a, astn target) {
                 case '*':
                     qwarn("Unop deref\n");
                     print_ast(a);
-                    return gen_load(a, target);
+                    return lvalue_to_rvalue(gen_indirection(a), target);
 
                 default:
                     qunimpl(a, "Unhandled unop in gen_rvalue :(");
             }
 
         case ASTN_SYMPTR:
-           return gen_load(a, target);
+           return lvalue_to_rvalue(gen_lvalue(a), target);
 
         case ASTN_QTEMP:
             return a;
@@ -113,6 +167,7 @@ static astn _gen_rvalue(astn a, astn target) {
 
 // try decay.
 // The expression must have qtemp type.
+/*
 astn try_decay(astn a) {
     astn t;
 
@@ -147,13 +202,29 @@ astn try_decay(astn a) {
 
     return ptr;
 }
+*/
+/*
+astn try_decay(astn a) {
+    astn t;
 
+    switch (a->type) {
+        case ASTN_QTEMP:
+            t = get_qtype(a);
+            break;
+
+        default:
+            return a;
+    }
+
+    if (!ir_type_matches(t, IR_ptr)
+}
+*/
 astn gen_rvalue(astn a, astn target) {
     astn r = _gen_rvalue(a, target);
     qwarn("Before decay:\n");
     if (r->type == ASTN_QTEMP && r->Qtemp.qtype->Qtype.derived_type)
         print_ast(r->Qtemp.qtype->Qtype.derived_type), print_ast(r);
-    r = try_decay(r);
+//    r = try_decay(r);
     qwarn("After decay:\n");
     if (r->type == ASTN_QTEMP && r->Qtemp.qtype->Qtype.derived_type)
         print_ast(r->Qtemp.qtype->Qtype.derived_type), print_ast(r);

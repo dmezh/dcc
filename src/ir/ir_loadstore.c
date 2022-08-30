@@ -12,30 +12,11 @@
  */
 astn gen_load(astn a, astn target) {
     // assuming local non-parameter variables right now.
-    astn addr = NULL;
-
-        /*
-    if (get_qtype(a)->Qtype.qtype == IR_arr) {
-    //if (a->Symptr.e->type->Type.is_derived && a->Symptr.e->type->Type.derived.type == t_ARRAY) {
-                astn addr = gen_lvalue(a);
-                // we have the address. Now we lea it.
-
-                astn arr = new_qtemp(qtype_alloc(IR_ptr));
-                arr->Qtemp.qtype->Qtype.derived_type = get_qtype(a)->Qtype.derived_type->Type.derived.target;
-
-                emit4(IR_OP_GEP, arr, addr, simple_constant_alloc(0), simple_constant_alloc(0));
-
-                return arr;
-            return gen_lvalue(a);
-        }
-                */
-
+    astn addr = a;
 
     switch (a->type) {
         case ASTN_SYMPTR:
-            // for arrays (and function names, ...), return pointer directly
-            addr = gen_lvalue(a);
-
+            die("");
             {
                 astn t = a->Symptr.e->type;
                 if (t->Type.is_derived && t->Type.derived.type == t_ARRAY) {
@@ -53,11 +34,10 @@ astn gen_load(astn a, astn target) {
             break;
 
         case ASTN_UNOP:
-            addr = gen_lvalue(a);
+            die("");
             break;
 
         case ASTN_QTEMP:
-            addr = gen_rvalue(a, NULL);
             break;
 
         default:
@@ -96,6 +76,9 @@ astn gen_lvalue(astn a) {
 
             astn l = gen_rvalue(a->Unop.target, NULL); // get the rvalue of the target
             return l;
+
+        case ASTN_QTEMP:
+            return gen_rvalue(a, NULL);
 
         default:
             qunimpl(a, "Unimplemented astn kind for gen_lvalue!");
