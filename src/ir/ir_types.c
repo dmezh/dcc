@@ -8,18 +8,34 @@ bool is_integer(astn a) {
     if (a->type != ASTN_QTYPE)
         return is_integer(get_qtype(a));
 
-    ir_type_E t = a->Qtype.qtype;
+    ir_type_E t = ir_type(a);
 
     return IR_TYPE_INTEGER_MIN < t && t < IR_TYPE_INTEGER_MAX;
 }
 
+/**
+ * Returns qtype's ir_type.
+ */
 ir_type_E ir_type(astn a) {
     if (a->type != ASTN_QTYPE)
         return ir_type(get_qtype(a));
 
-    return a->Qtype.qtype;
+    return a->Qtype.ir_type;
 }
 
+/**
+ * Returns qtype's derived_type.
+ */
+astn ir_dtype(astn t) {
+    if (t->type != ASTN_QTYPE)
+        return ir_dtype(get_qtype(t));
+
+    return get_qtype(t)->Qtype.derived_type;
+}
+
+/**
+ * Do the ir_types match exactly?
+ */
 bool ir_type_matches(astn a, ir_type_E t) {
     return ir_type(a) == t;
 }
@@ -90,15 +106,6 @@ astn get_qtype(astn t) {
             q->Qtype.derived_type = ret_der;
             return q;
 
-        case ASTN_BINOP:
-            // get resultant type
-            // for now, just return i32 if it's arithmetic
-            die("Tried to get type of binop!");
-            if (type_is_arithmetic(t))
-                return qtype_alloc(IR_i32);
-            else
-                qunimpl(t, "Haven't implemented non-arithmetic binops");
-
         case ASTN_QTEMP:
             return t->Qtemp.qtype;
 
@@ -139,10 +146,11 @@ astn get_qtype(astn t) {
                     qunimpl(utarget, "Invalid target of unop deref in get_qtype");
             }
 
+        case ASTN_BINOP:
+            qunimpl(t, "Tried to get type of binop!");
+
         default:
             qunimpl(t, "Unimplemented astn type in get_qtype :(");
     }
-
-    die("Unreachable");
 }
 

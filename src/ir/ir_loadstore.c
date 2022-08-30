@@ -44,11 +44,11 @@ astn gen_load(astn a, astn target) {
             qunimpl(a, "Bizarre type to try to load...");
     }
 
-    if (get_qtype(addr)->Qtype.qtype != IR_ptr) {
+    if (!ir_type_matches(addr, IR_ptr)) {
        qunimpl(addr, "Dereferenced non-pointer object!");
     }
 
-    target = qprepare_target(target, get_qtype(get_qtype(addr)->Qtype.derived_type));
+    target = qprepare_target(target, get_qtype(ir_dtype(addr)));
 
     // may need revision for globals
     ast_check(addr, ASTN_QTEMP, "Expected qtemp for loading!");

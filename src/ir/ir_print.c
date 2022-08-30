@@ -48,7 +48,7 @@ const char *qoneword(astn a) {
             break;
 
         case ASTN_QTYPE:
-            if (a->Qtype.qtype == IR_arr) {
+            if (ir_type_matches(a, IR_arr)) {
                 // we're going to stop at the first non-array type.
                 ast_check(a->Qtype.derived_type, ASTN_TYPE, "");
                 if (!a->Qtype.derived_type->Type.derived.size)
@@ -56,9 +56,9 @@ const char *qoneword(astn a) {
                 if (!a->Qtype.derived_type->Type.derived.target)
                     die("Expected array to have target.");
 
-                asprintf(&ret, "[%s x %s]", qoneword(a->Qtype.derived_type->Type.derived.size), qoneword(get_qtype(a->Qtype.derived_type->Type.derived.target)));
+                asprintf(&ret, "[%s x %s]", qoneword(ir_dtype(a)->Type.derived.size), qoneword(get_qtype(ir_dtype(a)->Type.derived.target)));
             } else {
-                asprintf(&ret, "%s", ir_type_str[a->Qtype.qtype]);
+                asprintf(&ret, "%s", ir_type_str[ir_type(a)]);
             }
             break;
 
@@ -87,7 +87,7 @@ void quad_print(quad first) {
         case IR_OP_ALLOCA:
             qprintf("    %s = alloca %s\n",
                     qoneword(first->target),
-                    qoneword(first->target->Qtemp.qtype->Qtype.derived_type));
+                    qoneword(ir_dtype(first->target)));
             break;
 
         case IR_OP_RETURN:
@@ -125,7 +125,7 @@ void quad_print(quad first) {
         case IR_OP_GEP:
             qprintf("    %s = getelementptr %s, %s, %s",
                     qoneword(first->target),
-                    qoneword(get_qtype(first->src1)->Qtype.derived_type),
+                    qoneword(ir_dtype(first->src1)),
                     qonewordt(first->src1),
                     qonewordt(first->src2));
 
@@ -147,7 +147,7 @@ void quads_dump_llvm(FILE *o) {
 
     // fix for multiple bbs
 
-    qprintf("define %s @%s() {\n", ir_type_str[get_qtype(irst.bb->fn->type->Type.derived.target)->Qtype.qtype], irst.bb->fn->ident);
+    qprintf("define %s @%s() {\n", ir_type_str[ir_type(irst.bb->fn->type->Type.derived.target)], irst.bb->fn->ident);
 
     quad q = irst.bb->first;
     while (q) {
