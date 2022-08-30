@@ -124,9 +124,9 @@ astn get_qtype(astn t) {
                 case ASTN_SYMPTR:;
                     n = get_qtype(utarget); // should be ptr, PTR TO int
 
-                    if (n->Qtype.derived_type) {
-                        ast_check(n->Qtype.derived_type, ASTN_TYPE, "");
-                        return get_qtype(n->Qtype.derived_type);
+                    if (ir_dtype(n)) {
+                        ast_check(ir_dtype(n), ASTN_TYPE, "");
+                        return get_qtype(ir_dtype(n));
                     } else {
                         qerror("Dereferenced non-pointer symbol!");
                     }
@@ -136,10 +136,10 @@ astn get_qtype(astn t) {
                 case ASTN_UNOP:;
                     n = get_qtype(utarget); // recurse and get end
 
-                    if (n->Qtype.derived_type->Type.is_derived)
-                        n->Qtype.derived_type = get_qtype(n->Qtype.derived_type->Type.derived.target);
+                    if (ir_dtype(n)->Type.is_derived)
+                        n->Qtype.derived_type = get_qtype(ir_dtype(n)->Type.derived.target);
                     else // not derived!
-                        n = get_qtype(n->Qtype.derived_type);
+                        n = get_qtype(ir_dtype(n));
                     return n;
 
                 default:

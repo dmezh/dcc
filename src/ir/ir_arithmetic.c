@@ -74,8 +74,6 @@ bool type_is_arithmetic(astn a) {
         default:
             qunimpl(a, "Unsupported astn for type_is_arithmetic :(");
     }
-
-    die("Unreachable");
 }
 
 astn gen_pointer_addition(astn ptr, astn i, astn target) {
@@ -122,11 +120,9 @@ astn gen_add_rvalue(astn a, astn target) {
         return target;
 
     } else if (l_is_integer && r_is_pointer) {
-        qwarn("Got integer + ptr");
         return gen_pointer_addition(r, l, target);
 
     } else if (l_is_pointer && r_is_integer) {
-        qwarn("Got ptr + integer");
         return gen_pointer_addition(l, r, target);
 
     } else {

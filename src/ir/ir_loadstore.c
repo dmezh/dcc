@@ -15,33 +15,11 @@ astn gen_load(astn a, astn target) {
     astn addr = a;
 
     switch (a->type) {
-        case ASTN_SYMPTR:
-            die("");
-            {
-                astn t = a->Symptr.e->type;
-                if (t->Type.is_derived && t->Type.derived.type == t_ARRAY) {
-                    astn ptr_type = qtype_alloc(IR_ptr);
-                    // say addr has QTYPE [10 x i32]. ptr should have qtype ptr to i32.
-                    astn targ_of_array = t->Type.derived.target;
-
-                    ptr_type->Qtype.derived_type = targ_of_array;
-
-                    astn ptr = new_qtemp(ptr_type);
-                    emit4(IR_OP_GEP, ptr, addr, simple_constant_alloc(0), simple_constant_alloc(0));
-                    return ptr;
-                }
-            }
-            break;
-
-        case ASTN_UNOP:
-            die("");
-            break;
-
         case ASTN_QTEMP:
             break;
 
         default:
-            qunimpl(a, "Bizarre type to try to load...");
+            qunimpl(a, "Unexpected non-qtemp astn in gen_load!");
     }
 
     if (!ir_type_matches(addr, IR_ptr)) {
@@ -50,8 +28,6 @@ astn gen_load(astn a, astn target) {
 
     target = qprepare_target(target, get_qtype(ir_dtype(addr)));
 
-    // may need revision for globals
-    ast_check(addr, ASTN_QTEMP, "Expected qtemp for loading!");
     emit(IR_OP_LOAD, target, addr, NULL);
     return target;
 }
@@ -63,7 +39,6 @@ astn gen_lvalue(astn a) {
     switch (a->type) {
         case ASTN_SYMPTR:;
             astn n = a->Symptr.e->ptr_qtemp;
-            //n->Qtemp.qtype = n->Qtemp.qtype->Qtype.derived_type;
             return n;
 
         case ASTN_NUM:

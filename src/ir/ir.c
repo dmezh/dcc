@@ -73,8 +73,6 @@ astn lvalue_to_rvalue(astn a, astn target) {
 }
 
 static astn _gen_rvalue(astn a, astn target) {
-    //a = try_decay(a);
-
     switch (a->type) {
         case ASTN_NUM:
             return a;
@@ -86,17 +84,12 @@ static astn _gen_rvalue(astn a, astn target) {
                 case '-':
                     return gen_sub_rvalue(a, target);
                 default:
-                    qwarn("UH OH:\n");
-                    print_ast(a);
-                    die("Unhandled binop type for gen_rvalue :(");
+                    qunimpl(a, "Unhandled binop type for gen_rvalue :(");
             }
-            die("Unreachable");
 
         case ASTN_UNOP:
             switch (a->Unop.op) {
                 case '*':
-                    qwarn("Unop deref\n");
-                    print_ast(a);
                     return lvalue_to_rvalue(gen_indirection(a), target);
 
                 default:
@@ -193,7 +186,6 @@ void gen_fn(sym e) {
     const_quad const last = last_in_bb(irst.bb);
     if (!last || last->op != IR_OP_RETURN) {
         if (!strcmp(irst.fn->ident, "main")) {
-            qwarn("Detected implicit return\n");
             emit(IR_OP_RETURN, NULL, gen_rvalue(simple_constant_alloc(0), NULL), NULL);
         }
     }
