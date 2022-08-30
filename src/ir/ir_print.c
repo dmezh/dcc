@@ -125,7 +125,7 @@ void quad_print(quad first) {
         case IR_OP_GEP:
             qprintf("    %s = getelementptr %s, %s, %s",
                     qoneword(first->target),
-                    qoneword(get_qtype(first->target)->Qtype.derived_type),
+                    qoneword(get_qtype(first->src1)->Qtype.derived_type),
                     qonewordt(first->src1),
                     qonewordt(first->src2));
 

@@ -14,9 +14,42 @@ astn gen_load(astn a, astn target) {
     // assuming local non-parameter variables right now.
     astn addr = NULL;
 
+        /*
+    if (get_qtype(a)->Qtype.qtype == IR_arr) {
+    //if (a->Symptr.e->type->Type.is_derived && a->Symptr.e->type->Type.derived.type == t_ARRAY) {
+                astn addr = gen_lvalue(a);
+                // we have the address. Now we lea it.
+
+                astn arr = new_qtemp(qtype_alloc(IR_ptr));
+                arr->Qtemp.qtype->Qtype.derived_type = get_qtype(a)->Qtype.derived_type->Type.derived.target;
+
+                emit4(IR_OP_GEP, arr, addr, simple_constant_alloc(0), simple_constant_alloc(0));
+
+                return arr;
+            return gen_lvalue(a);
+        }
+                */
+
+
     switch (a->type) {
         case ASTN_SYMPTR:
+            // for arrays (and function names, ...), return pointer directly
             addr = gen_lvalue(a);
+
+            {
+                astn t = a->Symptr.e->type;
+                if (t->Type.is_derived && t->Type.derived.type == t_ARRAY) {
+                    astn ptr_type = qtype_alloc(IR_ptr);
+                    // say addr has QTYPE [10 x i32]. ptr should have qtype ptr to i32.
+                    astn targ_of_array = t->Type.derived.target;
+
+                    ptr_type->Qtype.derived_type = targ_of_array;
+
+                    astn ptr = new_qtemp(ptr_type);
+                    emit4(IR_OP_GEP, ptr, addr, simple_constant_alloc(0), simple_constant_alloc(0));
+                    return ptr;
+                }
+            }
             break;
 
         case ASTN_UNOP:

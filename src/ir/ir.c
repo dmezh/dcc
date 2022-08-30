@@ -89,11 +89,8 @@ static astn _gen_rvalue(astn a, astn target) {
                     qunimpl(a, "Unhandled unop in gen_rvalue :(");
             }
 
-        case ASTN_SYMPTR: // decay array symbols to pointers.
-            if (a->Symptr.e->type->Type.is_derived && a->Symptr.e->type->Type.derived.type == t_ARRAY)
-                return try_decay(a);
-
-            return gen_load(a, target);
+        case ASTN_SYMPTR:
+           return gen_load(a, target);
 
         case ASTN_QTEMP:
             return a;
@@ -124,13 +121,6 @@ astn try_decay(astn a) {
             t = a->Qtemp.qtype;
             break;
 
-        case ASTN_SYMPTR:
-            t = get_qtype(gen_lvalue(a))->Qtype.derived_type;
-            a = gen_lvalue(a);
-            qwarn("********** Got:");
-            print_ast(t);
-            break;
-
         default:
             return a;
     }
@@ -157,7 +147,7 @@ astn try_decay(astn a) {
 
     return ptr;
 }
-*/
+
 astn gen_rvalue(astn a, astn target) {
     astn r = _gen_rvalue(a, target);
     qwarn("Before decay:\n");
