@@ -136,6 +136,8 @@ void gen_quads(astn a) {
 
         case ASTN_BINOP:
         case ASTN_UNOP:
+        case ASTN_NUM:
+        case ASTN_STRLIT:
             qwarn("Warning: useless expression: ");
             print_ast(a);
             gen_rvalue(a, NULL);
