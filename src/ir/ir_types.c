@@ -134,7 +134,7 @@ astn get_qtype(astn t) {
                         ast_check(ir_dtype(n), ASTN_TYPE, "");
                         return get_qtype(ir_dtype(n));
                     } else {
-                        qerror("Dereferenced non-pointer symbol!");
+                        qerrorl(n, "Dereferenced non-pointer symbol!");
                     }
 
                     break;

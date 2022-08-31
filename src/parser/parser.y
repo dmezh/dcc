@@ -242,7 +242,6 @@ ident:
 constant:
     NUMBER                      {   $$=astn_alloc(ASTN_NUM);
                                     $$->Num.number=$1;
-                                    $$->context=@1;
                                 }
 ;
 
@@ -432,7 +431,6 @@ assign:
 |   unary_expr '=' assign       {   $$=astn_alloc(ASTN_ASSIGN);
                                     $$->Assign.left=$1;
                                     $$->Assign.right=$3;
-                                    $$->context = @2;
                                 }
 |   unary_expr TIMESEQ assign   {   $$=cassign_alloc('*', $1, $3);  }
 |   unary_expr DIVEQ assign     {   $$=cassign_alloc('/', $1, $3);  }

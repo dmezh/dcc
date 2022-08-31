@@ -16,8 +16,7 @@ astn gen_lvalue(astn a) {
             return n;
 
         case ASTN_NUM:
-            qprintcontext(a->context);
-            qerror("Expression is not assignable!");
+            qerrorl(a, "Expression is not assignable!");
 
         case ASTN_UNOP:
             return gen_indirection(a);
@@ -41,7 +40,7 @@ astn gen_indirection(astn a) {
     astn targ_rval = gen_rvalue(a->Unop.target, NULL);
 
     if (!ir_type_matches(targ_rval, IR_ptr))
-        qerror("Object to be dereferenced is not a pointer.");
+        qerrorl(a, "Object to be dereferenced is not a pointer.");
 
     // if the operand points to a function, the result is a function designator.
     // TODO
