@@ -99,6 +99,9 @@ static astn _gen_rvalue(astn a, astn target) {
                     qunimpl(a, "Unhandled unop in gen_rvalue :(");
             }
 
+        case ASTN_ASSIGN:
+            return gen_assign(a);
+
         case ASTN_SYMPTR:
            return lvalue_to_rvalue(gen_lvalue(a), target);
 
