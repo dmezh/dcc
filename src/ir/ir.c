@@ -14,9 +14,12 @@
 #include "types.h"
 #include "util.h"
 
+static struct BB root_bb = {0};
+static struct BBL root_bbl = {.me = &root_bb};
+
 struct ir_state irst = {
-    .root_bbl = &(struct BBL){0},
-    .bb = &(struct BB){0},
+    .root_bbl = &root_bbl,
+    .bb = &root_bb,
 };
 
 
@@ -153,6 +156,20 @@ void gen_quads(astn a) {
             print_ast(a);
             die("Unimplemented astn for quad generation");
     }
+}
+
+void gen_global(sym e) {
+    astn qtype = qtype_alloc(IR_ptr);
+
+    qtype->Qtype.derived_type = e->type;
+
+    astn qtemp = qtemp_alloc(-1, qtype);
+
+    // double-link them to each other
+    qtemp->Qtemp.global = symptr_alloc(e);
+    e->ptr_qtemp = qtemp;
+
+    emit(IR_OP_DEFGLOBAL, qtemp, NULL, NULL);
 }
 
 void gen_fn(sym e) {

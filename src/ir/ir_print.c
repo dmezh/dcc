@@ -40,7 +40,10 @@ const char *qoneword(astn a) {
             return qoneword(a);
 
         case ASTN_QTEMP:
-            asprintf(&ret, "%%%d", a->Qtemp.tempno);
+            if (a->Qtemp.global)
+                asprintf(&ret, "@%s", a->Qtemp.global->Symptr.e->ident);
+            else
+                asprintf(&ret, "%%%d", a->Qtemp.tempno);
             break;
 
         case ASTN_STRLIT:
@@ -100,19 +103,18 @@ void quad_print(quad first) {
             break;
 
         case IR_OP_LOAD:
-            qprintf("    %s = load %s, %s %s\n",
+            qprintf("    %s = load %s, %s\n",
                     qoneword(first->target),
                     qoneword(get_qtype(first->target)),
-                    qoneword(get_qtype(first->src1)),
-                    qoneword(first->src1));
+                    qonewordt(first->src1));
             break;
 
         case IR_OP_STORE:
             ast_check(first->target, ASTN_QTEMP, "");
-            qprintf("    store %s %s, ptr %s\n",
+            qprintf("    store %s %s, %s\n",
                     qoneword(get_qtype(ir_dtype(first->target))),
                     qoneword(first->src1),
-                    qoneword(first->target));
+                    qonewordt(first->target));
             break;
 
         case IR_OP_ADD:
@@ -136,6 +138,12 @@ void quad_print(quad first) {
 
             break;
 
+        case IR_OP_DEFGLOBAL:
+            qprintf("%s = global %s zeroinitializer\n",
+                    qoneword(first->target),
+                    qoneword(ir_dtype(first->target)));
+            break;
+
         default:
             die("Unhandled quad in quad_print");
             break;
@@ -146,6 +154,14 @@ void quads_dump_llvm(FILE *o) {
     f = o;
 
     // fix for multiple bbs
+
+    quad g = bbl_this(irst.root_bbl)->first;
+    while (g) {
+        quad_print(g);
+        g = g->next;
+    }
+
+    irst.bb = bbl_this(bbl_next(irst.root_bbl));
 
     qprintf("define %s @%s() {\n", ir_type_str[ir_type(irst.bb->fn->type->Type.derived.target)], irst.bb->fn->ident);
 

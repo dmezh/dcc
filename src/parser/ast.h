@@ -235,6 +235,7 @@ struct astn_case {
 
 struct astn_qtemp {
     unsigned tempno;
+    struct astn *global;
     struct astn *qtype;
 };
 

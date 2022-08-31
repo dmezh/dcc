@@ -84,7 +84,7 @@
 %type<astn_p> param_t_list param_list param_decl
 %type<astn_p> struct_decltr_list struct_decltr
 
-%type<astn_p> type_name 
+%type<astn_p> type_name
 %type<astn_p> abstract_decl direct_abstract_decl
 
 %type<astn_p> block_item block_item_list block_item_list_maybe_empty
@@ -108,6 +108,7 @@ external_decln:                             // kludge ish for structs/unions // 
     decln                               {   if ($1->type == ASTN_DECL) {
                                                 if (DBGLVL_DEBUG()) print_ast($1);
                                                 $$=begin_st_entry($1, NS_MISC, $1->context);
+                                                gen_global($$);
                                             }
                                         }
 |   fn_def                              {   gen_fn($1);  }
@@ -189,7 +190,7 @@ opt_expr:
 |   expr
 ;
 
-semicolon:  ';' 
+semicolon:  ';'
 ;
 lbrace:     '{'
 ;
@@ -221,7 +222,7 @@ debug:
 // 6.5.1 Primary expressions
 primary_expr:
     ident                       {   sym e = st_lookup($1->Ident.ident, NS_MISC);
-                                    if (!e) 
+                                    if (!e)
                                         ps_error(@1, "'%s' undefined", $1->Ident.ident);
                                     else
                                         $$=symptr_alloc(e);
@@ -349,11 +350,11 @@ unops:
 ;
 
 sizeof:
-    SIZEOF unary_expr           {   $$=astn_alloc(ASTN_NUM); $$->Num.number.integer=get_sizeof($2); 
+    SIZEOF unary_expr           {   $$=astn_alloc(ASTN_NUM); $$->Num.number.integer=get_sizeof($2);
                                     $$->Num.number.is_signed=false; $$->Num.number.aux_type=s_INT;
                                     $$->context = @1;
                                 }
-|   SIZEOF '(' type_name ')'    {   $$=astn_alloc(ASTN_NUM); $$->Num.number.integer=get_sizeof($3); 
+|   SIZEOF '(' type_name ')'    {   $$=astn_alloc(ASTN_NUM); $$->Num.number.integer=get_sizeof($3);
                                     $$->Num.number.is_signed=false; $$->Num.number.aux_type=s_INT;
                                     $$->context = @1;
                                 }
@@ -494,14 +495,14 @@ init:
     assign
 ;
 
-/* 
+/*
  * A primer on how the backwards-inverted-AST fiasco is handled here -----
  * Arrays and pointers are really parsed separately from one another.
  * There isn't really a clean point where you know the ident is going to show up.
  * In addition, the type always shows up after the arrays and pointers have been
  * parsed and joined together. The type, specifiers and all, joins us in decln.
  * That's all just the grammar, not me.
- * 
+ *
  * Arrays are naturally parsed 'inside out' - child array before parent array. Easy enough
  * to deal with; we just set up each new array as the parent of the last one. Separating
  * the grammar a little into an additional direct_decl_arr helped with this.
@@ -518,7 +519,7 @@ init:
  *
  * Until the last step of the declaration (decln), the last node (INT here) is totally
  * separate from the rest of the type, and there's nothing useful at the end of the type
- * astnode chain. As such, I found it most convenient to just keep the ident as the last element 
+ * astnode chain. As such, I found it most convenient to just keep the ident as the last element
  * in the chain, so we always know where to find it. This works nicely with the grammar.
  * When we link our PTRs with ARRAYs below, we move that last node, the IDENT, over to the child
  * chain to be its last node, so it's still last when we're done. This is in merge_dtypechains().

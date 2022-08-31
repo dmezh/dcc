@@ -5,6 +5,8 @@ typedef enum {
     IR_OP_UNKNOWN = 0,
 
     IR_OP_FNDECL,
+    IR_OP_DEFGLOBAL,
+
     IR_OP_ALLOCA,
     IR_OP_LOAD,
     IR_OP_STORE,
@@ -36,6 +38,8 @@ static const char *ir_op_str[IR_OP_COUNT] = {
     [IR_OP_UNKNOWN] = 0,
 
     [IR_OP_FNDECL] = "fndecl",
+    [IR_OP_DEFGLOBAL] = "global",
+
     [IR_OP_ALLOCA] = "alloca",
     [IR_OP_LOAD] = "load",
     [IR_OP_STORE] = "store",
