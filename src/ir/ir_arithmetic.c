@@ -174,14 +174,14 @@ astn gen_sub_rvalue(astn a, astn target) {
     }
 
     if (l_is_integer && r_is_pointer) {
-        qerror("Cannot subtract pointer from integer");
+        qerrorl(a, "Cannot subtract pointer from integer");
     }
 
     if (l_is_pointer && r_is_integer) {
         return gen_pointer_subtraction(l, r, target);
     }
 
-    qerror("Invalid operands to subtraction.");
+    qerrorl(a, "Invalid operands to subtraction.");
 }
 
 

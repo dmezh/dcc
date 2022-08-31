@@ -12,6 +12,7 @@
 #include <stdlib.h>
 
 #include "ir_defs.h"
+#include "lexer.h"
 #include "symtab.h"
 #include "util.h"
 
@@ -22,6 +23,7 @@
 astn astn_alloc(enum astn_types type) {
     astn n = safe_calloc(1, sizeof(struct astn));
     n->type = type;
+    n->context = context;
     return n;
 }
 

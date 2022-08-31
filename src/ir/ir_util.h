@@ -18,11 +18,19 @@ quad last_in_bb(BB bb);
 quad emit(ir_op_E op, astn target, astn src1, astn src2);
 quad emit4(ir_op_E op, astn target, astn src1, astn src2, astn src4);
 
+#define qprintcontext(context)                                                 \
+    {                                                                          \
+        fprintf(stderr, "\n\n!!! Near %s:%d -", context.filename, context.lineno);  \
+    }
+
 #define qwarn(...)  fprintf(stderr, "\n" __VA_ARGS__);
+
 #define qunimpl(node, msg)  \
     {                       \
-        qwarn("UH OH:\n");  \
+        qprintcontext(node->context); \
+        qwarn("AST: ----------------\n\n");  \
         print_ast(node);    \
+        qwarn("---------------------\n");        \
         die(msg);           \
     }
 
@@ -31,9 +39,11 @@ quad emit4(ir_op_E op, astn target, astn src1, astn src2, astn src4);
         RED_ERROR("Error generating quads: " __VA_ARGS__);  \
     }
 
-#define qprintcontext(context)                                                 \
-    {                                                                          \
-        fprintf(stderr, "** At <%s:%d>: ", context.filename, context.lineno);  \
+#define qerrorl(a, msg)                                                                                         \
+    {                                                                                                           \
+        RED_ERROR("Error generating quads (near %s:%d) - %s", a->context.filename, a->context.lineno, msg);     \
     }
+
+
 
 #endif
