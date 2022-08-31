@@ -40,8 +40,8 @@ const char *qoneword(astn a) {
             return qoneword(a);
 
         case ASTN_QTEMP:
-            if (a->Qtemp.global)
-                asprintf(&ret, "@%s", a->Qtemp.global->Symptr.e->ident);
+            if (a->Qtemp.name)
+                asprintf(&ret, "@%s", a->Qtemp.name);
             else
                 asprintf(&ret, "%%%d", a->Qtemp.tempno);
             break;

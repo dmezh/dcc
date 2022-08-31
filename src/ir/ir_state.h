@@ -22,6 +22,9 @@ struct ir_state {
 
     // total number of qtemps
     int tempno;
+
+    // list of anonymous lvalues to declare at end
+    struct astn *anons;
 };
 
 extern struct ir_state irst;

@@ -29,6 +29,9 @@ static astn _gen_rvalue(astn a, astn target) {
         case ASTN_NUM:
             return a;
 
+        case ASTN_STRLIT:
+            return lvalue_to_rvalue(gen_anon(a), target);
+
         case ASTN_BINOP:
             switch (a->Binop.op) {
                 case '+':
@@ -112,6 +115,36 @@ void gen_quads(astn a) {
     }
 }
 
+// Allocate a qtemp for given anon thing, and add it to the list to define later
+astn gen_anon(astn a) {
+    astn qtype = qtype_alloc(IR_ptr);
+    astn qtemp = qtemp_alloc(-1, qtype);
+
+    astn dtype;
+
+    switch (a->type) {
+        case ASTN_STRLIT:;
+            astn i8_tspec = typespec_alloc(TS_CHAR);
+            astn i8_type = astn_alloc(ASTN_TYPE);
+
+            describe_type(i8_tspec, &i8_type->Type);
+
+            dtype = dtype_alloc(i8_type, t_ARRAY);
+            dtype->Type.derived.size = simple_constant_alloc(a->Strlit.strlit.len + 1); // +1 for \0
+            qtemp->Qtemp.global = a;
+            qtemp->Qtemp.name = a->Strlit.strlit.str;
+
+            break;
+
+        default:
+            qunimpl(a, "Invalid astn type for add_anon");
+    }
+
+    qtype->Qtype.derived_type = dtype;
+
+    return qtemp;
+}
+
 void gen_global(sym e) {
     astn qtype = qtype_alloc(IR_ptr);
 
@@ -122,6 +155,8 @@ void gen_global(sym e) {
     // double-link them to each other
     qtemp->Qtemp.global = symptr_alloc(e);
     e->ptr_qtemp = qtemp;
+
+    qtemp->Qtemp.name = e->ident;
 
     emit(IR_OP_DEFGLOBAL, qtemp, NULL, NULL);
 }

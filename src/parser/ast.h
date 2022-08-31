@@ -81,6 +81,7 @@ struct astn_ident {
 
 struct astn_strlit {
     struct strlit strlit;
+    struct astn *ptr_qtemp;
 };
 
 struct astn_binop {
@@ -237,6 +238,7 @@ struct astn_qtemp {
     unsigned tempno;
     struct astn *global;
     struct astn *qtype;
+    const char *name;
 };
 
 struct BB;
