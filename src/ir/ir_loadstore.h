@@ -5,6 +5,7 @@
 
 astn gen_load(astn a, astn target);
 astn gen_lvalue(astn a);
+astn gen_indirection(astn a);
 astn get_store(astn target, astn val);
 astn gen_assign(astn a);
 

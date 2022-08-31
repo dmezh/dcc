@@ -32,8 +32,20 @@ astn gen_load(astn a, astn target) {
     return target;
 }
 
-/*
- * Return address/object to write to.
+/**
+ * Store and return value.
+ */
+astn gen_store(astn target, astn val) {
+    astn lval = gen_lvalue(target);
+    astn rval = gen_rvalue(val, NULL);
+
+    emit(IR_OP_STORE, lval, rval, NULL);
+
+    return rval;
+}
+
+/**
+ * Get lvalue.
  */
 astn gen_lvalue(astn a) {
     switch (a->type) {
@@ -45,33 +57,42 @@ astn gen_lvalue(astn a) {
             qprintcontext(a->context);
             qerror("Expression is not assignable!");
 
-        case ASTN_UNOP:;
-            if (a->Unop.op != '*')
-                qunimpl(a, "Unimplemented unop for gen_lvalue!");
-
-            astn l = gen_rvalue(a->Unop.target, NULL); // get the rvalue of the target
-            return l;
+        case ASTN_UNOP:
+            return gen_indirection(a);
 
         case ASTN_QTEMP:
-            return gen_rvalue(a, NULL);
+            return a;
 
         default:
             qunimpl(a, "Unimplemented astn kind for gen_lvalue!");
     }
 }
 
-astn gen_store(astn target, astn val) {
-    astn lval = gen_lvalue(target);
-    astn rval = gen_rvalue(val, NULL);
+/**
+ * Generate indirection lvalue (unop *).
+ */
+astn gen_indirection(astn a) {
+    ast_check(a, ASTN_UNOP, "");
+    if (a->Unop.op != '*')
+        die("Passed wrong unop type to gen_indirection");
 
-    emit(IR_OP_STORE, lval, rval, NULL);
+    astn targ_rval = gen_rvalue(a->Unop.target, NULL);
 
-    return rval;
+    if (!ir_type_matches(targ_rval, IR_ptr))
+        qerror("Object to be dereferenced is not a pointer.");
+
+    // if the operand points to a function, the result is a function designator.
+    // TODO
+
+    // if it points to an object, the result is an lvalue designating the object.
+    return gen_lvalue(targ_rval);
 }
+
 
 /*
  * Generate code for ASTN_ASSIGN. We return the rvalue
  * (right side).
+ * TODO: Compatibility?
  */
 astn gen_assign(astn a) {
     ast_check(a, ASTN_ASSIGN, "");

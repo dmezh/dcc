@@ -23,23 +23,6 @@ struct ir_state irst = {
 };
 
 
-astn gen_indirection(astn a) {
-    ast_check(a, ASTN_UNOP, "");
-    if (a->Unop.op != '*')
-        die("Passed wrong unop type to gen_indirection");
-
-    astn targ_rval = gen_rvalue(a->Unop.target, NULL);
-
-    if (!ir_type_matches(targ_rval, IR_ptr))
-        qerror("Object to be dereferenced is not a pointer.");
-
-    // if the operand points to a function, the result is a function designator.
-    // TODO
-
-    // if it points to an object, the result is an lvalue designating the object.
-    return gen_lvalue(targ_rval);
-}
-
 astn lvalue_to_rvalue(astn a, astn target) {
     switch (a->type) {
         case ASTN_QTEMP:;
