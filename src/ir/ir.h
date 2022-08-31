@@ -10,9 +10,6 @@ extern BB current_bb;
 
 astn gen_rvalue(astn a, astn target);
 
-astn try_decay(astn a);
-
-ir_type_E type_to_ir(const_astn t);
 void gen_global(sym e);
 void gen_fn(sym e);
 
