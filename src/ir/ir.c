@@ -47,6 +47,14 @@ static astn _gen_rvalue(astn a, astn target) {
                 case '*':
                     return lvalue_to_rvalue(gen_indirection(a), target);
 
+                case PLUSPLUS:;
+                    astn prev = gen_rvalue(a->Unop.target, target);
+                    gen_assign(cassign_alloc('+', a->Unop.target, simple_constant_alloc(1)));
+                    return prev;
+
+                case '&':;
+                    return gen_lvalue(a->Unop.target);
+
                 default:
                     qunimpl(a, "Unhandled unop in gen_rvalue :(");
             }
@@ -74,7 +82,11 @@ astn gen_rvalue(astn a, astn target) {
 
 void gen_quads(astn a) {
     switch (a->type) {
-        case ASTN_RETURN:
+        case ASTN_RETURN:;
+            // TODO: check for void function type!
+            astn retval = gen_rvalue(a->Return.ret, NULL);
+            if (ir_type(retval) != ir_type(irst.fn->type->Type.derived.target))
+                qerror("Return statement type does not match function return type");
             emit(IR_OP_RETURN, NULL, gen_rvalue(a->Return.ret, NULL), NULL);
             break;
 
