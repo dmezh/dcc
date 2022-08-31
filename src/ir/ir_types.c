@@ -85,7 +85,7 @@ astn get_qtype(astn t) {
                         ret_der = t; // special for arrays - derived_type is the array
                         break;
                     default:
-                        die("Invalid derived type in get_qtype");
+                        qunimpl(t, "Invalid derived type in get_qtype");
                 }
             } else {
                 switch (t->Type.scalar.type) {

@@ -85,6 +85,18 @@ astn gen_pointer_addition(astn ptr, astn i, astn target) {
     return target;
 }
 
+astn gen_pointer_subtraction(astn ptr, astn i, astn target) {
+    target = qprepare_target(target, get_qtype(ptr));
+
+    ast_check(i, ASTN_NUM, "");
+
+    i->Num.number.integer = -i->Num.number.integer;
+
+    emit(IR_OP_GEP, target, ptr, i);
+
+    return target;
+}
+
 astn gen_add_rvalue(astn a, astn target) {
     // 6.5.6 Additive operators
     // constraints - addition:
@@ -134,7 +146,26 @@ astn gen_add_rvalue(astn a, astn target) {
 }
 
 astn gen_sub_rvalue(astn a, astn target) {
-    (void)target;
+    astn l = gen_rvalue(a->Binop.left, NULL);
+    astn r = gen_rvalue(a->Binop.right, NULL);
+
+    astn l_type = get_qtype(l);
+    astn r_type = get_qtype(r);
+
+    bool l_is_integer = is_integer(l_type);
+    bool r_is_integer = is_integer(r_type);
+
+    bool l_is_pointer = ir_type_matches(l_type, IR_ptr);
+    bool r_is_pointer = ir_type_matches(r_type, IR_ptr);
+
+    if (l_is_pointer && r_is_integer) {
+//        if (ir_type(l_type) != ir_type(r_type)) {
+//            die("Unimplemented: type lifting :(");
+//        }
+
+        return gen_pointer_subtraction(l, r, target);
+    }
+
     qunimpl(a, "Unimplemented: gen_sub_rvalue :(");
 }
 
