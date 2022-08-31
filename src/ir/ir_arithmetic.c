@@ -152,21 +152,36 @@ astn gen_sub_rvalue(astn a, astn target) {
     astn l_type = get_qtype(l);
     astn r_type = get_qtype(r);
 
+    bool l_is_arith = type_is_arithmetic(l);
+    bool r_is_arith = type_is_arithmetic(r);
+
     bool l_is_integer = is_integer(l_type);
     bool r_is_integer = is_integer(r_type);
 
     bool l_is_pointer = ir_type_matches(l_type, IR_ptr);
     bool r_is_pointer = ir_type_matches(r_type, IR_ptr);
 
-    if (l_is_pointer && r_is_integer) {
-//        if (ir_type(l_type) != ir_type(r_type)) {
-//            die("Unimplemented: type lifting :(");
-//        }
+    if (l_is_arith && r_is_arith) {
+        if (ir_type(l_type) != ir_type(r_type)) {
+            die("Unimplemented: type lifting :(");
+        }
 
+        qunimpl(a, "Unimplemented: ordinary subtraction.");
+    }
+
+    if (l_is_pointer && r_is_pointer) {
+        qunimpl(a, "Unimplemented: pointer - pointer subtraction.");
+    }
+
+    if (l_is_integer && r_is_pointer) {
+        qerror("Cannot subtract pointer from integer");
+    }
+
+    if (l_is_pointer && r_is_integer) {
         return gen_pointer_subtraction(l, r, target);
     }
 
-    qunimpl(a, "Unimplemented: gen_sub_rvalue :(");
+    qerror("Invalid operands to subtraction.");
 }
 
 
