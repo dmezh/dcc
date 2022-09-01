@@ -87,7 +87,7 @@ void gen_quads(astn a) {
             astn retval = gen_rvalue(a->Return.ret, NULL);
             if (ir_type(retval) != ir_type(irst.fn->type->Type.derived.target))
                 qerrorl(a, "Return statement type does not match function return type");
-            emit(IR_OP_RETURN, NULL, gen_rvalue(a->Return.ret, NULL), NULL);
+            emit(IR_OP_RETURN, NULL, retval, NULL);
             break;
 
         case ASTN_DECLREC:

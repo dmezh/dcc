@@ -48,20 +48,23 @@ astn get_qtype(astn t) {
     astn ret_der = NULL;
 
     astn n;
+    bool is_signed;
+
     switch (t->type) {
-        case ASTN_NUM:
+        case ASTN_NUM:;
+            is_signed = t->Num.number.is_signed;
             switch (t->Num.number.aux_type) {
                 case s_INT:
-                    ret = IR_i32;
+                    ret = is_signed ? IR_i32 : IR_u32;
                     break;
                 case s_LONG:
-                    ret = IR_i64;
+                    ret = is_signed ? IR_i64 : IR_u64;
                     break;
                 case s_LONGLONG:
-                    ret = IR_i64;
+                    ret = is_signed ? IR_i64 : IR_u64;
                     break;
                 case s_CHARLIT:
-                    ret = IR_i8;
+                    ret = is_signed ? IR_i8 : IR_u8; // is this ever signed?
                     break;
                 default:
                     ret = IR_TYPE_UNDEF;
@@ -88,21 +91,22 @@ astn get_qtype(astn t) {
                         qunimpl(t, "Invalid derived type in get_qtype");
                 }
             } else {
+                is_signed = !t->Type.scalar.is_unsigned;
                 switch (t->Type.scalar.type) {
                     case t_INT:
-                        ret = IR_i32;
+                        ret = is_signed ? IR_i32 : IR_u32;
                         break;
                     case t_LONG:
-                        ret = IR_i64;
+                        ret = is_signed ? IR_i64 : IR_u64;
                         break;
                     case t_LONGLONG:
-                        ret = IR_i64;
+                        ret = is_signed ? IR_i64 : IR_u64;
                         break;
                     case t_CHAR:
-                        ret = IR_i8;
+                        ret = is_signed ? IR_i8 : IR_u8;
                         break;
                     case t_SHORT:
-                        ret = IR_i16;
+                        ret = is_signed ? IR_i16 : IR_u16;
                         break;
                     default:
                         qunimpl(t, "Unsupported type in IR :(");
@@ -160,3 +164,139 @@ astn get_qtype(astn t) {
     }
 }
 
+    static bool type_is_signed[IR_TYPE_INTEGER_MAX] = {
+        [IR_u8] = false,
+        [IR_i8] = true,
+        [IR_u16] = false,
+        [IR_i16] = true,
+        [IR_u32] = false,
+        [IR_i32] = true,
+        [IR_u64] = false,
+        [IR_i64] = true,
+    };
+
+// Return resulting qtemp.
+astn convert_integer_type(astn a, ir_type_E t) {
+    ir_type_E a_type = ir_type(a);
+
+    if (a_type == t)
+        return a;
+
+    bool a_is_signed = type_is_signed[a_type];
+
+    astn new_t = qtype_alloc(t);
+    astn target = qprepare_target(NULL, new_t);
+
+    if (t > a_type) {
+        if (a_is_signed) {
+            emit(IR_OP_SEXT, target, a, NULL);
+        } else {
+            emit(IR_OP_ZEXT, target, a, NULL);
+        }
+    } else {
+        qunimpl(a, "Unimplemented: integer truncation");
+    }
+
+    return target;
+}
+
+// 6.3.1.8  Integer conversions
+// Returns new type.
+astn do_integer_conversions(astn a, astn b, astn *a_new, astn *b_new) {
+    ir_type_E a_irt = ir_type(a);
+    ir_type_E b_irt = ir_type(b);
+
+    const bool a_is_signed = type_is_signed[a_irt];
+    const bool b_is_signed = type_is_signed[b_irt];
+
+    // If both operands have the same type, then no further conversion is needed.
+
+    if (a_irt ==  b_irt) {
+        *a_new = a;
+        *b_new = b;
+        return get_qtype(*a_new);
+    }
+
+    // If both operands are signed or both are unsigned, then convert the lesser
+    // rank to the greater one's type.
+
+    if ((a_is_signed && b_is_signed) || (!a_is_signed && !b_is_signed)) {
+        ir_type_E target_type = a_irt > b_irt ? a_irt : b_irt;
+        *a_new = convert_integer_type(a, target_type);
+        *b_new = convert_integer_type(b, target_type);
+        return get_qtype(*a_new);
+    }
+
+    //
+
+    astn signed_one = a_is_signed ? a : b;
+    astn unsigned_one = a_is_signed ? b : a;
+
+    ir_type_E signed_one_rank = ir_type(signed_one);
+    ir_type_E unsigned_one_rank = ir_type(unsigned_one);
+
+    // If the unsigned operand has rank >= the signed one, then convert the signed
+    // one to the unsigned one's type.
+    if (unsigned_one_rank > signed_one_rank) {
+        ir_type_E target_type = unsigned_one_rank;
+        *a_new = convert_integer_type(a, target_type);
+        *b_new = convert_integer_type(b, target_type);
+        return get_qtype(*a_new);
+    }
+
+    // If the type of the signed operand can represent all values of the unsigned
+    // operand, convert the unsigned one to the signed one's type.
+    if ((signed_one_rank - unsigned_one_rank) > 1) {
+        ir_type_E target_type = signed_one_rank;
+        *a_new = convert_integer_type(a, target_type);
+        *b_new = convert_integer_type(b, target_type);
+        return get_qtype(*a_new);
+    }
+    // Else, convert both to the unsigned type corresponding to the signed operand's
+    // type.
+    ir_type_E target_type = signed_one_rank - 1;
+    *a_new = convert_integer_type(a, target_type);
+    *b_new = convert_integer_type(b, target_type);
+    return get_qtype(*a_new);
+    // These rules are annoying; I'm just going to make a table.
+
+    /*
+    ir_type_E resultant_type[IR_TYPE_INTEGER_MAX][IR_TYPE_INTEGER_MAX] = {
+        [IR_i8][IR_i8] = IR_i8,
+        [IR_u8][IR_u8] = IR_u8,
+        [IR_i8][IR_u8] = IR_u8,
+        [IR_u8][IR_i8] = IR_u8,
+
+        [IR_i16][IR_i16] = IR_i16,
+        [IR_u16][IR_u16] = IR_u16,
+        [IR_i16][IR_u16] = IR_u16,
+        [IR_u16][IR_i16] = IR_u16,
+
+        [IR_i32][IR_i32] = IR_i32,
+        [IR_u32][IR_u32] = IR_u32,
+        [IR_i32][IR_u32] = IR_u32,
+        [IR_u32][IR_i32] = IR_u32,
+
+        [IR_i64][IR_i64] = IR_i64,
+        [IR_u64][IR_u64] = IR_u64,
+        [IR_i64][IR_u64] = IR_u64,
+        [IR_u64][IR_i64] = IR_u64,
+
+        [IR_i8][IR_i16] = IR_i16,
+        [IR_i16][IR_i8] = IR_i16,
+
+        [IR_i8][IR_i32] = IR_i32,
+        [IR_i32][IR_i8] = IR_i32,
+
+        [IR_i8][IR_i64] = IR_i32,
+        [IR_i8][IR_i32] = IR_i32,
+    };
+    */
+}
+
+// 6.3.1.8  Usual arithmetic conversions
+// Return resulting type.
+astn do_arithmetic_conversions(astn a, astn b, astn *a_new, astn *b_new) {
+    // we don't worry about the floats.
+    return do_integer_conversions(a, b, a_new, b_new);
+}

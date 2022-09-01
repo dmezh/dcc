@@ -119,16 +119,14 @@ astn gen_add_rvalue(astn a, astn target) {
     bool r_is_pointer = ir_type_matches(r_type, IR_ptr);
 
     if (l_is_arith && r_is_arith) {
-        // check here for type of operation
-        if (ir_type(l_type) != ir_type(r_type))
-        {
-            // lift types here
-            die("Unimplemented: type lifting :(");
-        }
+        astn conv_l;
+        astn conv_r;
 
-        target = qprepare_target(target, l_type); // resultant type
+        astn res_type = do_arithmetic_conversions(l, r, &conv_l, &conv_r);
 
-        emit(IR_OP_ADD, target, l, r);
+        target = qprepare_target(target, res_type);
+
+        emit(IR_OP_ADD, target, conv_l, conv_r);
         return target;
 
     } else if (l_is_integer && r_is_pointer) {
@@ -162,11 +160,15 @@ astn gen_sub_rvalue(astn a, astn target) {
     bool r_is_pointer = ir_type_matches(r_type, IR_ptr);
 
     if (l_is_arith && r_is_arith) {
-        if (ir_type(l_type) != ir_type(r_type)) {
-            die("Unimplemented: type lifting :(");
-        }
+        astn conv_l;
+        astn conv_r;
 
-        qunimpl(a, "Unimplemented: ordinary subtraction.");
+        astn res_type = do_arithmetic_conversions(l, r, &conv_l, &conv_r);
+
+        target = qprepare_target(target, res_type);
+
+        emit(IR_OP_SUB, target, conv_l, conv_r);
+        return target;
     }
 
     if (l_is_pointer && r_is_pointer) {

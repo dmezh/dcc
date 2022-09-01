@@ -118,8 +118,17 @@ void quad_print(quad first) {
             break;
 
         case IR_OP_ADD:
-            qprintf("    %s = add i32 %s, %s\n",
+            qprintf("    %s = add %s %s, %s\n",
                     qoneword(first->target),
+                    qoneword(qtype_alloc(ir_type(first->target))),
+                    qoneword(first->src1),
+                    qoneword(first->src2));
+            break;
+
+        case IR_OP_SUB:
+            qprintf("    %s = sub %s %s, %s\n",
+                    qoneword(first->target),
+                    qoneword(qtype_alloc(ir_type(first->target))),
                     qoneword(first->src1),
                     qoneword(first->src2));
             break;
@@ -142,6 +151,20 @@ void quad_print(quad first) {
             qprintf("%s = global %s zeroinitializer\n",
                     qoneword(first->target),
                     qoneword(ir_dtype(first->target)));
+            break;
+
+        case IR_OP_SEXT:
+            qprintf("    %s = sext %s to %s\n",
+                    qoneword(first->target),
+                    qonewordt(first->src1),
+                    qoneword(qtype_alloc(ir_type(first->target))));
+            break;
+
+        case IR_OP_ZEXT:
+            qprintf("    %s = zext %s to %s\n",
+                    qoneword(first->target),
+                    qonewordt(first->src1),
+                    qoneword(qtype_alloc(ir_type(first->target))));
             break;
 
         default:
