@@ -38,6 +38,9 @@ static astn _gen_rvalue(astn a, astn target) {
                     return gen_add_rvalue(a, target);
                 case '-':
                     return gen_sub_rvalue(a, target);
+                case ',':
+                    gen_rvalue(a->Binop.left, NULL);
+                    return gen_rvalue(a->Binop.right, target);
                 default:
                     qunimpl(a, "Unhandled binop type for gen_rvalue :(");
             }
