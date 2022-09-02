@@ -355,7 +355,7 @@ astn do_integer_promotions(astn a) {
 
     ir_type_E a_rank = ir_type(a);
 
-    if (a_rank < IR_i32) {
+    if (a_rank < IR_u32) {
         return(convert_integer_type(a, IR_i32));
     }
 
