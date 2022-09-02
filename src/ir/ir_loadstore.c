@@ -40,7 +40,12 @@ astn gen_store(astn target, astn val) {
     astn lval = gen_lvalue(target);
     astn rval = gen_rvalue(val, NULL);
 
-    astn compat_rval = make_type_compat_with(rval, ir_dtype(lval));
+    astn t = ir_dtype(lval); // underlying type
+
+    if (ir_type_matches(t, IR_arr))
+        qerror("Arrays are not assignable!")
+
+    astn compat_rval = make_type_compat_with(rval, t);
 
     emit(IR_OP_STORE, lval, compat_rval, NULL);
 
@@ -50,7 +55,6 @@ astn gen_store(astn target, astn val) {
 /*
  * Generate code for ASTN_ASSIGN. We return the rvalue
  * (right side).
- * TODO: Compatibility?
  */
 astn gen_assign(astn a) {
     ast_check(a, ASTN_ASSIGN, "");
