@@ -218,7 +218,7 @@ astn convert_to_ptr(astn a, astn kind) {
 
         ast_check(a, ASTN_QTEMP, "Non-qtemp parameter a ptr passed to convert_to_ptr");
 
-        astn q = qtemp_alloc(a->Qtemp.tempno, get_qtype(kind));
+        astn q = qtemp_alloc(a->Qtemp.tempno, get_qtype(kind)); // tempno of a, qtype of kind
 
         return q;
     }
@@ -245,6 +245,12 @@ astn convert_integer_type(astn a, ir_type_E t) {
         return a;
 
     bool a_is_signed = type_is_signed[a_type];
+
+    if (a_is_signed && (a_type - t) == 1) // iN to uN
+        return a;
+
+    if (!a_is_signed && (t - a_type) == 1) // uN to iN
+        return a;
 
     astn new_t = qtype_alloc(t);
     astn target = qprepare_target(NULL, new_t);
@@ -326,45 +332,28 @@ astn do_integer_conversions(astn a, astn b, astn *a_new, astn *b_new) {
     *a_new = convert_integer_type(a, target_type);
     *b_new = convert_integer_type(b, target_type);
     return get_qtype(*a_new);
-    // These rules are annoying; I'm just going to make a table.
-
-    /*
-    ir_type_E resultant_type[IR_TYPE_INTEGER_MAX][IR_TYPE_INTEGER_MAX] = {
-        [IR_i8][IR_i8] = IR_i8,
-        [IR_u8][IR_u8] = IR_u8,
-        [IR_i8][IR_u8] = IR_u8,
-        [IR_u8][IR_i8] = IR_u8,
-
-        [IR_i16][IR_i16] = IR_i16,
-        [IR_u16][IR_u16] = IR_u16,
-        [IR_i16][IR_u16] = IR_u16,
-        [IR_u16][IR_i16] = IR_u16,
-
-        [IR_i32][IR_i32] = IR_i32,
-        [IR_u32][IR_u32] = IR_u32,
-        [IR_i32][IR_u32] = IR_u32,
-        [IR_u32][IR_i32] = IR_u32,
-
-        [IR_i64][IR_i64] = IR_i64,
-        [IR_u64][IR_u64] = IR_u64,
-        [IR_i64][IR_u64] = IR_u64,
-        [IR_u64][IR_i64] = IR_u64,
-
-        [IR_i8][IR_i16] = IR_i16,
-        [IR_i16][IR_i8] = IR_i16,
-
-        [IR_i8][IR_i32] = IR_i32,
-        [IR_i32][IR_i8] = IR_i32,
-
-        [IR_i8][IR_i64] = IR_i32,
-        [IR_i8][IR_i32] = IR_i32,
-    };
-    */
 }
 
 // 6.3.1.8  Usual arithmetic conversions
 // Return resulting type.
 astn do_arithmetic_conversions(astn a, astn b, astn *a_new, astn *b_new) {
     // we don't worry about the floats.
+    a = do_integer_promotions(a);
+    b = do_integer_promotions(b);
+
     return do_integer_conversions(a, b, a_new, b_new);
+}
+
+// The Sneaky Integer Promotions
+astn do_integer_promotions(astn a) {
+    if (!is_integer(a))
+        return a;
+
+    ir_type_E a_rank = ir_type(a);
+
+    if (a_rank < IR_i32) {
+        return(convert_integer_type(a, IR_i32));
+    }
+
+    return a;
 }

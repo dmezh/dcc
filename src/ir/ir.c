@@ -58,6 +58,12 @@ static astn _gen_rvalue(astn a, astn target) {
                 case '&':;
                     return gen_lvalue(a->Unop.target);
 
+                case '+':
+                    if (target)
+                        die("Unexpected target for unary +");
+
+                    return do_integer_promotions(gen_rvalue(a->Unop.target, NULL));
+
                 default:
                     qunimpl(a, "Unhandled unop in gen_rvalue :(");
             }
