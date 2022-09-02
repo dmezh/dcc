@@ -167,6 +167,14 @@ void quad_print(quad first) {
                     qoneword(qtype_alloc(ir_type(first->target))));
             break;
 
+        case IR_OP_TRUNC:
+            qprintf("    %s = trunc %s to %s\n",
+                    qoneword(first->target),
+                    qonewordt(first->src1),
+                    qoneword(get_qtype(first->target)));
+
+            break;
+
         case IR_OP_INTTOPTR:
             qprintf("    %s = inttoptr %s to %s\n",
                     qoneword(first->target),

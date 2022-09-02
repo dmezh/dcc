@@ -15,6 +15,7 @@ typedef enum {
 
     IR_OP_SEXT,
     IR_OP_ZEXT,
+    IR_OP_TRUNC,
     IR_OP_INTTOPTR,
     IR_OP_PTRTOINT,
 
@@ -58,6 +59,7 @@ static const char *ir_op_str[IR_OP_COUNT] = {
 
     [IR_OP_SEXT] = "sext",
     [IR_OP_ZEXT] = "zext",
+    [IR_OP_TRUNC] = "trunc",
     [IR_OP_INTTOPTR] = "inttoptr",
     [IR_OP_PTRTOINT] = "ptrtoint",
 

@@ -186,6 +186,10 @@ astn make_type_compat_with(astn a, astn kind) {
         return convert_to_ptr(a, kind);
     }
 
+    if (kind_is_integer && a->type == ASTN_NUM) {
+        return a; // ignore, this needs revisiting
+    }
+
     if (kind_is_integer && a_is_integer) {
         return convert_integer_type(a, ir_type(kind));
     }
@@ -262,7 +266,7 @@ astn convert_integer_type(astn a, ir_type_E t) {
             emit(IR_OP_ZEXT, target, a, NULL);
         }
     } else {
-        qunimpl(a, "Unimplemented: integer truncation");
+        emit(IR_OP_TRUNC, target, a, NULL);
     }
 
     return target;

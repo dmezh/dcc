@@ -64,6 +64,12 @@ static astn _gen_rvalue(astn a, astn target) {
 
                     return do_integer_promotions(gen_rvalue(a->Unop.target, NULL));
 
+                case '-':
+                    if (target)
+                        die("Unexpected target for unary -");
+
+                    return do_negate(do_integer_promotions(gen_rvalue(a->Unop.target, NULL)));
+
                 default:
                     qunimpl(a, "Unhandled unop in gen_rvalue :(");
             }
@@ -94,9 +100,12 @@ void gen_quads(astn a) {
         case ASTN_RETURN:;
             // TODO: check for void function type!
             astn retval = gen_rvalue(a->Return.ret, NULL);
-            if (ir_type(retval) != ir_type(irst.fn->type->Type.derived.target))
+
+            astn retval_conv = make_type_compat_with(retval, irst.fn->type->Type.derived.target);
+
+            if (ir_type(retval_conv) != ir_type(irst.fn->type->Type.derived.target))
                 qerrorl(a, "Return statement type does not match function return type");
-            emit(IR_OP_RETURN, NULL, retval, NULL);
+            emit(IR_OP_RETURN, NULL, retval_conv, NULL);
             break;
 
         case ASTN_DECLREC:

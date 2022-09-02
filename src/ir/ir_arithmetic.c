@@ -89,13 +89,11 @@ astn gen_pointer_addition(astn ptr, astn i, astn target) {
 
 astn gen_pointer_subtraction(astn ptr, astn i, astn target) {
     astn i_ext = convert_integer_type(i, IR_PTR_INT_TYPE);
-
-    astn neg = new_qtemp(get_qtype(i_ext));
-    emit(IR_OP_SUB, neg, simple_constant_alloc(0), i_ext);
+    astn i_ext_neg = do_negate(i_ext);
 
     target = qprepare_target(target, get_qtype(ptr));
 
-    emit(IR_OP_GEP, target, ptr, neg);
+    emit(IR_OP_GEP, target, ptr, i_ext_neg);
 
     return target;
 }
@@ -189,4 +187,11 @@ astn gen_sub_rvalue(astn a, astn target) {
     qerrorl(a, "Invalid operands to subtraction.");
 }
 
+astn do_negate(astn a) {
+    if (!is_integer(a))
+        qunimpl(a, "Attempted to negate non-integer");
 
+    astn neg = new_qtemp(get_qtype(a)); // it's ok if it's not signed, IR type is same
+    emit(IR_OP_SUB, neg, simple_constant_alloc(0), a);
+    return neg;
+}
