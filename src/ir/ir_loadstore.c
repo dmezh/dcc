@@ -40,7 +40,9 @@ astn gen_store(astn target, astn val) {
     astn lval = gen_lvalue(target);
     astn rval = gen_rvalue(val, NULL);
 
-    emit(IR_OP_STORE, lval, rval, NULL);
+    astn compat_rval = make_type_compat_with(rval, ir_dtype(lval));
+
+    emit(IR_OP_STORE, lval, compat_rval, NULL);
 
     return rval;
 }

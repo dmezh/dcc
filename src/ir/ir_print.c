@@ -167,6 +167,22 @@ void quad_print(quad first) {
                     qoneword(qtype_alloc(ir_type(first->target))));
             break;
 
+        case IR_OP_INTTOPTR:
+            qprintf("    %s = inttoptr %s to %s\n",
+                    qoneword(first->target),
+                    qonewordt(first->src1),
+                    qoneword(qtype_alloc(ir_type(first->target))));
+
+            break;
+
+        case IR_OP_PTRTOINT:
+            qprintf("    %s = ptrtoint %s to %s\n",
+                    qoneword(first->target),
+                    qonewordt(first->src1),
+                    qoneword(qtype_alloc(ir_type(first->target))));
+
+            break;
+
         default:
             die("Unhandled quad in quad_print");
             break;

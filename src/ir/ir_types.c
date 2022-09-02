@@ -164,16 +164,78 @@ astn get_qtype(astn t) {
     }
 }
 
-    static bool type_is_signed[IR_TYPE_INTEGER_MAX] = {
-        [IR_u8] = false,
-        [IR_i8] = true,
-        [IR_u16] = false,
-        [IR_i16] = true,
-        [IR_u32] = false,
-        [IR_i32] = true,
-        [IR_u64] = false,
-        [IR_i64] = true,
-    };
+static bool type_is_signed[IR_TYPE_INTEGER_MAX] = {
+    [IR_u8] = false,
+    [IR_i8] = true,
+    [IR_u16] = false,
+    [IR_i16] = true,
+    [IR_u32] = false,
+    [IR_i32] = true,
+    [IR_u64] = false,
+    [IR_i64] = true,
+};
+
+astn make_type_compat_with(astn a, astn kind) {
+    bool kind_is_ptr = ir_type_matches(kind, IR_ptr);
+    bool a_is_ptr = ir_type_matches(a, IR_ptr);
+
+    bool kind_is_integer = is_integer(kind);
+    bool a_is_integer = is_integer(a);
+
+    if (kind_is_ptr) {
+        return convert_to_ptr(a, kind);
+    }
+
+    if (kind_is_integer && a_is_integer) {
+        return convert_integer_type(a, ir_type(kind));
+    }
+
+    if (kind_is_integer && a_is_ptr) {
+        return ptr_to_int(a, kind);
+    }
+
+    qunimpl(kind, "Don't know how to make something compatible with type.");
+}
+
+astn ptr_to_int(astn a, astn kind) {
+    if (!ir_type_matches(a, IR_ptr))
+        qunimpl(a, "Passed non-ptr to ptr_to_int!");
+
+    if (!is_integer(kind))
+        qunimpl(kind, "Passed non-integer kind to ptr_to_int!");
+
+    astn irt = qtype_alloc(ir_type(kind));
+    astn target = qprepare_target(NULL, irt);
+
+    emit(IR_OP_PTRTOINT, target, a, NULL);
+
+    return target;
+}
+
+astn convert_to_ptr(astn a, astn kind) {
+    if (ir_type_matches(a, IR_ptr)) {
+        // equalize derived types.
+
+        ast_check(a, ASTN_QTEMP, "Non-qtemp parameter a ptr passed to convert_to_ptr");
+
+        astn q = qtemp_alloc(a->Qtemp.tempno, get_qtype(kind));
+
+        return q;
+    }
+
+    if (is_integer(a)) {
+        astn rval = gen_rvalue(a, NULL);
+
+        astn ptr = qprepare_target(NULL, qtype_alloc(IR_ptr));
+        ptr->Qtype.derived_type = ir_dtype(kind);
+
+        emit(IR_OP_INTTOPTR, ptr, rval, NULL);
+
+        return ptr;
+    }
+
+    qunimpl(a, "Don't know how to convert this to a pointer.");
+}
 
 // Return resulting qtemp.
 astn convert_integer_type(astn a, ir_type_E t) {
@@ -203,6 +265,12 @@ astn convert_integer_type(astn a, ir_type_E t) {
 // 6.3.1.8  Integer conversions
 // Returns new type.
 astn do_integer_conversions(astn a, astn b, astn *a_new, astn *b_new) {
+    if (!is_integer(a))
+        qunimpl(a, "Node passed to do_integer_conversions is not an integer!");
+
+    if (!is_integer(b))
+        qunimpl(b, "Node passed to do_integer_conversions is not an integer!");
+
     ir_type_E a_irt = ir_type(a);
     ir_type_E b_irt = ir_type(b);
 
