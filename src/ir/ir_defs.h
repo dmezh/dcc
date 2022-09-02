@@ -78,4 +78,6 @@ static const char *ir_type_str[IR_TYPE_COUNT] = {
     [IR_i64] = "i64",
 };
 
+#define IR_PTR_INT_TYPE IR_i64
+
 #endif
