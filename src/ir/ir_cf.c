@@ -172,6 +172,10 @@ void gen_switch(astn swnode) {
     astn ca = sw->body;
     while (ca) {
         astn n = list_data(ca);
+        if (n->type != ASTN_CASE) {
+            die("");
+        }
+
         astn num = n->Case.case_expr;
         if (!num) {
             n->Case.bb = wrap_bb(def);
@@ -180,12 +184,11 @@ void gen_switch(astn swnode) {
         }
 
         BB case_bb = bb_nolink(".switch.case");
-
         n->Case.bb = wrap_bb(case_bb);
 
         num = convert_integer_type(num, ir_type(c_t));
 
-        emit(IR_OP_SWITCHCASE, num, n->Case.bb, NULL);
+        emit(IR_OP_SWITCHCASE, num, wrap_bb(case_bb), NULL);
 
         ca = list_next(ca);
     }
@@ -195,24 +198,35 @@ void gen_switch(astn swnode) {
     ca = sw->body;
     while (ca) {
         astn n = list_data(ca);
-        astn s = n->Case.statement;
+        if (n->type != ASTN_CASE) {
+            die("");
+        }
 
-        if (!n->Case.bb) {
-            ca = list_next(ca);
-            continue;
+        astn s = n->Case.statement;
+        print_ast(s);
+
+        if (!n->Case.bb || !n->Case.bb->Qbb.bb) {
+            die("");
+        }
+
+        ca = list_next(ca);
+
+        BB next = end;
+        if (ca && list_data(ca)->Case.bb) {
+            next = list_data(ca)->Case.bb->Qbb.bb;
         }
 
         bb_active(n->Case.bb->Qbb.bb);
         bb_link(n->Case.bb->Qbb.bb);
+        irst.brk = next;
+
         if (s)
             gen_quads(s);
 
-        ca = list_next(ca);
-
-        if (ca && list_data(ca)->Case.bb) {
-            uncond_branch(list_data(ca)->Case.bb->Qbb.bb);
-        }
+        uncond_branch(next);
     }
+    bb_active(end);
+    bb_link(end);
 }
 
 void gen_if(astn ifnode) {

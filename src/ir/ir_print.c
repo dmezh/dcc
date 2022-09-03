@@ -268,6 +268,7 @@ void quad_print(quad first) {
             break;
 
         case IR_OP_BR: // unconditional branch
+            ast_check(first->target, ASTN_QBB, "");
             qprintf("    br label %%%s\n", first->target->Qbb.bb->name);
             break;
 
