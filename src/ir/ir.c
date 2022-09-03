@@ -169,6 +169,7 @@ void gen_quads(astn a) {
             if (ir_type(retval_conv) != ir_type(irst.fn->type->Type.derived.target))
                 qerrorl(a, "Return statement type does not match function return type");
             emit(IR_OP_RETURN, NULL, retval_conv, NULL);
+            irst.tempno++;
             break;
 
         case ASTN_DECLREC:
@@ -211,6 +212,10 @@ void gen_quads(astn a) {
                 gen_dowhile(a);
             else
                 gen_while(a);
+            break;
+
+        case ASTN_IFELSE:
+            gen_if(a);
             break;
 
         case ASTN_FORLOOP:
@@ -337,6 +342,7 @@ void gen_fn(sym e) {
     }
 
     irst.bb = bbl_push();
+    irst.tempno++;
 
     // generate parameters - memory
     p = e->param_list;

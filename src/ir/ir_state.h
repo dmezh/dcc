@@ -31,6 +31,9 @@ struct ir_state {
 
     // list of anonymous lvalues to declare at end
     struct astn *anons;
+
+    // uniqueness counter
+    int uniq;
 };
 
 extern struct ir_state irst;

@@ -25,7 +25,7 @@ struct BB {
     quad first;
     quad current;
 
-    int bbno;
+    const char *name;
 
     struct BB *prev;
     struct BB *next;

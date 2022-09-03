@@ -8,9 +8,7 @@
 
 #include "parser.tab.h"
 
-BB bb_alloc(void) {
-    BB new = safe_calloc(1, sizeof(struct BB));
-
+BB bb_link(BB new) {
     new->fn = irst.fn;
     if (irst.bb_head) {
         irst.bb_head->next = new;
@@ -20,8 +18,25 @@ BB bb_alloc(void) {
     return new;
 }
 
+BB bb_alloc(void) {
+    BB new = safe_calloc(1, sizeof(struct BB));
+    return new;
+}
+
+BB bb_nolink(const char *s) {
+    BB new = bb_alloc();
+    char *ss;
+    asprintf(&ss, "%s.%d", s, irst.uniq++);
+    new->name = ss;
+
+    return new;
+}
+
+BB bb_named(const char* s) {
+    return bb_link(bb_nolink(s));
+}
+
 BB bb_active(BB bb) {
-    bb->bbno = irst.tempno++;
     irst.bb = bb;
     return bb;
 }
@@ -38,6 +53,7 @@ BB bbl_push(void) {
     irst.bb_head = NULL;
 
     BB first = bb_alloc();
+    bb_link(first);
 
     irst.bb_head = first;
 
@@ -141,12 +157,36 @@ void uncond_branch(BB bb) {
     emit(IR_OP_BR, wrap_bb(bb), NULL, NULL);
 }
 
+void gen_if(astn ifnode) {
+    struct astn_ifelse *ifn = &ifnode->Ifelse;
+
+    BB thn = bb_named("if.then");
+    BB els = bb_nolink("if.else");
+    BB next = bb_nolink("if.fin");
+
+    cmp0_br(ifn->condition_s, els, thn);
+
+    bb_active(thn);
+    bb_link(thn);
+    gen_quads(ifn->then_s);
+    uncond_branch(next);
+
+    bb_active(els);
+    bb_link(els);
+    if (ifn->else_s)
+        gen_quads(ifn->else_s);
+    uncond_branch(next);
+
+    bb_active(next);
+    bb_link(next);
+}
+
 void gen_while(astn wn) {
     struct astn_whileloop *w = &wn->Whileloop;
 
-    BB cond = bb_alloc();
-    BB body = bb_alloc();
-    BB next = bb_alloc();
+    BB cond = bb_named("while.cond");
+    BB body = bb_named("while.body");
+    BB next = bb_named("while.next");
 
     uncond_branch(cond);
 
@@ -167,9 +207,9 @@ void gen_while(astn wn) {
 void gen_dowhile(astn dw) {
     struct astn_whileloop *d = &dw->Whileloop;
 
-    BB cond = bb_alloc();
-    BB body = bb_alloc();
-    BB next = bb_alloc();
+    BB cond = bb_named("dowhile.cond");
+    BB body = bb_named("dowhile.body");
+    BB next = bb_named("dowhile.next");
 
     uncond_branch(body);
     bb_active(body);
@@ -190,9 +230,9 @@ void gen_dowhile(astn dw) {
 void gen_for(astn fl) {
     struct astn_forloop *f = &fl->Forloop;
 
-    BB cond = bb_alloc();
-    BB body = bb_alloc();
-    BB next = bb_alloc();
+    BB cond = bb_named("for.cond");
+    BB body = bb_named("for.body");
+    BB next = bb_named("for.next");
 
     gen_quads(f->init);
 

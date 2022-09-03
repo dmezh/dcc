@@ -95,10 +95,6 @@ void quad_print(quad first) {
     switch (first->op) {
         case IR_OP_UNKNOWN: die("IR op is UNKNOWN"); break;
 
-        case IR_META_LABEL:
-            qprintf("%d:\n", first->target->Qbb.bb->bbno);
-            break;
-
         case IR_OP_ALLOCA:
             qprintf("    %s = alloca %s\n",
                     qoneword(first->target),
@@ -248,14 +244,14 @@ void quad_print(quad first) {
             break;
 
         case IR_OP_BR: // unconditional branch
-            qprintf("    br label %%%d\n", first->target->Qbb.bb->bbno);
+            qprintf("    br label %%%s\n", first->target->Qbb.bb->name);
             break;
 
         case IR_OP_CONDBR:
-            qprintf("    br %s, label %%%d, label %%%d\n",
+            qprintf("    br %s, label %%%s, label %%%s\n",
                     qonewordt(first->target),
-                    first->src1->Qbb.bb->bbno,
-                    first->src2->Qbb.bb->bbno);
+                    first->src1->Qbb.bb->name,
+                    first->src2->Qbb.bb->name);
             break;
 
         case IR_OP_CMPEQ:
@@ -316,8 +312,8 @@ void quads_dump_llvm(FILE *o) {
         }
 
         while (bb) {        // for each quad
-            if (bb->bbno)
-                qprintf("%d:\n", bb->bbno);
+            if (bb->name)
+                qprintf("%s:\n", bb->name);
 
             quad g = bb->first;
             while (g) {
