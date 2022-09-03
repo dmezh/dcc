@@ -228,6 +228,13 @@ void quad_print(quad first) {
             qprintf("    br label %%%d\n", first->target->Qbb.bb->bbno);
             break;
 
+        case IR_OP_CMPEQ:
+            qprintf("    %s = icmp eq %s, %s\n",
+                    qoneword(first->target),
+                    qonewordt(first->src1),
+                    qoneword(first->src2));
+            break;
+
         default:
             die("Unhandled quad in quad_print");
             break;

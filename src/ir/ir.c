@@ -65,6 +65,9 @@ static astn _gen_rvalue(astn a, astn target) {
                 case ',':
                     gen_rvalue(a->Binop.left, NULL);
                     return gen_rvalue(a->Binop.right, target);
+                case EQEQ:
+                    return gen_equality_eq(a->Binop.left, a->Binop.right, target);
+
                 default:
                     qunimpl(a, "Unhandled binop type for gen_rvalue :(");
             }
