@@ -4,6 +4,7 @@
 #include "ir.h"
 
 BB bb_alloc(void);
+BB bb_active(BB bb);
 BB bbl_push(void);
 void bbl_pop_to_root(void);
 

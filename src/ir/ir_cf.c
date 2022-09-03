@@ -9,7 +9,6 @@
 BB bb_alloc(void) {
     BB new = safe_calloc(1, sizeof(struct BB));
 
-    new->bbno = ++irst.tempno;
     new->fn = irst.fn;
     if (irst.bb_head) {
         irst.bb_head->next = new;
@@ -17,6 +16,12 @@ BB bb_alloc(void) {
         irst.bb_head = new;
     }
     return new;
+}
+
+BB bb_active(BB bb) {
+    bb->bbno = ++irst.tempno;
+    irst.bb = bb;
+    return bb;
 }
 
 BB bbl_push(void) {
@@ -35,7 +40,8 @@ BB bbl_push(void) {
     irst.bb_head = first;
 
     new->me = first;
-    irst.bb = first;
+
+    bb_active(first);
 
     return first;
 }
@@ -66,6 +72,13 @@ static void prepare_equality(astn a, astn b, astn *a_conv, astn *b_conv) {
     qunimpl(a, "Unimplemented operands in prepare_equality.");
 }
 
+void cmp0_br(astn a, BB t, BB f) {
+    astn ar = gen_rvalue(a, NULL);
+
+    astn res = gen_equality_eq(ar, simple_constant_alloc(0), NULL);
+    emit(IR_OP_CONDBR, res, wrap_bb(t), wrap_bb(f));
+}
+
 astn gen_equality_eq(astn a, astn b, astn target) {
     astn a_conv;
     astn b_conv;
@@ -90,11 +103,14 @@ void gen_while(astn wn) {
     BB next = bb_alloc();
 
     uncond_branch(cond);
-    irst.bb = cond;
 
-    uncond_branch(body);
-    irst.bb = body;
+    bb_active(cond);
+    cmp0_br(w->condition, next, body);
 
-    uncond_branch(next);
-    irst.bb = next;
+    bb_active(body);
+    // cursor
+    gen_quads(w->body);
+    uncond_branch(cond);
+
+    bb_active(next);
 }

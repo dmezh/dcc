@@ -15,10 +15,13 @@ typedef enum {
 
     IR_OP_FNCALL,
     IR_OP_BR,
+    IR_OP_CONDBR,
     IR_OP_CMPEQ,
     IR_OP_CMPNE,
     IR_OP_CMPGT,
     IR_OP_CMPLT,
+
+    IR_META_LABEL,
 
     IR_OP_SEXT,
     IR_OP_ZEXT,

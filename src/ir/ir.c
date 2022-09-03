@@ -201,6 +201,13 @@ void gen_quads(astn a) {
             gen_assign(a);
             break;
 
+        case ASTN_LIST:
+            while (a && list_data(a)) {
+                gen_quads(list_data(a));
+                a = list_next(a);
+            }
+            break;
+
         default:
             qunimpl(a, "Unimplemented astn for quad generation");
     }
