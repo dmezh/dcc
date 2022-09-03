@@ -67,7 +67,8 @@ static astn _gen_rvalue(astn a, astn target) {
                     return gen_rvalue(a->Binop.right, target);
                 case EQEQ:
                     return gen_equality_eq(a->Binop.left, a->Binop.right, target);
-
+                case NOTEQ:
+                    return gen_equality_ne(a->Binop.left, a->Binop.right, target);
                 default:
                     qunimpl(a, "Unhandled binop type for gen_rvalue :(");
             }
@@ -199,6 +200,16 @@ void gen_quads(astn a) {
 
         case ASTN_ASSIGN:
             gen_assign(a);
+            break;
+
+        case ASTN_CASSIGN:;
+            astn assign = astn_alloc(ASTN_ASSIGN);
+            astn bin = binop_alloc(a->Cassign.op, lvalue_to_rvalue(a->Cassign.left, NULL), a->Cassign.right);
+
+            assign->Assign.left = a->Cassign.left;
+            assign->Assign.right = bin;
+
+            gen_assign(assign);
             break;
 
         case ASTN_LIST:

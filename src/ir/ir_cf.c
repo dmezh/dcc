@@ -91,6 +91,18 @@ astn gen_equality_eq(astn a, astn b, astn target) {
     return target;
 }
 
+astn gen_equality_ne(astn a, astn b, astn target) {
+    astn a_conv;
+    astn b_conv;
+
+    prepare_equality(a, b, &a_conv, &b_conv);
+
+    target = qprepare_target(target, qtype_alloc(IR_i1));
+    emit(IR_OP_CMPNE, target, a_conv, b_conv);
+
+    return target;
+}
+
 void uncond_branch(BB bb) {
     emit(IR_OP_BR, wrap_bb(bb), NULL, NULL);
 }

@@ -1,18 +1,12 @@
-//!dtest skip
-//!dtest description "While loops."
-
-#include "../dcc_assert.h"
-
-int printf();
+//!dtest description While loops.
+//!dtest expect returncode 64
 
 int main() {
     int i=2;
 
-    dcc_assert(i == 2);
-
-    while (i<50) {
-        i*=2;
+    while (i != 64) {
+        i+=i;
     }
 
-    dcc_assert(i == 64);
+    return i;
 }
