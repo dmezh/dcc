@@ -32,6 +32,7 @@ typedef enum {
     IR_ptr,
 
     IR_TYPE_INTEGER_MIN,
+    IR_i1,
     IR_u8,
     IR_i8,
     IR_u16,
@@ -70,6 +71,7 @@ static const char *ir_op_str[IR_OP_COUNT] = {
 static const char *ir_type_str[IR_TYPE_COUNT] = {
     [IR_TYPE_UNDEF] = 0,
     [IR_ptr] = "ptr",
+    [IR_i1] = "i1",
     [IR_u8] = "i8",
     [IR_i8] = "i8",
     [IR_u16] = "i16",

@@ -108,6 +108,9 @@ astn get_qtype(astn t) {
                     case t_SHORT:
                         ret = is_signed ? IR_i16 : IR_u16;
                         break;
+                    case t_BOOL:
+                        ret = IR_i1;
+                        break;
                     default:
                         qunimpl(t, "Unsupported type in IR :(");
                 }
@@ -165,6 +168,7 @@ astn get_qtype(astn t) {
 }
 
 static bool type_is_signed[IR_TYPE_INTEGER_MAX] = {
+    [IR_i1] = false,
     [IR_u8] = false,
     [IR_i8] = true,
     [IR_u16] = false,
