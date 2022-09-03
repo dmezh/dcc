@@ -21,8 +21,6 @@ typedef enum {
     IR_OP_CMPLT,
     IR_OP_CMPLTEQ,
 
-    IR_META_LABEL,
-
     IR_OP_SEXT,
     IR_OP_ZEXT,
     IR_OP_TRUNC,
@@ -42,6 +40,7 @@ typedef enum {
     IR_arr,
     IR_ptr,
     IR_void,
+    IR_struct,
 
     IR_TYPE_INTEGER_MIN,
     IR_i1,

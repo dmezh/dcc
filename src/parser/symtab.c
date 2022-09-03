@@ -151,11 +151,13 @@ sym st_define_struct(const char *ident, astn decl_list,
     //printf("creating mini at %s:%d\n", openbrace_context.filename, openbrace_context.lineno);
     st_new_scope(SCOPE_MINI, openbrace_context);
     strunion->members = current_scope; // mini-scope
+    strunion->struct_offset = 0;
     sym member;
     while (decl_list) {
         member = real_begin_st_entry(list_data(decl_list), NS_MEMBERS, list_data(decl_list)->context);
         member->linkage = L_NONE;
         member->storspec = SS_NONE;
+        member->struct_offset = strunion->struct_offset++;
         decl_list = list_next(decl_list);
     }
     strunion->def_context = closebrace_context;
@@ -244,7 +246,7 @@ static void check_dtypechain_legality(astn head) {
 /*
  *  Synthesize a new st_entry, qualify and specify it, and attempt to install it
  *  into the current scope. Sets entry_type to STE_VAR by default.
- * 
+ *
  *  TODO: decl is not yet a list
  */
 static sym real_begin_st_entry(astn decl, enum namespaces ns, YYLTYPE context) {

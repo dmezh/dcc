@@ -43,10 +43,13 @@ const char *qoneword(astn a) {
             return qoneword(a);
 
         case ASTN_QTEMP:
-            if (a->Qtemp.name)
+            if (a->Qtemp.name && ir_type_matches(a, IR_struct)) {
+                asprintf(&ret, "%%%s", a->Qtemp.name);
+            } else if (a->Qtemp.name) {
                 asprintf(&ret, "@%s", a->Qtemp.name);
-            else
+            } else {
                 asprintf(&ret, "%%%d", a->Qtemp.tempno);
+            }
             break;
 
         case ASTN_STRLIT:
@@ -63,6 +66,9 @@ const char *qoneword(astn a) {
                     die("Expected array to have target.");
 
                 asprintf(&ret, "[%s x %s]", qoneword(ir_dtype(a)->Type.derived.size), qoneword(get_qtype(ir_dtype(a)->Type.derived.target)));
+            } else if (ir_type_matches(a, IR_struct)) {
+                ast_check(ir_dtype(a), ASTN_TYPE, "");
+                return qoneword(ir_dtype(a)->Type.tagtype.symbol->qptr);
             } else {
                 asprintf(&ret, "%s", ir_type_str[ir_type(a)]);
             }
@@ -174,6 +180,20 @@ void quad_print(quad first) {
                 }
 
                 qprintf(")\n");
+            } else if (ir_type_matches(first->target, IR_struct)) {
+                qprintf("%s = type { ",
+                        qoneword(first->target));
+
+                sym m = ir_dtype(first->target)->Type.tagtype.symbol->members->first;
+                while (m) {
+                    qprintf("%s", qoneword(get_qtype(m->type)));
+                    m = m->next;
+
+                    if (m)
+                        qprintf(", ");
+                }
+
+                qprintf(" }\n");
             } else {
                 qprintf("%s = global %s zeroinitializer\n",
                         qoneword(first->target),

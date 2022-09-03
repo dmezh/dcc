@@ -57,6 +57,7 @@ typedef struct st_entry {
     // struct/union
     bool is_union;
     struct symtab* members; // tag type is complete when this is non-null
+    astn qptr;
 
     // var
     enum storspec storspec;
@@ -66,7 +67,7 @@ typedef struct st_entry {
         struct number numinit;
         struct strlit strinit;
     };
-    int stack_offset;
+    int struct_offset;
     astn ptr_qtemp;
     astn param_qtemp;
 

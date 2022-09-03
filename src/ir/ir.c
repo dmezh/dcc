@@ -143,6 +143,9 @@ static astn _gen_rvalue(astn a, astn target) {
         case ASTN_FNCALL:
            return gen_fncall(a, target);
 
+        case ASTN_SELECT:
+           return lvalue_to_rvalue(gen_select(a), target);
+
         case ASTN_QTEMP:
             return a;
 

@@ -6,6 +6,8 @@
 #include "ir_util.h"
 #include "ir_types.h"
 #include "lexer.h" // for print_context
+#include "symtab.h"
+#include "symtab_util.h"
 #include "util.h"
 
 /**
@@ -63,4 +65,22 @@ astn gen_assign(astn a) {
     ast_check(a, ASTN_ASSIGN, "");
 
     return gen_store(a->Assign.left, a->Assign.right);
+}
+
+astn gen_select(astn a) {
+    astn s_lval = gen_lvalue(a->Select.parent);
+
+    if (!ir_type_matches(s_lval, IR_struct))
+        qerrorl(a, "Object is not a struct or union - cannot use member selection.");
+
+    sym memb_e = st_lookup_fq(a->Select.member->Ident.ident, get_qtype(ir_dtype(s_lval))->Qtype.derived_type->Type.tagtype.symbol->members, NS_MEMBERS);
+
+    if (!memb_e)
+        qerrorl(a, "Ident is not a member of this struct.");
+
+    astn target = qprepare_target(NULL, qtype_alloc(IR_ptr));
+    target->Qtemp.qtype->Qtype.derived_type = get_qtype(symptr_alloc(memb_e));
+
+    emit4(IR_OP_GEP, target, s_lval, simple_constant_alloc(0), simple_constant_alloc(memb_e->struct_offset));
+    return target;
 }

@@ -2,6 +2,7 @@
 
 #include "ir.h"
 #include "ir_arithmetic.h"
+#include "ir_state.h"
 #include "ir_util.h"
 
 bool is_integer(astn a) {
@@ -38,6 +39,27 @@ astn ir_dtype(astn t) {
  */
 bool ir_type_matches(astn a, ir_type_E t) {
     return ir_type(a) == t;
+}
+
+astn emit_struct_def(astn t) {
+    ast_check(t, ASTN_TYPE, "");
+
+    BB save = irst.bb;
+    irst.bb = irst.root_bbl->me;
+
+    astn target = qtemp_alloc(-1, qtype_alloc(IR_struct));
+    target->Qtemp.qtype->Qtype.derived_type = t;
+    t->Type.tagtype.symbol->qptr = target;
+
+    char *name;
+    asprintf(&name, "struct.%s.%d", t->Type.tagtype.symbol->ident, irst.uniq++);
+    target->Qtemp.name = name;
+
+    emit(IR_OP_DEFGLOBAL, t, NULL, NULL);
+
+    irst.bb = save;
+
+    return target;
 }
 
 /**
@@ -97,6 +119,14 @@ astn get_qtype(astn t) {
                     default:
                         qunimpl(t, "Invalid derived type in get_qtype");
                 }
+            } else if (t->Type.is_tagtype) {
+                if (t->Type.tagtype.symbol->is_union)
+                    qunimpl(t, "Unsupported: unions.");
+
+                if (!t->Type.tagtype.symbol->qptr)
+                    return emit_struct_def(t)->Qtemp.qtype;
+
+                return t->Type.tagtype.symbol->qptr->Qtemp.qtype;
             } else {
                 is_signed = !t->Type.scalar.is_unsigned;
                 switch (t->Type.scalar.type) {

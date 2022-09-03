@@ -24,6 +24,9 @@ astn gen_lvalue(astn a) {
         case ASTN_QTEMP:
             return a;
 
+        case ASTN_SELECT:
+            return gen_select(a);
+
         default:
             qunimpl(a, "Unimplemented astn kind for gen_lvalue!");
     }
