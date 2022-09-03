@@ -238,7 +238,7 @@ void quads_dump_llvm(FILE *o) {
     while (bbl) {           // for each function
         BB bb = bbl->me;    // for each basic block
         if (bbl != irst.root_bbl)
-            qprintf("define %s @%s() {\n", ir_type_str[ir_type(bb->fn->type->Type.derived.target)], bb->fn->ident);
+            qprintf("define %s() {\n", qonewordt(symptr_alloc(bb->fn)));
 
         quad g = bb->first;
         while (bb) {        // for each quad

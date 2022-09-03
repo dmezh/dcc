@@ -284,6 +284,10 @@ void gen_fn(sym e) {
         if (!strcmp(irst.fn->ident, "main")) {
             emit(IR_OP_RETURN, NULL, gen_rvalue(simple_constant_alloc(0), NULL), NULL);
         }
+
+        if (ir_type_matches(ir_dtype(symptr_alloc(irst.fn))->Type.derived.target, IR_void)) {
+            emit(IR_OP_RETURN, NULL, NULL, NULL);
+        }
     }
 
     bbl_pop_to_root();
