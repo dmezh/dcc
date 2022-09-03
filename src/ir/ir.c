@@ -175,7 +175,7 @@ void gen_quads(astn a) {
         case ASTN_DECLREC:
             // generate initializers
             // assuming local scope
-            if (a->Declrec.init) {
+            if (a->Declrec.init && a->Declrec.e->storspec == SS_AUTO) {
                 astn ass = astn_alloc(ASTN_ASSIGN);
                 ass->Assign.left = symptr_alloc(a->Declrec.e);
                 ass->Assign.right = a->Declrec.init;
@@ -281,7 +281,7 @@ astn gen_anon(astn a) {
     return qtemp;
 }
 
-void gen_global(sym e) {
+void gen_global_named(sym e, const char *ident) {
     astn qtype;
     if (ir_type_matches(symptr_alloc(e), IR_fn))
         qtype = qtype_alloc(IR_fn);
@@ -296,9 +296,13 @@ void gen_global(sym e) {
     qtemp->Qtemp.global = symptr_alloc(e);
     e->ptr_qtemp = qtemp;
 
-    qtemp->Qtemp.name = e->ident;
+    qtemp->Qtemp.name = ident;
 
     emit(IR_OP_DEFGLOBAL, qtemp, NULL, NULL);
+}
+
+void gen_global(sym e) {
+    gen_global_named(e, e->ident);
 }
 
 static void gen_local(sym n) {
@@ -309,6 +313,16 @@ static void gen_local(sym n) {
         n->ptr_qtemp = qtemp;
 
         emit(IR_OP_ALLOCA, qtemp, NULL, NULL);
+    } else if (n->entry_type == STE_VAR && n->storspec == SS_STATIC) {
+        char *name;
+        asprintf(&name, ".localstatic.%s.%s", irst.fn->ident, n->ident);
+
+        BB save = irst.bb;
+        irst.bb = &root_bb;
+
+        gen_global_named(n, name);
+
+        irst.bb = save;
     }
 }
 
