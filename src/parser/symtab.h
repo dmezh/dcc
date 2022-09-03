@@ -111,8 +111,8 @@ typedef const st_entry* const_sym;
  * current_scope: symtab 2  11|   thing3++;       // syntax error
  * current_scope: symtab 2  12| }                 // pop scope stack
  * current_scope: symtab 1  13|
- * 
- *                                                             *current_scope 
+ *
+ *                                                             *current_scope
  *    symtab 1               symtab 2              symtab 3  ⬋
  *   ,---------,  *parent  ,----------,  *parent  ,--------,
  *   | stuff.c |  <------  | main(){} |  <------  |  if{}  |
@@ -129,6 +129,8 @@ typedef struct symtab {
     struct symtab *parent;
     sym parent_func;
     sym first, last;
+
+    astn all_syms;
 } symtab;
 
 extern symtab root_symtab;
@@ -142,5 +144,7 @@ sym st_define_struct(const char *ident, astn decl_list,
                            YYLTYPE name_context, YYLTYPE closebrace_context, YYLTYPE openbrace_context);
 
 sym begin_st_entry(astn decl, enum namespaces ns,  YYLTYPE context);
+
+symtab *st_parent_function(void);
 
 #endif

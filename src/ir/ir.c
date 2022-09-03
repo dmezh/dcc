@@ -303,18 +303,22 @@ void gen_fn(sym e) {
     irst.tempno = 0; // reset
     irst.bb->bbno = 0;
 
-    // generate local allocations
-    sym n = e->fn_scope->first;
-    while (n) {
+    // check the all_sym list
+    // this includes variables from sub-scopes :)
+    astn l = e->fn_scope->all_syms;
+    while (l) {
+        sym n = list_data(l)->Declrec.e;
+
         if (n->entry_type == STE_VAR && n->storspec == SS_AUTO) {
             astn qtemp = new_qtemp(qtype_alloc(IR_ptr));
             qtemp->Qtemp.qtype->Qtype.derived_type = get_qtype(symptr_alloc(n));
+
             n->ptr_qtemp = qtemp;
 
             emit(IR_OP_ALLOCA, qtemp, NULL, NULL);
         }
 
-        n = n->next;
+        l = list_next(l);
     }
 
     astn a = e->body;

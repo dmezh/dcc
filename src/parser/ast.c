@@ -278,6 +278,17 @@ astn do_decl(astn decl) {
     if (decl->type == ASTN_DECL) {
         n = declrec_alloc(begin_st_entry(decl, NS_MISC, decl->context), decl->Decl.init);
     }
+
+    symtab *p = st_parent_function();
+
+    if (!p)
+        return n;
+
+    if (!p->all_syms)
+        p->all_syms = list_alloc(n);
+    else
+        list_append(n, p->all_syms);
+
     return n;
 }
 
