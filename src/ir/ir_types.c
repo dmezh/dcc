@@ -207,6 +207,10 @@ astn get_qtype(astn t) {
             n->Qtype.derived_type = t->Fncall.fn->Symptr.e->type->Type.derived.target;
             return n;
 
+        case ASTN_QBB:
+            n = qtype_alloc(IR_label);
+            return n;
+
         default:
             qunimpl(t, "Unimplemented astn type in get_qtype :(");
     }

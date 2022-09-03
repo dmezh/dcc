@@ -20,6 +20,9 @@ typedef enum {
     IR_OP_CMPNE,
     IR_OP_CMPLT,
     IR_OP_CMPLTEQ,
+    IR_OP_SWITCHBEGIN,
+    IR_OP_SWITCHCASE,
+    IR_OP_SWITCHEND,
 
     IR_OP_SEXT,
     IR_OP_ZEXT,
@@ -41,6 +44,7 @@ typedef enum {
     IR_ptr,
     IR_void,
     IR_struct,
+    IR_label,
 
     IR_TYPE_INTEGER_MIN,
     IR_i1,
@@ -86,6 +90,7 @@ static const char *ir_type_str[IR_TYPE_COUNT] = {
     [IR_TYPE_UNDEF] = 0,
     [IR_ptr] = "ptr",
     [IR_void] = "void",
+    [IR_label] = "label",
     [IR_i1] = "i1",
     [IR_u8] = "i8",
     [IR_i8] = "i8",

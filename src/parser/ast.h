@@ -239,6 +239,7 @@ struct astn_label {
 
 struct astn_case {
     struct astn *case_expr, *statement;
+    struct astn *bb;
 };
 
 struct astn_qtemp {

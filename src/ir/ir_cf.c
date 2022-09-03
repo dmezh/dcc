@@ -157,6 +157,64 @@ void uncond_branch(BB bb) {
     emit(IR_OP_BR, wrap_bb(bb), NULL, NULL);
 }
 
+void gen_switch(astn swnode) {
+    struct astn_switch *sw =  &swnode->Switch;
+
+    astn c = sw->condition;
+    c = do_integer_promotions(gen_rvalue(c, NULL));
+    astn c_t = get_qtype(c);
+
+    BB end = bb_nolink(".switch.end");
+    BB def = bb_nolink(".switch.def");
+
+    emit(IR_OP_SWITCHBEGIN, wrap_bb(end), c, NULL);
+
+    astn ca = sw->body;
+    while (ca) {
+        astn n = list_data(ca);
+        astn num = n->Case.case_expr;
+        if (!num) {
+            n->Case.bb = wrap_bb(def);
+            ca = list_next(ca);
+            continue;
+        }
+
+        BB case_bb = bb_nolink(".switch.case");
+
+        n->Case.bb = wrap_bb(case_bb);
+
+        num = convert_integer_type(num, ir_type(c_t));
+
+        emit(IR_OP_SWITCHCASE, num, n->Case.bb, NULL);
+
+        ca = list_next(ca);
+    }
+
+    emit(IR_OP_SWITCHEND, NULL, NULL, NULL);
+
+    ca = sw->body;
+    while (ca) {
+        astn n = list_data(ca);
+        astn s = n->Case.statement;
+
+        if (!n->Case.bb) {
+            ca = list_next(ca);
+            continue;
+        }
+
+        bb_active(n->Case.bb->Qbb.bb);
+        bb_link(n->Case.bb->Qbb.bb);
+        if (s)
+            gen_quads(s);
+
+        ca = list_next(ca);
+
+        if (ca && list_data(ca)->Case.bb) {
+            uncond_branch(list_data(ca)->Case.bb->Qbb.bb);
+        }
+    }
+}
+
 void gen_if(astn ifnode) {
     struct astn_ifelse *ifn = &ifnode->Ifelse;
 

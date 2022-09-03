@@ -444,6 +444,9 @@ void print_ast(astn n) {
     case ASTN_QTYPE:
         eprintf("QTYPE: %s\n", qoneword(n));
         break;
+    case ASTN_QBB:
+        eprintf("label %%%s", n->Qbb.bb->name);
+        break;
     case ASTN_NOOP:
         eprintf("(NOOP)\n");
         break;

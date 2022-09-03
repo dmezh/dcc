@@ -225,6 +225,10 @@ void gen_quads(astn a) {
             gen_for(a);
             break;
 
+        case ASTN_SWITCH:
+            gen_switch(a);
+            break;
+
         case ASTN_NOOP:
             break;
 

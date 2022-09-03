@@ -89,6 +89,10 @@ const char *qoneword(astn a) {
             asprintf(&ret, "@%s", a->Declrec.e->ident);
             break;
 
+        case ASTN_QBB:
+            asprintf(&ret, "%%%s", a->Qbb.bb->name);
+            break;
+
         default:
             qunimpl(a, "Unable to get oneword for astn :(");
             return 0;
@@ -302,6 +306,22 @@ void quad_print(quad first) {
                     qoneword(first->src2));
             break;
 
+        case IR_OP_SWITCHBEGIN:
+            qprintf("    switch %s, %s [\n",
+                    qonewordt(first->src1),
+                    qonewordt(first->target));
+
+            break;
+
+        case IR_OP_SWITCHCASE:
+            qprintf("        %s, %s\n",
+                    qonewordt(first->target),
+                    qonewordt(first->src1));
+            break;
+
+        case IR_OP_SWITCHEND:
+            qprintf("    ]\n");
+            break;
         default:
             die("Unhandled quad in quad_print");
             break;
