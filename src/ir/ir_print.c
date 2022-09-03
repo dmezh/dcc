@@ -269,7 +269,7 @@ void quad_print(quad first) {
             break;
 
         case IR_OP_CMPLT:
-            qprintf("   %s = icmp slt %s, %s\n",
+            qprintf("    %s = icmp slt %s, %s\n",
                     qoneword(first->target),
                     qonewordt(first->src1),
                     qoneword(first->src2));
