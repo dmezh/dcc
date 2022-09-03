@@ -35,9 +35,13 @@ astn gen_fncall(astn a, astn target) {
         arg = list_next(arg);
     }
 
-    target = qprepare_target(target, get_qtype(a->Fncall.fn->Symptr.e->type->Type.derived.target));
-
-    emit(IR_OP_FNCALL, target, a->Fncall.fn, arg_rval);
+    astn fn_ret = get_qtype(a->Fncall.fn->Symptr.e->type->Type.derived.target);
+    if (ir_type_matches(fn_ret, IR_void)) {
+        emit(IR_OP_FNCALL, NULL, a->Fncall.fn, arg_rval);
+    } else {
+        target = qprepare_target(target, fn_ret);
+        emit(IR_OP_FNCALL, target, a->Fncall.fn, arg_rval);
+    }
 
     return target;
 }

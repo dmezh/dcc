@@ -115,6 +115,9 @@ astn get_qtype(astn t) {
                     case t_BOOL:
                         ret = IR_i1;
                         break;
+                    case t_VOID:
+                        ret = IR_void;
+                        break;
                     default:
                         qunimpl(t, "Unsupported type in IR :(");
                 }

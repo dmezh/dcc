@@ -200,10 +200,16 @@ void quad_print(quad first) {
 
             break;
 
-        case IR_OP_FNCALL:
-            qprintf("    %s = call %s(",
-                    qoneword(first->target),
-                    qonewordt(first->src1));
+        case IR_OP_FNCALL:;
+            ir_type_E fn_ret = ir_type(ir_dtype(first->src1)->Type.derived.target);
+            if (fn_ret == IR_void) {
+                qprintf("    call %s(",
+                        qonewordt(first->src1));
+            } else {
+                qprintf("    %s = call %s(",
+                        qoneword(first->target),
+                        qonewordt(first->src1));
+            }
 
             astn arg = first->src2;
 
