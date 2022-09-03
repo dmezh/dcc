@@ -173,7 +173,8 @@ void gen_switch(astn swnode) {
     while (ca) {
         astn n = list_data(ca);
         if (n->type != ASTN_CASE) {
-            die("");
+            ca = list_next(ca);
+            continue;
         }
 
         astn num = n->Case.case_expr;
@@ -188,7 +189,7 @@ void gen_switch(astn swnode) {
 
         num = convert_integer_type(num, ir_type(c_t));
 
-        emit(IR_OP_SWITCHCASE, num, wrap_bb(case_bb), NULL);
+        emit(IR_OP_SWITCHCASE, num, n->Case.bb, NULL);
 
         ca = list_next(ca);
     }
@@ -199,15 +200,15 @@ void gen_switch(astn swnode) {
     while (ca) {
         astn n = list_data(ca);
         if (n->type != ASTN_CASE) {
-            die("");
+            gen_quads(n);
+            ca = list_next(ca);
+            continue;
         }
 
         astn s = n->Case.statement;
-        print_ast(s);
 
-        if (!n->Case.bb || !n->Case.bb->Qbb.bb) {
+        if (!n->Case.bb || !n->Case.bb->Qbb.bb)
             die("");
-        }
 
         ca = list_next(ca);
 
@@ -218,13 +219,14 @@ void gen_switch(astn swnode) {
 
         bb_active(n->Case.bb->Qbb.bb);
         bb_link(n->Case.bb->Qbb.bb);
-        irst.brk = next;
+        irst.brk = end;
 
         if (s)
             gen_quads(s);
 
         uncond_branch(next);
     }
+
     bb_active(end);
     bb_link(end);
 }
