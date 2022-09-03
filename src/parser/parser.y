@@ -50,7 +50,7 @@
     sym st_entry;
 }
 
-%token INDSEL PLUSPLUS MINUSMINUS SHL SHR LTEQ GTEQ EQEQ
+%token INDSEL PLUSPLUS MINUSMINUS SHL SHR LTEQ GTEQ EQEQ PREINCR PREDECR
 %token NOTEQ LOGAND LOGOR ELLIPSIS TIMESEQ DIVEQ MODEQ PLUSEQ MINUSEQ SHLEQ SHREQ ANDEQ
 %token OREQ XOREQ AUTO BREAK CASE CHAR CONST CONTINUE DEFAULT DO DOUBLE ENUM EXTERN
 %token FLOAT FOR GOTO INLINE INT LONG REGISTER RESTRICT RETURN SHORT SIGNED SIZEOF
@@ -321,20 +321,8 @@ postop:
 unary_expr:
     postfix_expr
 |   unops
-|   PLUSPLUS unary_expr         {   astn n=astn_alloc(ASTN_NUM);
-                                    n->Num.number.integer=1;
-                                    n->Num.number.is_signed=1;
-                                    n->Num.number.aux_type=s_INT;
-                                    n->context = @1;
-                                    $$=cassign_alloc('+', $2, n);
-                                }
-|   MINUSMINUS unary_expr       {   astn n=astn_alloc(ASTN_NUM);
-                                    n->Num.number.integer=1;
-                                    n->Num.number.is_signed=1;
-                                    n->Num.number.aux_type=s_INT;
-                                    n->context = @1;
-                                    $$=cassign_alloc('-', $2, n);
-                                }
+|   PLUSPLUS unary_expr         {   $$=unop_alloc(PREINCR, $2); }
+|   MINUSMINUS unary_expr       {   $$=unop_alloc(PREDECR, $2); }
 // todo: casts
 |   sizeof
 ;

@@ -77,7 +77,13 @@ bool type_is_arithmetic(astn a) {
 }
 
 astn gen_pointer_addition(astn ptr, astn i, astn target) {
-    astn i_ext = convert_integer_type(i, IR_PTR_INT_TYPE);
+    astn i_ext;
+
+    if (i->type != ASTN_NUM) {
+        i_ext = convert_integer_type(i, IR_PTR_INT_TYPE);
+    } else {
+        i_ext = i;
+    }
 
     target = qprepare_target(target, get_qtype(ptr)); // it's the same type as the pointer
 
@@ -88,8 +94,17 @@ astn gen_pointer_addition(astn ptr, astn i, astn target) {
 }
 
 astn gen_pointer_subtraction(astn ptr, astn i, astn target) {
-    astn i_ext = convert_integer_type(i, IR_PTR_INT_TYPE);
-    astn i_ext_neg = do_negate(i_ext);
+    astn i_ext;
+    astn i_ext_neg;
+
+    if (i->type != ASTN_NUM) {
+        i_ext = convert_integer_type(i, IR_PTR_INT_TYPE);
+        i_ext_neg = do_negate(i_ext);
+    } else {
+        i->Num.number.integer = -i->Num.number.integer;
+        i_ext = i;
+        i_ext_neg = i_ext;
+    }
 
     target = qprepare_target(target, get_qtype(ptr));
 

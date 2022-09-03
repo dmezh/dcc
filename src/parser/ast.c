@@ -61,9 +61,10 @@ astn simple_constant_alloc(int num) {
  * allocate complex assignment (*=, /=, etc) - 6.5.16
  */
 astn cassign_alloc(int op, astn left, astn right) {
-    astn n=astn_alloc(ASTN_ASSIGN);
-    n->Assign.left=left;
-    n->Assign.right=binop_alloc(op, left, right);
+    astn n=astn_alloc(ASTN_CASSIGN);
+    n->Cassign.left=left;
+    n->Cassign.right=right;
+    n->Cassign.op=op;
     return n;
 }
 

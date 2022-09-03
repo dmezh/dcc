@@ -49,7 +49,7 @@ astn gen_store(astn target, astn val) {
 
     emit(IR_OP_STORE, lval, compat_rval, NULL);
 
-    return rval;
+    return compat_rval;
 }
 
 /*
@@ -57,6 +57,9 @@ astn gen_store(astn target, astn val) {
  * (right side).
  */
 astn gen_assign(astn a) {
+    if (a->type == ASTN_CASSIGN)
+        return gen_rvalue(a, NULL);
+
     ast_check(a, ASTN_ASSIGN, "");
 
     return gen_store(a->Assign.left, a->Assign.right);

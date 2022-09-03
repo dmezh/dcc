@@ -37,6 +37,7 @@ astn gen_indirection(astn a) {
     if (a->Unop.op != '*')
         die("Passed wrong unop type to gen_indirection");
 
+
     astn targ_rval = gen_rvalue(a->Unop.target, NULL);
 
     if (!ir_type_matches(targ_rval, IR_ptr))
@@ -81,6 +82,9 @@ astn lvalue_to_rvalue(astn a, astn target) {
             }
 
             return gen_load(a, target);
+
+        case ASTN_SYMPTR:
+            return gen_rvalue(a, target);
 
         default:
             qunimpl(a, "Unsupported astn type for lvalue_to_rvalue!");

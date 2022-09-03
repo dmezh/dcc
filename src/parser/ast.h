@@ -23,6 +23,7 @@
 #define FOREACH_ASTN_KIND(MAKER)    \
     MAKER(ASTN_KIND_UNDEF),     \
     MAKER(ASTN_ASSIGN),         \
+    MAKER(ASTN_CASSIGN),        \
     MAKER(ASTN_NUM),            \
     MAKER(ASTN_IDENT),          \
     MAKER(ASTN_STRLIT),         \
@@ -68,6 +69,12 @@ enum astn_types {
 struct astn_assign { // could have been binop but separated for clarity
     // struct astn left, *right;
     struct astn *left, *right;
+};
+
+struct astn_cassign {
+    struct astn *left, *right;
+
+    int op;
 };
 
 // I'm questioning whether yystype could just be one of the union vals in struct astn instead
@@ -260,6 +267,7 @@ struct astn {
     YYLTYPE context;
     union {
         struct astn_assign Assign;
+        struct astn_cassign Cassign;
         struct astn_num Num;
         struct astn_ident Ident;
         struct astn_strlit Strlit;

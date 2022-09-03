@@ -86,6 +86,8 @@ void print_ast(astn n) {
         switch (n->Unop.op) {
             case PLUSPLUS:      eprintf("POSTINC\n");                break;
             case MINUSMINUS:    eprintf("POSTDEC\n");                break;
+            case PREINCR:       eprintf("PREINC\n");                 break;
+            case PREDECR:       eprintf("PREDECR\n");                break;
             case '*':           eprintf("DEREF\n");                  break;
             case '&':           eprintf("ADDRESSOF\n");              break;
             default:            eprintf("%c\n", n->Unop.op);    break;

@@ -58,6 +58,12 @@ static astn _gen_rvalue(astn a, astn target) {
                 case '&':;
                     return gen_lvalue(a->Unop.target);
 
+                case PREINCR:
+                    if (target)
+                        die("Unexpected target.");
+
+                    return gen_assign(cassign_alloc('+', gen_lvalue(a->Unop.target), simple_constant_alloc(1)));
+
                 case '+':
                     if (target)
                         die("Unexpected target for unary +");
@@ -76,6 +82,15 @@ static astn _gen_rvalue(astn a, astn target) {
 
         case ASTN_ASSIGN:
             return gen_assign(a);
+
+        case ASTN_CASSIGN:;
+            astn assign = astn_alloc(ASTN_ASSIGN);
+            astn bin = binop_alloc(a->Cassign.op, lvalue_to_rvalue(a->Cassign.left, NULL), a->Cassign.right);
+
+            assign->Assign.left = a->Cassign.left;
+            assign->Assign.right = bin;
+
+            return gen_assign(assign);
 
         case ASTN_SYMPTR:
            return lvalue_to_rvalue(gen_lvalue(a), target);
