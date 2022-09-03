@@ -69,6 +69,11 @@ static astn _gen_rvalue(astn a, astn target) {
                     return gen_equality_eq(a->Binop.left, a->Binop.right, target);
                 case NOTEQ:
                     return gen_equality_ne(a->Binop.left, a->Binop.right, target);
+                case '<':
+                case '>':
+                case LTEQ:
+                case GTEQ:
+                    return gen_relational(a->Binop.left, a->Binop.right, a->Binop.op, target);
                 default:
                     qunimpl(a, "Unhandled binop type for gen_rvalue :(");
             }
@@ -202,7 +207,14 @@ void gen_quads(astn a) {
             break;
 
         case ASTN_WHILELOOP:
-            gen_while(a);
+            if (a->Whileloop.is_dowhile)
+                gen_dowhile(a);
+            else
+                gen_while(a);
+            break;
+
+        case ASTN_FORLOOP:
+            gen_for(a);
             break;
 
         case ASTN_NOOP:

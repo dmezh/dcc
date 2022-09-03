@@ -6,6 +6,8 @@
 #include "ir_types.h"
 #include "ir_util.h"
 
+#include "parser.tab.h"
+
 BB bb_alloc(void) {
     BB new = safe_calloc(1, sizeof(struct BB));
 
@@ -103,6 +105,38 @@ astn gen_equality_ne(astn a, astn b, astn target) {
     return target;
 }
 
+static void prepare_relational(astn a, astn b, astn *a_conv, astn *b_conv) {
+    prepare_equality(a, b, a_conv, b_conv);
+}
+
+astn gen_relational(astn a, astn b, int op, astn target) {
+    astn a_conv;
+    astn b_conv;
+
+    prepare_relational(a, b, &a_conv, &b_conv);
+
+    target = qprepare_target(target, qtype_alloc(IR_i1));
+
+    switch (op) {
+        case '<':
+            emit(IR_OP_CMPLT, target, a_conv, b_conv);
+            break;
+        case '>':
+            emit(IR_OP_CMPLT, target, b_conv, a_conv);
+            break;
+        case GTEQ:
+            emit(IR_OP_CMPLTEQ, target, a_conv, b_conv);
+            break;
+        case LTEQ:
+            emit(IR_OP_CMPLTEQ, target, b_conv, a_conv);
+            break;
+        default:
+            die("");
+    }
+
+    return target;
+}
+
 void uncond_branch(BB bb) {
     emit(IR_OP_BR, wrap_bb(bb), NULL, NULL);
 }
@@ -129,3 +163,54 @@ void gen_while(astn wn) {
 
     bb_active(next);
 }
+
+void gen_dowhile(astn dw) {
+    struct astn_whileloop *d = &dw->Whileloop;
+
+    BB cond = bb_alloc();
+    BB body = bb_alloc();
+    BB next = bb_alloc();
+
+    uncond_branch(body);
+    bb_active(body);
+
+    irst.brk = next;
+    irst.cont = body;
+
+    gen_quads(d->body);
+
+    uncond_branch(cond);
+    bb_active(cond);
+
+    cmp0_br(d->condition, next, body);
+
+    bb_active(next);
+}
+
+void gen_for(astn fl) {
+    struct astn_forloop *f = &fl->Forloop;
+
+    BB cond = bb_alloc();
+    BB body = bb_alloc();
+    BB next = bb_alloc();
+
+    gen_quads(f->init);
+
+    uncond_branch(cond);
+    bb_active(cond);
+
+    cmp0_br(f->condition, next, body);
+
+    bb_active(body);
+
+    irst.brk = next;
+    irst.cont = body;
+
+    gen_quads(f->body);
+    gen_quads(f->oneach);
+
+    uncond_branch(cond);
+
+    bb_active(next);
+}
+

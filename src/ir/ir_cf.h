@@ -12,6 +12,10 @@ void uncond_branch(BB bb);
 
 astn gen_equality_eq(astn a, astn b, astn target);
 astn gen_equality_ne(astn a, astn b, astn target);
+astn gen_relational(astn a, astn b, int op, astn target);
+
 void gen_while(astn a);
+void gen_dowhile(astn a);
+void gen_for(astn a);
 
 #endif

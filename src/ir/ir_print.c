@@ -253,6 +253,19 @@ void quad_print(quad first) {
                     qoneword(first->src2));
             break;
 
+        case IR_OP_CMPLT:
+            qprintf("   %s = icmp slt %s, %s\n",
+                    qoneword(first->target),
+                    qonewordt(first->src1),
+                    qoneword(first->src2));
+            break;
+
+        case IR_OP_CMPLTEQ:
+            qprintf("   %s = icmp sle %s, %s\n",
+                    qoneword(first->target),
+                    qonewordt(first->src1),
+                    qoneword(first->src2));
+            break;
 
         default:
             die("Unhandled quad in quad_print");

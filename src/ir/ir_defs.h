@@ -18,8 +18,8 @@ typedef enum {
     IR_OP_CONDBR,
     IR_OP_CMPEQ,
     IR_OP_CMPNE,
-    IR_OP_CMPGT,
     IR_OP_CMPLT,
+    IR_OP_CMPLTEQ,
 
     IR_META_LABEL,
 
