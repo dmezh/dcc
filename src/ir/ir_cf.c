@@ -21,7 +21,7 @@ BB bb_alloc(void) {
 }
 
 BB bb_active(BB bb) {
-    bb->bbno = ++irst.tempno;
+    bb->bbno = irst.tempno++;
     irst.bb = bb;
     return bb;
 }

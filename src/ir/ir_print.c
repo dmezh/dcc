@@ -79,6 +79,10 @@ const char *qoneword(astn a) {
             asprintf(&ret, "@%s", a->Symptr.e->ident);
             break;
 
+        case ASTN_DECLREC:
+            asprintf(&ret, "@%s", a->Declrec.e->ident);
+            break;
+
         default:
             qunimpl(a, "Unable to get oneword for astn :(");
             return 0;
@@ -157,8 +161,23 @@ void quad_print(quad first) {
 
         case IR_OP_DEFGLOBAL:
             if (ir_type_matches(first->target, IR_fn)) {
-                qprintf("declare %s(...)\n",
+                ast_check(first->target->Qtemp.global, ASTN_SYMPTR, "");
+                if (first->target->Qtemp.global->Symptr.e->fn_defined) break;
+
+                qprintf("declare %s(",
                         qonewordt(first->target));
+
+                astn param = first->target->Qtemp.global->Symptr.e->param_list_q;
+
+                while (param) {
+                    qprintf("%s", qonewordt(list_data(param)));
+
+                    param = list_next(param);
+
+                    if (param) qprintf(", ");
+                }
+
+                qprintf(")\n");
             } else {
                 qprintf("%s = global %s zeroinitializer\n",
                         qoneword(first->target),
@@ -276,12 +295,25 @@ void quad_print(quad first) {
 void quads_dump_llvm(FILE *o) {
     f = o;
 
-    // fix for multiple bbs
     BBL bbl = irst.root_bbl;
     while (bbl) {           // for each function
         BB bb = bbl->me;    // for each basic block
-        if (bbl != irst.root_bbl)
-            qprintf("define %s() {\n", qonewordt(symptr_alloc(bb->fn)));
+        if (bbl != irst.root_bbl) {
+            qprintf("define %s(", qonewordt(symptr_alloc(bb->fn)));
+            astn p = bb->fn->param_list_q;
+
+            while (p) {
+                astn e = list_data(p);
+
+                qprintf("%s", qonewordt(e));
+
+                p = list_next(p);
+                if (p)
+                    qprintf(", ");
+            }
+
+            qprintf(") {\n");
+        }
 
         while (bb) {        // for each quad
             if (bb->bbno)

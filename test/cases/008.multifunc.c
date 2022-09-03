@@ -1,12 +1,9 @@
-//!dtest skip
 //!dtest description "Multiple functions."
+//!dtest expect returncode 98
 
-#include "../dcc_assert.h"
-
-int add();
-int multiply();
-int multiply_by_adding();
-int indirect_add();
+int add(int a, int b);
+int multiply_by_adding(int a, int b);
+int indirect_add(int a, int b);
 
 int main() {
     int a = 2;
@@ -14,24 +11,18 @@ int main() {
 
     int c;
     c = add(a, b);
-    dcc_assert(c == 8);
 
-    c = multiply(c, a);
-    dcc_assert(c == 16);
+    c = multiply_by_adding(c, a);
 
     c = multiply_by_adding(c, b);
-    dcc_assert(c == 96);
 
     c = indirect_add(c, a);
-    dcc_assert(98);
+
+    return c;
 }
 
 int add(int a, int b) {
     return a+b;
-}
-
-int multiply(int a, int b) {
-    return a * b;
 }
 
 int multiply_by_adding(int a, int b) {

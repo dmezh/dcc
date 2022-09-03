@@ -68,9 +68,11 @@ typedef struct st_entry {
     };
     int stack_offset;
     astn ptr_qtemp;
+    astn param_qtemp;
 
     // fn
     astn param_list;
+    astn param_list_q;
     struct symtab* fn_scope;
     astn body;
     bool fn_defined;

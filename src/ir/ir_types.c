@@ -76,6 +76,9 @@ astn get_qtype(astn t) {
         case ASTN_SYMPTR:;
             return get_qtype(t->Symptr.e->type);
 
+        case ASTN_DECLREC:
+            return get_qtype(t->Declrec.e->type);
+
         case ASTN_TYPE:
             if (t->Type.is_derived) {
                 switch (t->Type.derived.type) {

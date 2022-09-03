@@ -296,12 +296,57 @@ void gen_global(sym e) {
     emit(IR_OP_DEFGLOBAL, qtemp, NULL, NULL);
 }
 
+static void gen_local(sym n) {
+    if (n->entry_type == STE_VAR && n->storspec == SS_AUTO) {
+        astn qtemp = new_qtemp(qtype_alloc(IR_ptr));
+        qtemp->Qtemp.qtype->Qtype.derived_type = get_qtype(symptr_alloc(n));
+
+        n->ptr_qtemp = qtemp;
+
+        emit(IR_OP_ALLOCA, qtemp, NULL, NULL);
+    }
+}
+
+static void gen_param(sym n) {
+    if (n->entry_type == STE_VAR && n->storspec == SS_AUTO) {
+        astn qtemp = new_qtemp(get_qtype(symptr_alloc(n)));
+
+        n->param_qtemp = qtemp;
+
+        if (!irst.fn->param_list_q)
+            irst.fn->param_list_q = list_alloc(qtemp);
+        else
+            list_append(qtemp, irst.fn->param_list_q);
+    }
+}
+
 void gen_fn(sym e) {
     irst.fn = e;
-    irst.bb = bbl_push();
 
     irst.tempno = 0; // reset
-    irst.bb->bbno = 0;
+    // irst.bb->bbno = 0;
+
+    // generate parameters
+    astn p = e->param_list;
+    while (p) {
+        sym n = list_data(p)->Declrec.e;
+
+        gen_param(n);
+
+        p = list_next(p);
+    }
+
+    irst.bb = bbl_push();
+
+    // generate parameters - memory
+    p = e->param_list;
+    while (p) {
+        sym n = list_data(p)->Declrec.e;
+
+        gen_local(n);
+
+        p = list_next(p);
+    }
 
     // check the all_sym list
     // this includes variables from sub-scopes :)
@@ -309,16 +354,19 @@ void gen_fn(sym e) {
     while (l) {
         sym n = list_data(l)->Declrec.e;
 
-        if (n->entry_type == STE_VAR && n->storspec == SS_AUTO) {
-            astn qtemp = new_qtemp(qtype_alloc(IR_ptr));
-            qtemp->Qtemp.qtype->Qtype.derived_type = get_qtype(symptr_alloc(n));
-
-            n->ptr_qtemp = qtemp;
-
-            emit(IR_OP_ALLOCA, qtemp, NULL, NULL);
-        }
+        gen_local(n);
 
         l = list_next(l);
+    }
+
+    // generate param -> memory stores
+    p = e->param_list;
+    while (p) {
+        sym n = list_data(p)->Declrec.e;
+
+        gen_store(n->ptr_qtemp, n->param_qtemp);
+
+        p = list_next(p);
     }
 
     astn a = e->body;

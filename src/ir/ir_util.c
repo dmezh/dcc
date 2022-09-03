@@ -7,7 +7,7 @@
  * Allocate and return a new qtemp.
  */
 astn new_qtemp(astn qtype) {
-    return qtemp_alloc(++irst.tempno, qtype);
+    return qtemp_alloc(irst.tempno++, qtype);
 }
 
 /**
