@@ -224,6 +224,10 @@ void quad_print(quad first) {
 
             break;
 
+        case IR_OP_BR: // unconditional branch
+            qprintf("    br label %%%d\n", first->target->Qbb.bb->bbno);
+            break;
+
         default:
             die("Unhandled quad in quad_print");
             break;
@@ -240,8 +244,11 @@ void quads_dump_llvm(FILE *o) {
         if (bbl != irst.root_bbl)
             qprintf("define %s() {\n", qonewordt(symptr_alloc(bb->fn)));
 
-        quad g = bb->first;
         while (bb) {        // for each quad
+            if (bb->bbno)
+                qprintf("%d:\n", bb->bbno);
+
+            quad g = bb->first;
             while (g) {
                 quad_print(g);
                 g = g->next;

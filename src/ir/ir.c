@@ -187,6 +187,10 @@ void gen_quads(astn a) {
             gen_rvalue(a, NULL);
             break;
 
+        case ASTN_WHILELOOP:
+            gen_while(a);
+            break;
+
         case ASTN_NOOP:
             break;
 
@@ -254,6 +258,7 @@ void gen_fn(sym e) {
     irst.bb = bbl_push();
 
     irst.tempno = 0; // reset
+    irst.bb->bbno = 0;
 
     // generate local allocations
     sym n = e->fn_scope->first;

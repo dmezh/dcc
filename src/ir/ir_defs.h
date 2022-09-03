@@ -14,6 +14,7 @@ typedef enum {
     IR_OP_GEP,
 
     IR_OP_FNCALL,
+    IR_OP_BR,
 
     IR_OP_SEXT,
     IR_OP_ZEXT,
@@ -63,6 +64,7 @@ static const char *ir_op_str[IR_OP_COUNT] = {
     [IR_OP_GEP] = "getelementptr",
 
     [IR_OP_FNCALL] = "call",
+    [IR_OP_BR] = "br",
 
     [IR_OP_SEXT] = "sext",
     [IR_OP_ZEXT] = "zext",

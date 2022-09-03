@@ -20,6 +20,9 @@ struct ir_state {
     // current BBL
     BBL current_bbl;
 
+    // BB chain head
+    BB bb_head;
+
     // current BB
     BB bb;
 

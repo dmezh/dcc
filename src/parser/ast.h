@@ -55,7 +55,7 @@
     MAKER(ASTN_LABEL),          \
     MAKER(ASTN_CASE),           \
     MAKER(ASTN_QTEMP),          \
-    MAKER(ASTN_QBBNO),          \
+    MAKER(ASTN_QBB),            \
     MAKER(ASTN_QTYPE),          \
     MAKER(ASTN_NOOP),           \
     MAKER(ASTN_KIND_MAX)
@@ -248,8 +248,7 @@ struct astn_qtemp {
     const char *name;
 };
 
-struct BB;
-struct astn_qbbno {
+struct astn_qbb {
     struct BB* bb;
 };
 
@@ -296,7 +295,7 @@ struct astn {
         struct astn_label Label;
         struct astn_case Case;
         struct astn_qtemp Qtemp;
-        struct astn_qbbno Qbbno;
+        struct astn_qbb Qbb;
         struct astn_qtype Qtype;
     };
 };
