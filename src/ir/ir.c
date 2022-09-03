@@ -45,14 +45,20 @@ static astn _gen_rvalue(astn a, astn target) {
                     qunimpl(a, "Unhandled binop type for gen_rvalue :(");
             }
 
-        case ASTN_UNOP:
+        case ASTN_UNOP:;
+            astn prev;
             switch (a->Unop.op) {
                 case '*':
                     return lvalue_to_rvalue(gen_indirection(a), target);
 
                 case PLUSPLUS:;
-                    astn prev = gen_rvalue(a->Unop.target, target);
-                    gen_assign(cassign_alloc('+', a->Unop.target, simple_constant_alloc(1)));
+                    prev = gen_rvalue(a->Unop.target, target);
+                    gen_assign(cassign_alloc('+', gen_lvalue(a->Unop.target), simple_constant_alloc(1)));
+                    return prev;
+
+                case MINUSMINUS:;
+                    prev = gen_rvalue(a->Unop.target, target);
+                    gen_assign(cassign_alloc('-', gen_lvalue(a->Unop.target), simple_constant_alloc(1)));
                     return prev;
 
                 case '&':;
