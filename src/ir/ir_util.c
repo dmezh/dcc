@@ -4,47 +4,6 @@
 #include "ir_state.h"
 
 /**
- * Allocate and append new basic block to end of BBL.
- */
-BB bb_alloc(void) {
-    BB n = safe_calloc(1, sizeof(struct BB));
-    n->bbno = irst.bb_count;
-    n->fn = irst.fn;
-    bbl_append(n);
-    return n;
-}
-
-/**
- * Get next BBL of this BBL.
- */
-BBL bbl_next(const BBL bbl) {
-    return bbl->next;
-}
-
-/**
- * Get BB at this BBL.
- */
-BB bbl_this(const BBL bbl) {
-    return bbl->me;
-}
-
-/**
- * Append given BB to end of the global BBL.
- */
-void bbl_append(BB bb) {
-    BBL new = safe_calloc(1, sizeof(struct BBL));
-    new->me = bb;
-
-    // this is fucking dumb; keep a pointer to the end of the
-    // global BBL chain in irst instead.
-    BBL head = irst.root_bbl;
-    while (head->next) head = head->next;
-
-    head->next = new;
-    return;
-}
-
-/**
  * Allocate and return a new qtemp.
  */
 astn new_qtemp(astn qtype) {

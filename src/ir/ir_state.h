@@ -17,6 +17,9 @@ struct ir_state {
     // root BBL
     BBL root_bbl;
 
+    // current BBL
+    BBL current_bbl;
+
     // current BB
     BB bb;
 

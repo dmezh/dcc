@@ -234,22 +234,25 @@ void quads_dump_llvm(FILE *o) {
     f = o;
 
     // fix for multiple bbs
+    BBL bbl = irst.root_bbl;
+    while (bbl) {           // for each function
+        BB bb = bbl->me;    // for each basic block
+        if (bbl != irst.root_bbl)
+            qprintf("define %s @%s() {\n", ir_type_str[ir_type(bb->fn->type->Type.derived.target)], bb->fn->ident);
 
-    quad g = bbl_this(irst.root_bbl)->first;
-    while (g) {
-        quad_print(g);
-        g = g->next;
+        quad g = bb->first;
+        while (bb) {        // for each quad
+            while (g) {
+                quad_print(g);
+                g = g->next;
+            }
+
+            bb = bb->next;
+        }
+
+        if (bbl != irst.root_bbl)
+            qprintf("}\n");
+
+        bbl = bbl->next;
     }
-
-    irst.bb = bbl_this(bbl_next(irst.root_bbl));
-
-    qprintf("define %s @%s() {\n", ir_type_str[ir_type(irst.bb->fn->type->Type.derived.target)], irst.bb->fn->ident);
-
-    quad q = irst.bb->first;
-    while (q) {
-        quad_print(q);
-        q = q->next;
-    }
-
-    qprintf("}\n");
 }

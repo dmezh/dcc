@@ -1,5 +1,6 @@
 #include "ir.h"
 #include "ir_arithmetic.h"
+#include "ir_cf.h"
 #include "ir_loadstore.h"
 #include "ir_lvalue.h"
 #include "ir_state.h"
@@ -20,6 +21,7 @@ static struct BBL root_bbl = {.me = &root_bb};
 
 struct ir_state irst = {
     .root_bbl = &root_bbl,
+    .current_bbl = &root_bbl,
     .bb = &root_bb,
 };
 
@@ -249,7 +251,9 @@ void gen_global(sym e) {
 
 void gen_fn(sym e) {
     irst.fn = e;
-    irst.bb = bb_alloc();
+    irst.bb = bbl_push();
+
+    irst.tempno = 0; // reset
 
     // generate local allocations
     sym n = e->fn_scope->first;
@@ -281,5 +285,7 @@ void gen_fn(sym e) {
             emit(IR_OP_RETURN, NULL, gen_rvalue(simple_constant_alloc(0), NULL), NULL);
         }
     }
+
+    bbl_pop_to_root();
 }
 
