@@ -25,7 +25,10 @@ void quad_print_blankline(void) {
 
 const char *qonewordt(astn a) {
     char *ret;
-    asprintf(&ret, "%s %s", qoneword(get_qtype(a)), qoneword(a));
+    if (ir_type_matches(a, IR_fn))
+        asprintf(&ret, "%s %s", qoneword(ir_dtype(a)->Type.derived.target), qoneword(a));
+    else
+        asprintf(&ret, "%s %s", qoneword(get_qtype(a)), qoneword(a));
     return ret;
 }
 
@@ -73,7 +76,8 @@ const char *qoneword(astn a) {
             return qoneword(get_qtype(a));
 
         case ASTN_SYMPTR:
-            return a->Symptr.e->ident;
+            asprintf(&ret, "@%s", a->Symptr.e->ident);
+            break;
 
         default:
             qunimpl(a, "Unable to get oneword for astn :(");
@@ -148,9 +152,14 @@ void quad_print(quad first) {
             break;
 
         case IR_OP_DEFGLOBAL:
-            qprintf("%s = global %s zeroinitializer\n",
-                    qoneword(first->target),
-                    qoneword(ir_dtype(first->target)));
+            if (ir_type_matches(first->target, IR_fn)) {
+                qprintf("declare %s(...)\n",
+                        qonewordt(first->target));
+            } else {
+                qprintf("%s = global %s zeroinitializer\n",
+                        qoneword(first->target),
+                        qoneword(ir_dtype(first->target)));
+            }
             break;
 
         case IR_OP_SEXT:
@@ -188,6 +197,24 @@ void quad_print(quad first) {
                     qoneword(first->target),
                     qonewordt(first->src1),
                     qoneword(qtype_alloc(ir_type(first->target))));
+
+            break;
+
+        case IR_OP_FNCALL:
+            qprintf("    %s = call %s(",
+                    qoneword(first->target),
+                    qonewordt(first->src1));
+
+            astn arg = first->src2;
+
+            while (arg && list_data(arg)) {
+                qprintf("%s", qonewordt(list_data(arg)));
+                arg = list_next(arg);
+                if (arg && list_data(arg))
+                    qprintf(", ");
+            }
+
+            qprintf(")\n");
 
             break;
 

@@ -13,6 +13,8 @@ typedef enum {
     IR_OP_RETURN,
     IR_OP_GEP,
 
+    IR_OP_FNCALL,
+
     IR_OP_SEXT,
     IR_OP_ZEXT,
     IR_OP_TRUNC,
@@ -28,6 +30,7 @@ typedef enum {
 typedef enum {
     IR_TYPE_UNDEF = 0,
 
+    IR_fn,
     IR_arr,
     IR_ptr,
 
@@ -57,6 +60,8 @@ static const char *ir_op_str[IR_OP_COUNT] = {
     [IR_OP_STORE] = "store",
     [IR_OP_RETURN] = "ret",
     [IR_OP_GEP] = "getelementptr",
+
+    [IR_OP_FNCALL] = "call",
 
     [IR_OP_SEXT] = "sext",
     [IR_OP_ZEXT] = "zext",

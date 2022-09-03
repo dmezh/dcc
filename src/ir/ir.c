@@ -23,6 +23,24 @@ struct ir_state irst = {
     .bb = &root_bb,
 };
 
+astn gen_fncall(astn a, astn target) {
+    astn arg = a->Fncall.args;
+    astn arg_rval = NULL;
+
+    while (arg) {
+        if (!arg_rval)
+            arg_rval = list_alloc(gen_rvalue(list_data(arg), NULL));
+        else
+            list_append(gen_rvalue(list_data(arg), NULL), arg_rval);
+        arg = list_next(arg);
+    }
+
+    target = qprepare_target(target, get_qtype(a->Fncall.fn->Symptr.e->type->Type.derived.target));
+
+    emit(IR_OP_FNCALL, target, a->Fncall.fn, arg_rval);
+
+    return target;
+}
 
 static astn _gen_rvalue(astn a, astn target) {
     switch (a->type) {
@@ -107,6 +125,9 @@ static astn _gen_rvalue(astn a, astn target) {
         case ASTN_SYMPTR:
            return lvalue_to_rvalue(gen_lvalue(a), target);
 
+        case ASTN_FNCALL:
+           return gen_fncall(a, target);
+
         case ASTN_QTEMP:
             return a;
 
@@ -150,6 +171,7 @@ void gen_quads(astn a) {
         case ASTN_UNOP:
         case ASTN_NUM:
         case ASTN_STRLIT:
+        case ASTN_SYMPTR:
             qwarn("Warning: useless expression: ");
             print_ast(a);
             gen_rvalue(a, NULL);
@@ -167,8 +189,7 @@ void gen_quads(astn a) {
             break;
 
         default:
-            print_ast(a);
-            die("Unimplemented astn for quad generation");
+            qunimpl(a, "Unimplemented astn for quad generation");
     }
 }
 
@@ -203,7 +224,11 @@ astn gen_anon(astn a) {
 }
 
 void gen_global(sym e) {
-    astn qtype = qtype_alloc(IR_ptr);
+    astn qtype;
+    if (ir_type_matches(symptr_alloc(e), IR_fn))
+        qtype = qtype_alloc(IR_fn);
+    else
+        qtype = qtype_alloc(IR_ptr);
 
     qtype->Qtype.derived_type = e->type;
 

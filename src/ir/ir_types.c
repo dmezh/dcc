@@ -87,6 +87,10 @@ astn get_qtype(astn t) {
                         ret = IR_arr;
                         ret_der = t; // special for arrays - derived_type is the array
                         break;
+                    case t_FN:
+                        ret = IR_fn;
+                        ret_der = t; // special for functions - derived_type is the function
+                        break;
                     default:
                         qunimpl(t, "Invalid derived type in get_qtype");
                 }
@@ -162,6 +166,11 @@ astn get_qtype(astn t) {
         case ASTN_BINOP:
             qunimpl(t, "Tried to get type of binop!");
 
+        case ASTN_FNCALL:
+            n = qtype_alloc(IR_fn);
+            n->Qtype.derived_type = t->Fncall.fn->Symptr.e->type->Type.derived.target;
+            return n;
+
         default:
             qunimpl(t, "Unimplemented astn type in get_qtype :(");
     }
@@ -202,7 +211,8 @@ astn make_type_compat_with(astn a, astn kind) {
         return ptr_to_int(a, kind);
     }
 
-    qunimpl(kind, "Don't know how to make something compatible with type.");
+    print_ast(a);
+    qunimpl(kind, "Don't know how to make the above compatible with this!");
 }
 
 astn ptr_to_int(astn a, astn kind) {
