@@ -64,6 +64,12 @@ static astn _gen_rvalue(astn a, astn target) {
 
                     return gen_assign(cassign_alloc('+', gen_lvalue(a->Unop.target), simple_constant_alloc(1)));
 
+                case PREDECR:
+                    if (target)
+                        die("Unexpected target.");
+
+                    return gen_assign(cassign_alloc('-', gen_lvalue(a->Unop.target), simple_constant_alloc(1)));
+
                 case '+':
                     if (target)
                         die("Unexpected target for unary +");
