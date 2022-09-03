@@ -70,7 +70,7 @@ astn gen_assign(astn a) {
 astn gen_select(astn a) {
     astn s_lval = gen_lvalue(a->Select.parent);
 
-    if (!ir_type_matches(s_lval, IR_struct))
+    if (!ir_type_matches(ir_dtype(s_lval), IR_struct))
         qerrorl(a, "Object is not a struct or union - cannot use member selection.");
 
     sym memb_e = st_lookup_fq(a->Select.member->Ident.ident, get_qtype(ir_dtype(s_lval))->Qtype.derived_type->Type.tagtype.symbol->members, NS_MEMBERS);
