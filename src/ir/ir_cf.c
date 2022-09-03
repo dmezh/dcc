@@ -120,7 +120,10 @@ void gen_while(astn wn) {
     cmp0_br(w->condition, next, body);
 
     bb_active(body);
-    // cursor
+
+    irst.brk = next;
+    irst.cont = body;
+
     gen_quads(w->body);
     uncond_branch(cond);
 

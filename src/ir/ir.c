@@ -191,6 +191,16 @@ void gen_quads(astn a) {
             gen_rvalue(a, NULL);
             break;
 
+        case ASTN_BREAK:
+            uncond_branch(irst.brk);
+            irst.tempno++;
+            break;
+
+        case ASTN_CONTINUE:
+            uncond_branch(irst.cont);
+            irst.tempno++;
+            break;
+
         case ASTN_WHILELOOP:
             gen_while(a);
             break;
