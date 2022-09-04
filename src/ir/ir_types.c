@@ -427,7 +427,7 @@ ir_type_E get_integer_promotions_type(astn a) {
     ir_type_E a_rank = ir_type(a);
 
     if (a_rank < IR_u32) {
-        return IR_u32;
+        return IR_i32;
     }
 
     return a_rank;
