@@ -226,8 +226,16 @@ astn gen_ternary(astn tern, astn target) {
     bool th_is_arith = type_is_arithmetic(thv);
     bool els_is_arith = type_is_arithmetic(elsv);
 
+    bool th_is_ptr = ir_type_matches(thv, IR_ptr);
+    bool els_is_ptr = ir_type_matches(thv, IR_ptr);
+
     if (th_is_arith && els_is_arith) {
         type->Qtypecontainer.qtype = get_arithmetic_conversions_type(thv, elsv);
+    } else if (th_is_ptr && els_is_ptr) {
+        // we will allow mismatched pointed-to types,
+        // this is a warning in clang/gcc.
+
+        type->Qtypecontainer.qtype = get_qtype(thv);
     } else {
         qunimpl(tern, "Unsupported types for ternary :(")
     }
