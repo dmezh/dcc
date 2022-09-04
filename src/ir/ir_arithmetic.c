@@ -202,6 +202,47 @@ astn gen_sub_rvalue(astn a, astn target) {
     qerrorl(a, "Invalid operands to subtraction.");
 }
 
+astn gen_mulop_rvalue(astn a, astn target) {
+    int op = a->Binop.op;
+
+    astn l = gen_rvalue(a->Binop.left, NULL);
+    astn r = gen_rvalue(a->Binop.right, NULL);
+
+    bool l_is_arith = type_is_arithmetic(l);
+    bool r_is_arith = type_is_arithmetic(r);
+
+    if (!(l_is_arith && r_is_arith))
+        qerrorl(a, "Can't do multiplicative operation on non-arithmetic operands.");
+
+    astn conv_l;
+    astn conv_r;
+
+    astn res_type = do_arithmetic_conversions(l, r, &conv_l, &conv_r);
+
+    bool res_signed = type_is_signed(ir_type(res_type));
+
+    ir_op_E iop;
+
+    switch (op) {
+        case '*':
+            iop = IR_OP_MUL;
+            break;
+        case '%':
+            iop  = res_signed ? IR_OP_SMOD : IR_OP_UMOD;
+            break;
+        case '/':
+            iop = res_signed ? IR_OP_SDIV : IR_OP_UDIV;
+            break;
+        default:
+            qunimpl(a, "Invalid multiplicative operator");
+    }
+
+    target = qprepare_target(target, get_qtype(res_type));
+    emit(iop, target, conv_l, conv_r);
+
+    return target;
+}
+
 astn do_negate(astn a) {
     if (!is_integer(a))
         qunimpl(a, "Attempted to negate non-integer");

@@ -9,6 +9,8 @@ astn ir_dtype(astn t);
 bool ir_type_matches(astn a, ir_type_E t);
 astn get_qtype(astn t);
 
+bool type_is_signed(ir_type_E t);
+
 astn make_type_compat_with(astn a, astn kind);
 
 astn ptr_to_int(astn a, astn kind);

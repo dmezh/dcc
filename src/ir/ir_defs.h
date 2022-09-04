@@ -32,6 +32,11 @@ typedef enum {
 
     IR_OP_ADD,
     IR_OP_SUB,
+    IR_OP_MUL,
+    IR_OP_SDIV,
+    IR_OP_UDIV,
+    IR_OP_SMOD,
+    IR_OP_UMOD,
 
     IR_OP_COUNT,
 } ir_op_E;

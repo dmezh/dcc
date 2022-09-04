@@ -216,17 +216,21 @@ astn get_qtype(astn t) {
     }
 }
 
-static bool type_is_signed[IR_TYPE_INTEGER_MAX] = {
-    [IR_i1] = false,
-    [IR_u8] = false,
-    [IR_i8] = true,
-    [IR_u16] = false,
-    [IR_i16] = true,
-    [IR_u32] = false,
-    [IR_i32] = true,
-    [IR_u64] = false,
-    [IR_i64] = true,
-};
+bool type_is_signed(ir_type_E t) {
+    static bool _type_is_signed[IR_TYPE_INTEGER_MAX] = {
+        [IR_i1] = false,
+        [IR_u8] = false,
+        [IR_i8] = true,
+        [IR_u16] = false,
+        [IR_i16] = true,
+        [IR_u32] = false,
+        [IR_i32] = true,
+        [IR_u64] = false,
+        [IR_i64] = true,
+    };
+
+    return _type_is_signed[t];
+}
 
 astn make_type_compat_with(astn a, astn kind) {
     bool kind_is_ptr = ir_type_matches(kind, IR_ptr);
@@ -302,7 +306,7 @@ astn convert_integer_type(astn a, ir_type_E t) {
     if (a_type == t)
         return a;
 
-    bool a_is_signed = type_is_signed[a_type];
+    bool a_is_signed = type_is_signed(a_type);
 
     if (a_is_signed && (a_type - t) == 1) // iN to uN
         return a;
@@ -338,8 +342,8 @@ astn do_integer_conversions(astn a, astn b, astn *a_new, astn *b_new) {
     ir_type_E a_irt = ir_type(a);
     ir_type_E b_irt = ir_type(b);
 
-    const bool a_is_signed = type_is_signed[a_irt];
-    const bool b_is_signed = type_is_signed[b_irt];
+    const bool a_is_signed = type_is_signed(a_irt);
+    const bool b_is_signed = type_is_signed(b_irt);
 
     // If both operands have the same type, then no further conversion is needed.
 

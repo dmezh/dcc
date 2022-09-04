@@ -151,6 +151,46 @@ void quad_print(quad first) {
                     qoneword(first->src2));
             break;
 
+        case IR_OP_MUL:
+            qprintf("    %s = mul %s %s, %s\n",
+                    qoneword(first->target),
+                    qoneword(qtype_alloc(ir_type(first->target))),
+                    qoneword(first->src1),
+                    qoneword(first->src2));
+            break;
+
+        case IR_OP_SDIV:
+            qprintf("    %s = sdiv %s %s, %s\n",
+                    qoneword(first->target),
+                    qoneword(qtype_alloc(ir_type(first->target))),
+                    qoneword(first->src1),
+                    qoneword(first->src2));
+            break;
+
+        case IR_OP_UDIV:
+            qprintf("    %s = udiv %s %s, %s\n",
+                    qoneword(first->target),
+                    qoneword(qtype_alloc(ir_type(first->target))),
+                    qoneword(first->src1),
+                    qoneword(first->src2));
+            break;
+
+        case IR_OP_SMOD:
+            qprintf("    %s = srem %s %s, %s\n",
+                    qoneword(first->target),
+                    qoneword(qtype_alloc(ir_type(first->target))),
+                    qoneword(first->src1),
+                    qoneword(first->src2));
+            break;
+
+        case IR_OP_UMOD:
+            qprintf("    %s = urem %s %s, %s\n",
+                    qoneword(first->target),
+                    qoneword(qtype_alloc(ir_type(first->target))),
+                    qoneword(first->src1),
+                    qoneword(first->src2));
+            break;
+
         case IR_OP_GEP:
             qprintf("    %s = getelementptr %s, %s, %s",
                     qoneword(first->target),

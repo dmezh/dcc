@@ -74,6 +74,10 @@ static astn _gen_rvalue(astn a, astn target) {
                 case LTEQ:
                 case GTEQ:
                     return gen_relational(a->Binop.left, a->Binop.right, a->Binop.op, target);
+                case '*':
+                case '%':
+                case '/':
+                    return gen_mulop_rvalue(a, target);
                 default:
                     qunimpl(a, "Unhandled binop type for gen_rvalue :(");
             }
