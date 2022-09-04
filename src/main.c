@@ -22,12 +22,14 @@ FILE *tmp, *tmp2;
 static struct opt {
     int debug;
     bool asm_out;
+    bool link;
     const char* out_file;
     const char* in_file;
 } opt = {
     .debug = 0,
     .asm_out = false,
     .out_file = NULL,
+    .link = 1,
 };
 
 static struct {
@@ -55,6 +57,7 @@ static void print_usage() {
     eprintf("Usage: ./dcc [OPTIONS] input_file"
         "\n Options:"
         "\n   -h              show extended usage"
+        "\n   -c              do not link"
         "\n   -o output_file  specify output file"
         "\n   -S              output assembly only"
         "\n   -v              debug mode:"
@@ -70,7 +73,7 @@ static void print_usage() {
 static void get_options(int argc, char** argv) {
     int a;
     opterr = 0;
-    while ((a = getopt(argc, argv, "hvVSo:")) != -1) {
+    while ((a = getopt(argc, argv, "hvcVSo:")) != -1) {
         switch (a) {
             case 'h':
                 print_usage();
@@ -92,6 +95,9 @@ static void get_options(int argc, char** argv) {
                 break;
             case 'o':
                 opt.out_file = optarg;
+                break;
+            case 'c':
+                opt.link = false;
                 break;
             case '?':
                 print_usage();
@@ -115,9 +121,14 @@ static void get_options(int argc, char** argv) {
             debug_setlevel_DEBUG();
     }
 
-    if (!opt.out_file)
+    if (!opt.out_file) {
+        if (opt.asm_out)
+            opt.out_file = "out.ll";
+        else
+            opt.out_file = opt.link ? "out.out" : "a.o";
+    }
         //opt.out_file = opt.asm_out ? "a.S" : "a.out";
-        opt.out_file = "out.IR";
+        //opt.out_file = "out.IR";
 
     if (optind >= argc) {
         RED_ERROR("No input file specified!");
@@ -169,11 +180,13 @@ static void assemble() {
         case 0:
             dup2(fileno(tmp2), STDIN_FILENO);
 
+            const char *link_cmd = opt.link ? "" : "-c";
+
             if (dcc_is_host_darwin()) {
-                const char* gcc_argv[] = {"clang", "-x", "assembler", "-", "-o", opt.out_file, /*"-mmacosx-version-min=10.15",*/ "-arch", "x86_64", "-Og", NULL};
+                const char* gcc_argv[] = {"clang", "-x", "assembler", link_cmd, "-", "-o", opt.out_file, /*"-mmacosx-version-min=10.15",*/ "-arch", "x86_64", "-Og", NULL};
                 execvp(gcc_argv[0], (char**)gcc_argv);
             } else {
-                const char* gcc_argv[] = {"gcc", "-x", "assembler", "-fPIC", "-", "-o", opt.out_file, NULL};
+                const char* gcc_argv[] = {"gcc", "-x", "assembler", link_cmd, "-fPIC", "-", "-o", opt.out_file, NULL};
                 execvp(gcc_argv[0], (char**)gcc_argv);
             }
 
