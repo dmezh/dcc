@@ -283,7 +283,9 @@ astn convert_to_ptr(astn a, astn kind) {
 
         ast_check(a, ASTN_QTEMP, "Non-qtemp parameter a ptr passed to convert_to_ptr");
 
-        astn q = qtemp_alloc(a->Qtemp.tempno, get_qtype(kind)); // tempno of a, qtype of kind
+        astn q = astn_alloc(ASTN_QTEMP); // about to overwrite
+        *q = *a;
+        q->Qtemp.qtype = get_qtype(kind);
 
         return q;
     }

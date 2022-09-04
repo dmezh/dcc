@@ -174,10 +174,10 @@ astn gen_relational(astn a, astn b, int op, astn target) {
             emit(IR_OP_CMPLT, target, b_conv, a_conv);
             break;
         case GTEQ:
-            emit(IR_OP_CMPLTEQ, target, a_conv, b_conv);
+            emit(IR_OP_CMPLTEQ, target, b_conv, a_conv);
             break;
         case LTEQ:
-            emit(IR_OP_CMPLTEQ, target, b_conv, a_conv);
+            emit(IR_OP_CMPLTEQ, target, a_conv, b_conv);
             break;
         default:
             die("");

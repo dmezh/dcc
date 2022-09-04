@@ -15,9 +15,6 @@ astn gen_lvalue(astn a) {
             astn n = a->Symptr.e->ptr_qtemp;
             return n;
 
-        case ASTN_NUM:
-            qerrorl(a, "Expression is not assignable!");
-
         case ASTN_UNOP:
             return gen_indirection(a);
 
@@ -28,7 +25,7 @@ astn gen_lvalue(astn a) {
             return gen_select(a);
 
         default:
-            qunimpl(a, "Unimplemented astn kind for gen_lvalue!");
+            qerrorl(a, "Expression is not an lvalue!");
     }
 }
 
@@ -90,7 +87,7 @@ astn lvalue_to_rvalue(astn a, astn target) {
             return gen_rvalue(a, target);
 
         default:
-            qunimpl(a, "Unsupported astn type for lvalue_to_rvalue!");
+            qerrorl(a, "Expression is not an lvalue!");
     }
 }
 

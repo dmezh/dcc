@@ -49,6 +49,8 @@ const char *qoneword(astn a) {
             } else if (a->Qtemp.name) {
                 asprintf(&ret, "@%s", a->Qtemp.name);
             } else {
+                if (a->Qtemp.tempno < 0)
+                    qunimpl(a, "Tried to print a negative qtemp number!");
                 asprintf(&ret, "%%%d", a->Qtemp.tempno);
             }
             break;
