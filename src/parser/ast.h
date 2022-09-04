@@ -246,7 +246,7 @@ struct astn_qtemp {
     unsigned tempno;
     struct astn *global;
     struct astn *qtype;
-    const char *name;
+    char *name;
 };
 
 struct astn_qbb {

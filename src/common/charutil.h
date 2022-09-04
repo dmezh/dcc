@@ -10,6 +10,8 @@
 long long int parse_char(char* str, size_t* i, int* type);
 
 // print single char in escape-seq format
+char* get_char_esc(unsigned char c);
 void emit_char(unsigned char c, FILE* f);
+char* get_char_hexesc(unsigned char c);
 
 #endif

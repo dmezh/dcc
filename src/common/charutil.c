@@ -43,26 +43,45 @@ long long int parse_char(char* str, size_t* i, int* type) {
     }
 }
 
-void emit_char(unsigned char c, FILE* f) {
+void emit_char(unsigned char c, FILE *f) {
+    fprintf(f, "%s", get_char_esc(c));
+}
+
+char* get_char_esc(unsigned char c) {
+    char *ret;
     switch (c)
     {
-            case '\'': fprintf(f, "\\\'"); break;
-            case '\"': fprintf(f, "\\\""); break;
-            case '\?': fprintf(f, "?");    break;
-            case '\\': fprintf(f, "\\\\"); break;
-            case '\0': fprintf(f, "\\0");  break;
-            case '\a': fprintf(f, "\\a");  break;
-            case '\b': fprintf(f, "\\b");  break;
-            case '\f': fprintf(f, "\\f");  break;
-            case '\n': fprintf(f, "\\n");  break;
-            case '\r': fprintf(f, "\\r");  break;
-            case '\t': fprintf(f, "\\t");  break;
-            case '\v': fprintf(f, "\\v");  break;
+            case '\'': asprintf(&ret, "\\\'"); break;
+            case '\"': asprintf(&ret, "\\\""); break;
+            case '\?': asprintf(&ret, "?");    break;
+            case '\\': asprintf(&ret, "\\\\"); break;
+            case '\0': asprintf(&ret, "\\0");  break;
+            case '\a': asprintf(&ret, "\\a");  break;
+            case '\b': asprintf(&ret, "\\b");  break;
+            case '\f': asprintf(&ret, "\\f");  break;
+            case '\n': asprintf(&ret, "\\n");  break;
+            case '\r': asprintf(&ret, "\\r");  break;
+            case '\t': asprintf(&ret, "\\t");  break;
+            case '\v': asprintf(&ret, "\\v");  break;
             default:
                 if (c >= 33 && c <= 126) {
-                    fprintf(f, "%c", c);
+                    asprintf(&ret, "%c", c);
                 } else {
-                    fprintf(f, "\\%03o", c);
+                    asprintf(&ret, "\\%03o", c);
                 }
     }
+
+    return ret;
+}
+
+char* get_char_hexesc(unsigned char c) {
+    char *ret;
+
+    if (c != '"' && c >= 32 && c <= 126) {
+        asprintf(&ret, "%c", c);
+    } else {
+        asprintf(&ret, "\\%02X", c);
+    }
+
+    return ret;
 }

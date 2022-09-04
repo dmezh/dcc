@@ -13,6 +13,6 @@ static void __assert_dcc(const char * assertion, const char * file, unsigned int
     exit(-5);
 }
 
-#define dcc_assert(expr) if (!(expr)) __assert_dcc(#expr, __FILE__, __LINE__, "{unknown}")
+#define dcc_assert(expr) if ((expr) == 0) __assert_dcc(#expr, __FILE__, __LINE__, "{unknown}")
 
 #endif

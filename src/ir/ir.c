@@ -280,7 +280,16 @@ astn gen_anon(astn a) {
             dtype = dtype_alloc(i8_type, t_ARRAY);
             dtype->Type.derived.size = simple_constant_alloc(a->Strlit.strlit.len + 1); // +1 for \0
             qtemp->Qtemp.global = a;
-            qtemp->Qtemp.name = a->Strlit.strlit.str;
+            asprintf(&qtemp->Qtemp.name, ".strlit.%s.%d", irst.fn->ident, irst.uniq++);
+
+            if (irst.anons)
+                list_append(qtemp, irst.anons);
+            else
+                irst.anons = list_alloc(qtemp);
+
+            BB save = bb_jumproot();
+            emit(IR_OP_DEFGLOBAL, qtemp, a, NULL);
+            bb_active(save);
 
             break;
 
@@ -308,7 +317,7 @@ void gen_global_named(sym e, const char *ident) {
     qtemp->Qtemp.global = symptr_alloc(e);
     e->ptr_qtemp = qtemp;
 
-    qtemp->Qtemp.name = ident;
+    qtemp->Qtemp.name = strdup(ident);
 
     emit(IR_OP_DEFGLOBAL, qtemp, NULL, NULL);
 }
@@ -327,13 +336,20 @@ static void gen_local(sym n) {
         emit(IR_OP_ALLOCA, qtemp, NULL, NULL);
     } else if (n->entry_type == STE_VAR && n->storspec == SS_STATIC) {
         char *name;
-        asprintf(&name, ".localstatic.%s.%s", irst.fn->ident, n->ident);
+        asprintf(&name, ".localstatic.%s.%s.%d", irst.fn->ident, n->ident, irst.uniq++);
 
         BB save = irst.bb;
         irst.bb = &root_bb;
 
         gen_global_named(n, name);
 
+        irst.bb = save;
+    } else if (n->type->Type.derived.type == t_FN) {
+        char *name;
+        asprintf(&name, "%s", n->ident);
+
+        BB save = bb_jumproot();
+        gen_global_named(n, name);
         irst.bb = save;
     }
 }

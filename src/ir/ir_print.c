@@ -6,6 +6,7 @@
 #include "ir_util.h"
 
 #include "ast.h"
+#include "charutil.h"
 #include "symtab.h"
 
 static FILE *f;
@@ -53,7 +54,15 @@ const char *qoneword(astn a) {
             break;
 
         case ASTN_STRLIT:
-            asprintf(&ret, "%s", a->Strlit.strlit.str);
+            asprintf(&ret, "c\"");
+
+            for (size_t i = 0; i < a->Strlit.strlit.len; i++) {
+                char * old_ret = ret;
+                asprintf(&ret, "%s%s", ret, get_char_hexesc(a->Strlit.strlit.str[i]));
+                free(old_ret);
+            }
+
+            asprintf(&ret, "%s\\00\"", ret);
             break;
 
         case ASTN_QTYPE:
@@ -208,12 +217,16 @@ void quad_print(quad first) {
         case IR_OP_DEFGLOBAL:
             if (ir_type_matches(first->target, IR_fn)) {
                 ast_check(first->target->Qtemp.global, ASTN_SYMPTR, "");
-                if (first->target->Qtemp.global->Symptr.e->fn_defined) break;
 
-                qprintf("declare %s(",
-                        qonewordt(first->target));
+                sym fn = first->target->Qtemp.global->Symptr.e;
+                if (fn->fn_defined) break;
 
-                astn param = first->target->Qtemp.global->Symptr.e->param_list_q;
+                if (fn->linkage == L_INTERNAL)
+                    qerrorl(fn->type, "static function never defined");
+
+                qprintf("declare %s(", qonewordt(first->target));
+
+                astn param = fn->param_list_q;
 
                 while (param) {
                     qprintf("%s", qonewordt(list_data(param)));
@@ -239,9 +252,26 @@ void quad_print(quad first) {
 
                 qprintf(" }\n");
             } else {
-                qprintf("%s = global %s zeroinitializer\n",
-                        qoneword(first->target),
-                        qoneword(ir_dtype(first->target)));
+                qprintf("%s = ", qoneword(first->target));
+
+                if (first->target->Qtemp.global->type == ASTN_STRLIT) {
+                    qprintf("private constant ");
+                } else if (*first->target->Qtemp.name == '.') {
+                    qprintf("private global ");
+                } else {
+                    qprintf("global ");
+                }
+
+                qprintf("%s ", qoneword(ir_dtype(first->target)));
+
+                if (first->src1) {
+                    qprintf("%s", qoneword(first->src1));
+                }
+                else {
+                    qprintf("zeroinitializer");
+                }
+
+                qprintf("\n");
             }
             break;
 
@@ -371,6 +401,9 @@ void quad_print(quad first) {
 
 void quads_dump_llvm(FILE *o) {
     f = o;
+
+    // generate anons
+
 
     BBL bbl = irst.root_bbl;
     while (bbl) {           // for each function

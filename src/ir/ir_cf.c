@@ -41,6 +41,13 @@ BB bb_active(BB bb) {
     return bb;
 }
 
+BB bb_jumproot(void) {
+    BB save = irst.bb;
+    irst.bb = irst.root_bbl->me;
+
+    return save;
+}
+
 BB bbl_push(void) {
     BBL new = safe_calloc(1, sizeof(struct BBL));
     if (irst.bb != irst.root_bbl->me)
@@ -79,8 +86,8 @@ static void prepare_equality(astn a, astn b, astn *a_conv, astn *b_conv) {
     astn ar = gen_rvalue(a, NULL);
     astn br = gen_rvalue(b, NULL);
 
-    bool a_is_arith = type_is_arithmetic(a);
-    bool b_is_arith = type_is_arithmetic(b);
+    bool a_is_arith = type_is_arithmetic(ar);
+    bool b_is_arith = type_is_arithmetic(br);
 
     if (a_is_arith && b_is_arith) {
         do_arithmetic_conversions(ar, br, a_conv, b_conv);
