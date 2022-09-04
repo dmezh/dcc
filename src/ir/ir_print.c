@@ -415,7 +415,10 @@ void quads_dump_llvm(FILE *o) {
             while (p) {
                 astn e = list_data(p);
 
-                qprintf("%s", qonewordt(e));
+                if (e->type == ASTN_ELLIPSIS)
+                    qprintf("...")
+                else
+                    qprintf("%s", qonewordt(e));
 
                 p = list_next(p);
                 if (p)

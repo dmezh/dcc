@@ -266,8 +266,8 @@ void gen_while(astn wn) {
     struct astn_whileloop *w = &wn->Whileloop;
 
     BB cond = bb_named("while.cond");
-    BB body = bb_named("while.body");
-    BB next = bb_named("while.next");
+    BB body = bb_nolink("while.body");
+    BB next = bb_nolink("while.next");
 
     uncond_branch(cond);
 
@@ -275,6 +275,7 @@ void gen_while(astn wn) {
     cmp0_br(w->condition, next, body);
 
     bb_active(body);
+    bb_link(body);
 
     irst.brk = next;
     irst.cont = body;
@@ -283,17 +284,19 @@ void gen_while(astn wn) {
     uncond_branch(cond);
 
     bb_active(next);
+    bb_link(next);
 }
 
 void gen_dowhile(astn dw) {
     struct astn_whileloop *d = &dw->Whileloop;
 
-    BB cond = bb_named("dowhile.cond");
-    BB body = bb_named("dowhile.body");
-    BB next = bb_named("dowhile.next");
+    BB cond = bb_nolink("dowhile.cond");
+    BB body = bb_nolink("dowhile.body");
+    BB next = bb_nolink("dowhile.next");
 
     uncond_branch(body);
     bb_active(body);
+    bb_link(body);
 
     irst.brk = next;
     irst.cont = body;
@@ -302,18 +305,20 @@ void gen_dowhile(astn dw) {
 
     uncond_branch(cond);
     bb_active(cond);
+    bb_link(cond);
 
     cmp0_br(d->condition, next, body);
 
     bb_active(next);
+    bb_link(next);
 }
 
 void gen_for(astn fl) {
     struct astn_forloop *f = &fl->Forloop;
 
     BB cond = bb_named("for.cond");
-    BB body = bb_named("for.body");
-    BB next = bb_named("for.next");
+    BB body = bb_nolink("for.body");
+    BB next = bb_nolink("for.next");
 
     gen_quads(f->init);
 
@@ -323,6 +328,7 @@ void gen_for(astn fl) {
     cmp0_br(f->condition, next, body);
 
     bb_active(body);
+    bb_link(body);
 
     irst.brk = next;
     irst.cont = body;
@@ -333,5 +339,6 @@ void gen_for(astn fl) {
     uncond_branch(cond);
 
     bb_active(next);
+    bb_link(next);
 }
 

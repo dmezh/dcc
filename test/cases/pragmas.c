@@ -1,4 +1,4 @@
-//!dtest skip
+//!dtest description test internal pragmas.
 
 #pragma do-dumpsymtab
 int i;

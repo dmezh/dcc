@@ -1,4 +1,3 @@
-//!dtest skip
 //!dtest description "Test compilation of variadics, without testing accessing varargs themselves."
 
 #include "../dcc_assert.h"

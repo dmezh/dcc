@@ -1,4 +1,3 @@
-//!dtest skip
 //!dtest description Completely useless (no side effects possible) expressions
 //!dtest expect returncode 0
 

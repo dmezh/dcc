@@ -376,6 +376,16 @@ void gen_fn(sym e) {
     // generate parameters
     astn p = e->param_list;
     while (p) {
+        astn a = list_data(p);
+        if (a->type == ASTN_ELLIPSIS) {
+            list_append(a, irst.fn->param_list_q);
+
+            if (list_next(p))
+                die("Unexpected list element past variadic ellipsis in gen_fn");
+
+            break;
+        }
+
         sym n = list_data(p)->Declrec.e;
 
         gen_param(n);
@@ -389,6 +399,12 @@ void gen_fn(sym e) {
     // generate parameters - memory
     p = e->param_list;
     while (p) {
+        if (list_data(p)->type == ASTN_ELLIPSIS) {
+            if (list_next(p))
+                die("Unexpected list element past variadic ellipsis in gen_fn");
+
+            break;
+        }
         sym n = list_data(p)->Declrec.e;
 
         gen_local(n);
@@ -410,6 +426,13 @@ void gen_fn(sym e) {
     // generate param -> memory stores
     p = e->param_list;
     while (p) {
+       if (list_data(p)->type == ASTN_ELLIPSIS) {
+            if (list_next(p))
+                die("Unexpected list element past variadic ellipsis in gen_fn");
+
+            break;
+        }
+
         sym n = list_data(p)->Declrec.e;
 
         gen_store(n->ptr_qtemp, n->param_qtemp);
