@@ -211,6 +211,9 @@ astn get_qtype(astn t) {
             n = qtype_alloc(IR_label);
             return n;
 
+        case ASTN_QTYPECONTAINER:
+            return get_qtype(t->Qtypecontainer.qtype);
+
         default:
             qunimpl(t, "Unimplemented astn type in get_qtype :(");
     }
@@ -244,7 +247,7 @@ astn make_type_compat_with(astn a, astn kind) {
     }
 
     if (kind_is_integer && a->type == ASTN_NUM) {
-        return a; // ignore, this needs revisiting
+        return convert_integer_type(a, ir_type(kind));
     }
 
     if (kind_is_integer && a_is_integer) {
@@ -330,9 +333,16 @@ astn convert_integer_type(astn a, ir_type_E t) {
     return target;
 }
 
+astn do_integer_conversions(astn a, astn b, astn *a_new, astn *b_new) {
+    ir_type_E target_type = get_integer_conversions_type(a, b);
+    *a_new = convert_integer_type(a, target_type);
+    *b_new = convert_integer_type(b, target_type);
+    return get_qtype(*a_new);
+}
+
 // 6.3.1.8  Integer conversions
 // Returns new type.
-astn do_integer_conversions(astn a, astn b, astn *a_new, astn *b_new) {
+ir_type_E get_integer_conversions_type(astn a, astn b) {
     if (!is_integer(a))
         qunimpl(a, "Node passed to do_integer_conversions is not an integer!");
 
@@ -348,19 +358,14 @@ astn do_integer_conversions(astn a, astn b, astn *a_new, astn *b_new) {
     // If both operands have the same type, then no further conversion is needed.
 
     if (a_irt ==  b_irt) {
-        *a_new = a;
-        *b_new = b;
-        return get_qtype(*a_new);
+        return a_irt;
     }
 
     // If both operands are signed or both are unsigned, then convert the lesser
     // rank to the greater one's type.
 
     if ((a_is_signed && b_is_signed) || (!a_is_signed && !b_is_signed)) {
-        ir_type_E target_type = a_irt > b_irt ? a_irt : b_irt;
-        *a_new = convert_integer_type(a, target_type);
-        *b_new = convert_integer_type(b, target_type);
-        return get_qtype(*a_new);
+        return a_irt > b_irt ? a_irt : b_irt;
     }
 
     //
@@ -374,26 +379,17 @@ astn do_integer_conversions(astn a, astn b, astn *a_new, astn *b_new) {
     // If the unsigned operand has rank >= the signed one, then convert the signed
     // one to the unsigned one's type.
     if (unsigned_one_rank > signed_one_rank) {
-        ir_type_E target_type = unsigned_one_rank;
-        *a_new = convert_integer_type(a, target_type);
-        *b_new = convert_integer_type(b, target_type);
-        return get_qtype(*a_new);
+        return unsigned_one_rank;
     }
 
     // If the type of the signed operand can represent all values of the unsigned
     // operand, convert the unsigned one to the signed one's type.
     if ((signed_one_rank - unsigned_one_rank) > 1) {
-        ir_type_E target_type = signed_one_rank;
-        *a_new = convert_integer_type(a, target_type);
-        *b_new = convert_integer_type(b, target_type);
-        return get_qtype(*a_new);
+        return signed_one_rank;
     }
     // Else, convert both to the unsigned type corresponding to the signed operand's
     // type.
-    ir_type_E target_type = signed_one_rank - 1;
-    *a_new = convert_integer_type(a, target_type);
-    *b_new = convert_integer_type(b, target_type);
-    return get_qtype(*a_new);
+    return signed_one_rank - 1;
 }
 
 // 6.3.1.8  Usual arithmetic conversions
@@ -406,16 +402,33 @@ astn do_arithmetic_conversions(astn a, astn b, astn *a_new, astn *b_new) {
     return do_integer_conversions(a, b, a_new, b_new);
 }
 
+astn get_arithmetic_conversions_type(astn a, astn b) {
+    if (!is_integer(a) || !is_integer(b))
+        die("Not arithmetic!");
+
+    astn ap = qtype_alloc(get_integer_promotions_type(a));
+    astn bp = qtype_alloc(get_integer_promotions_type(b));
+
+    return qtype_alloc(get_integer_conversions_type(ap, bp));
+}
+
 // The Sneaky Integer Promotions
 astn do_integer_promotions(astn a) {
     if (!is_integer(a))
-        return a;
+        return a; // die?
+
+    return convert_integer_type(a, get_integer_promotions_type(a));
+}
+
+ir_type_E get_integer_promotions_type(astn a) {
+    if (!is_integer(a))
+        return ir_type(a); // die?
 
     ir_type_E a_rank = ir_type(a);
 
     if (a_rank < IR_u32) {
-        return(convert_integer_type(a, IR_i32));
+        return IR_u32;
     }
 
-    return a;
+    return a_rank;
 }

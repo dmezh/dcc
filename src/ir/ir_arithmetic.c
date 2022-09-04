@@ -188,7 +188,26 @@ astn gen_sub_rvalue(astn a, astn target) {
     }
 
     if (l_is_pointer && r_is_pointer) {
-        qunimpl(a, "Unimplemented: pointer - pointer subtraction.");
+        if (target)
+            die("Unexpected target");
+
+        if (!ir_type_matches(ir_dtype(l), ir_type(ir_dtype(r))))
+            qerrorl(a, "Cannot subtract incompatible pointer types");
+
+        // convert both to int
+        astn i_l = ptr_to_int(l, qtype_alloc(IR_PTR_INT_TYPE));
+        astn i_r = ptr_to_int(r, qtype_alloc(IR_PTR_INT_TYPE));
+
+        // subtract
+        astn b = binop_alloc('-', i_l, i_r);
+        astn b_r = gen_rvalue(b, NULL);
+
+        // divide
+        int size = ir_type_size[ir_type(ir_dtype(l))];
+        astn bd = binop_alloc('/', b_r, simple_constant_alloc(size));
+        astn bd_r = gen_rvalue(bd, NULL);
+
+        return convert_to_ptr(bd_r, get_qtype(l));
     }
 
     if (l_is_integer && r_is_pointer) {

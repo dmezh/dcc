@@ -1,6 +1,8 @@
 #ifndef IR_DEFS_H
 #define IR_DEFS_H
 
+#include <stddef.h>
+
 typedef enum {
     IR_OP_UNKNOWN = 0,
 
@@ -105,6 +107,20 @@ static const char *ir_type_str[IR_TYPE_COUNT] = {
     [IR_i32] = "i32",
     [IR_u64] = "i64",
     [IR_i64] = "i64",
+};
+
+static size_t ir_type_size[IR_TYPE_COUNT] = {
+    [IR_TYPE_UNDEF] = 0,
+    [IR_ptr] = 8, // can get from target_size[]
+    [IR_i1] = 1,
+    [IR_u8] = 1,
+    [IR_i8] = 1,
+    [IR_u16] = 2,
+    [IR_i16] = 2,
+    [IR_u32] = 4,
+    [IR_i32] = 4,
+    [IR_u64] = 8,
+    [IR_i64] = 8,
 };
 
 #define IR_PTR_INT_TYPE IR_i64

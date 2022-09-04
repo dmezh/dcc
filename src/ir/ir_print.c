@@ -102,6 +102,9 @@ const char *qoneword(astn a) {
             asprintf(&ret, "%%%s", a->Qbb.bb->name);
             break;
 
+        case ASTN_QTYPECONTAINER:
+            return qoneword(a->Qtypecontainer.qtype);
+
         default:
             qunimpl(a, "Unable to get oneword for astn :(");
             return 0;

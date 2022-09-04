@@ -153,6 +153,9 @@ static astn _gen_rvalue(astn a, astn target) {
         case ASTN_QTEMP:
             return a;
 
+        case ASTN_TERN:
+            return gen_ternary(a, target);
+
         default:
             qunimpl(a, "Unhandled astn for gen_rvalue :(");
     }

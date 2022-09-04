@@ -57,6 +57,7 @@
     MAKER(ASTN_QTEMP),          \
     MAKER(ASTN_QBB),            \
     MAKER(ASTN_QTYPE),          \
+    MAKER(ASTN_QTYPECONTAINER), \
     MAKER(ASTN_NOOP),           \
     MAKER(ASTN_KIND_MAX)
 
@@ -258,6 +259,10 @@ struct astn_qtype {
     struct astn *derived_type;
 };
 
+struct astn_qtypecontainer {
+    struct astn *qtype;
+};
+
 // uppercase member names are a style decision; they're clear and they also
 // allow us to have members like .Sizeof, .Return, etc without clobbering
 // the names to avoid conflicting with keywords.
@@ -298,6 +303,7 @@ struct astn {
         struct astn_qtemp Qtemp;
         struct astn_qbb Qbb;
         struct astn_qtype Qtype;
+        struct astn_qtypecontainer Qtypecontainer;
     };
 };
 

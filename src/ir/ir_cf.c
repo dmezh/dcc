@@ -2,6 +2,7 @@
 
 #include "ir.h"
 #include "ir_arithmetic.h"
+#include "ir_loadstore.h" // ternary
 #include "ir_state.h"
 #include "ir_types.h"
 #include "ir_util.h"
@@ -89,11 +90,36 @@ static void prepare_equality(astn a, astn b, astn *a_conv, astn *b_conv) {
     bool a_is_arith = type_is_arithmetic(ar);
     bool b_is_arith = type_is_arithmetic(br);
 
+    bool a_is_pointer = ir_type_matches(ar, IR_ptr);
+    bool b_is_pointer = ir_type_matches(br, IR_ptr);
+
+    bool a_is_integer = is_integer(ar);
+    bool b_is_integer = is_integer(br);
+
     if (a_is_arith && b_is_arith) {
         do_arithmetic_conversions(ar, br, a_conv, b_conv);
         return;
     }
 
+    if (a_is_pointer && b_is_pointer) {
+        // we will allow comparisons of pointers of incompatible types.
+        // this is a warning on clang/gcc.
+
+        *a_conv = ar;
+        *b_conv = br;
+
+        return;
+    }
+
+    if ((a_is_pointer && b_is_integer) || (a_is_integer && b_is_pointer)) {
+        // we will allow comparison of any integer to a pointer.
+        // this is a warning on clang/gcc.
+
+        *a_conv = ar;
+        *b_conv = br;
+
+        return;
+    }
     qunimpl(a, "Unimplemented operands in prepare_equality.");
 }
 
@@ -162,6 +188,51 @@ astn gen_relational(astn a, astn b, int op, astn target) {
 
 void uncond_branch(BB bb) {
     emit(IR_OP_BR, wrap_bb(bb), NULL, NULL);
+}
+
+astn gen_ternary(astn tern, astn target) {
+    struct astn_tern *t = &tern->Tern;
+
+    BB thb = bb_nolink(".tern.then");
+    BB elsb = bb_nolink(".tern.else");
+    BB fin = bb_nolink(".tern.fin");
+
+    astn type = astn_alloc(ASTN_QTYPECONTAINER); // get this after making rvalues
+
+    astn temp = new_qtemp(qtype_alloc(IR_ptr));
+    temp->Qtemp.qtype->Qtype.derived_type = type;
+
+    // gotta be really careful with the null type
+    emit(IR_OP_ALLOCA, temp, NULL, NULL);
+
+    cmp0_br(t->cond, elsb, thb);
+
+    bb_active(thb);
+    bb_link(thb);
+    astn thv = gen_rvalue(t->t_then, NULL);
+    emit(IR_OP_STORE, temp, thv, NULL);
+    uncond_branch(fin);
+
+    bb_active(elsb);
+    bb_link(elsb);
+    astn elsv = gen_rvalue(t->t_else, NULL);
+    emit(IR_OP_STORE, temp, elsv, NULL);
+    uncond_branch(fin);
+
+    bb_active(fin);
+    bb_link(fin);
+
+    // check types
+    bool th_is_arith = type_is_arithmetic(thv);
+    bool els_is_arith = type_is_arithmetic(elsv);
+
+    if (th_is_arith && els_is_arith) {
+        type->Qtypecontainer.qtype = get_arithmetic_conversions_type(thv, elsv);
+    } else {
+        qunimpl(tern, "Unsupported types for ternary :(")
+    }
+
+    return gen_load(temp, target);
 }
 
 void gen_switch(astn swnode) {

@@ -15,6 +15,8 @@ astn gen_equality_eq(astn a, astn b, astn target);
 astn gen_equality_ne(astn a, astn b, astn target);
 astn gen_relational(astn a, astn b, int op, astn target);
 
+astn gen_ternary(astn a, astn target);
+
 void gen_switch(astn a);
 void gen_if(astn a);
 void gen_while(astn a);
