@@ -190,6 +190,7 @@ void gen_quads(astn a) {
             }
             break;
 
+        case ASTN_SELECT:
         case ASTN_BINOP:
         case ASTN_UNOP:
         case ASTN_NUM:
