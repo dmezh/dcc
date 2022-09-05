@@ -185,10 +185,8 @@ astn gen_relational(astn a, astn b, int op, astn target) {
 
     return target;
 }
-astn gen_ternary_type(astn tern, astn type) {
 
-}
-astn gen_logical_and(astn b, astn target) {
+astn gen_logical_or(astn b, astn target) {
     astn one = convert_integer_type(simple_constant_alloc(1), IR_i1);
     astn zero = convert_integer_type(simple_constant_alloc(0), IR_i1);
 
@@ -199,6 +197,20 @@ astn gen_logical_and(astn b, astn target) {
     tern->Tern.cond = ieqz;
     tern->Tern.t_then = jneqz;
     tern->Tern.t_else = one;
+
+    return gen_ternary(tern, target);
+}
+
+astn gen_logical_and(astn b, astn target) {
+    astn zero = convert_integer_type(simple_constant_alloc(0), IR_i1);
+
+    astn ieqz = binop_alloc(EQEQ, b->Binop.left, zero);
+    astn jneqz = binop_alloc(NOTEQ, b->Binop.right, zero);
+
+    astn tern = astn_alloc(ASTN_TERN);
+    tern->Tern.cond = ieqz;
+    tern->Tern.t_then = zero;
+    tern->Tern.t_else = jneqz;
 
     return gen_ternary(tern, target);
 }
@@ -216,26 +228,15 @@ astn gen_ternary(astn tern, astn target) {
     BB elsconv = bb_nolink(".tern.elsconv");
     BB fin = bb_nolink(".tern.fin");
 
-//    astn thtype = astn_alloc(ASTN_QTYPECONTAINER); // get this after making rvalues
-//    astn elstype = astn_alloc(ASTN_QTYPECONTAINER); // get this after making rvalues
     astn restype = astn_alloc(ASTN_QTYPECONTAINER);
-
-//    astn thtemp = new_qtemp(qtype_alloc(IR_ptr));
-//    thtemp->Qtemp.qtype->Qtype.derived_type = thtype;
-
-//    astn elstemp = new_qtemp(qtype_alloc(IR_ptr));
-//    elstemp->Qtemp.qtype->Qtype.derived_type = elstype;
 
     astn restemp = new_qtemp(qtype_alloc(IR_ptr));
     restemp->Qtemp.qtype->Qtype.derived_type = restype;
-
-    // gotta be really careful with the null type
-//    emit(IR_OP_ALLOCA, elstemp, NULL, NULL);
-//    emit(IR_OP_ALLOCA, thtemp, NULL, NULL);
     emit(IR_OP_ALLOCA, restemp, NULL, NULL);
 
     cmp0_br(t->cond, elsb, thb);
 
+    // generate rvalues
     bb_active(thb);
     bb_link(thb);
     astn thv = gen_rvalue(t->t_then, NULL);
@@ -276,6 +277,7 @@ astn gen_ternary(astn tern, astn target) {
     emit(IR_OP_STORE, restemp, elsvconv, NULL);
     uncond_branch(fin);
 
+    // now load the result and proceed
     bb_active(fin);
     bb_link(fin);
 

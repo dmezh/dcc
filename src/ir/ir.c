@@ -83,7 +83,7 @@ static astn _gen_rvalue(astn a, astn target) {
                     return gen_logical_and(a, target);
 
                 case LOGOR:
-                    return gen_logical_and(a, target);
+                    return gen_logical_or(a, target);
 
                 default:
                     qunimpl(a, "Unhandled binop type for gen_rvalue :(");
