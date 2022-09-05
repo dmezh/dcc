@@ -78,6 +78,13 @@ static astn _gen_rvalue(astn a, astn target) {
                 case '%':
                 case '/':
                     return gen_mulop_rvalue(a, target);
+
+                case LOGAND:
+                    return gen_logical_and(a, target);
+
+                case LOGOR:
+                    return gen_logical_and(a, target);
+
                 default:
                     qunimpl(a, "Unhandled binop type for gen_rvalue :(");
             }

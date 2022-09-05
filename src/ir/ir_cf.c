@@ -185,6 +185,23 @@ astn gen_relational(astn a, astn b, int op, astn target) {
 
     return target;
 }
+astn gen_ternary_type(astn tern, astn type) {
+
+}
+astn gen_logical_and(astn b, astn target) {
+    astn one = convert_integer_type(simple_constant_alloc(1), IR_i1);
+    astn zero = convert_integer_type(simple_constant_alloc(0), IR_i1);
+
+    astn ieqz = binop_alloc(EQEQ, b->Binop.left, zero);
+    astn jneqz = binop_alloc(NOTEQ, b->Binop.right, zero);
+
+    astn tern = astn_alloc(ASTN_TERN);
+    tern->Tern.cond = ieqz;
+    tern->Tern.t_then = jneqz;
+    tern->Tern.t_else = one;
+
+    return gen_ternary(tern, target);
+}
 
 void uncond_branch(BB bb) {
     emit(IR_OP_BR, wrap_bb(bb), NULL, NULL);
@@ -193,34 +210,41 @@ void uncond_branch(BB bb) {
 astn gen_ternary(astn tern, astn target) {
     struct astn_tern *t = &tern->Tern;
 
-    BB thb = bb_nolink(".tern.then");
+    BB thb = bb_named(".tern.then");
     BB elsb = bb_nolink(".tern.else");
+    BB thconv = bb_nolink(".tern.thconv");
+    BB elsconv = bb_nolink(".tern.elsconv");
     BB fin = bb_nolink(".tern.fin");
 
-    astn type = astn_alloc(ASTN_QTYPECONTAINER); // get this after making rvalues
+//    astn thtype = astn_alloc(ASTN_QTYPECONTAINER); // get this after making rvalues
+//    astn elstype = astn_alloc(ASTN_QTYPECONTAINER); // get this after making rvalues
+    astn restype = astn_alloc(ASTN_QTYPECONTAINER);
 
-    astn temp = new_qtemp(qtype_alloc(IR_ptr));
-    temp->Qtemp.qtype->Qtype.derived_type = type;
+//    astn thtemp = new_qtemp(qtype_alloc(IR_ptr));
+//    thtemp->Qtemp.qtype->Qtype.derived_type = thtype;
+
+//    astn elstemp = new_qtemp(qtype_alloc(IR_ptr));
+//    elstemp->Qtemp.qtype->Qtype.derived_type = elstype;
+
+    astn restemp = new_qtemp(qtype_alloc(IR_ptr));
+    restemp->Qtemp.qtype->Qtype.derived_type = restype;
 
     // gotta be really careful with the null type
-    emit(IR_OP_ALLOCA, temp, NULL, NULL);
+//    emit(IR_OP_ALLOCA, elstemp, NULL, NULL);
+//    emit(IR_OP_ALLOCA, thtemp, NULL, NULL);
+    emit(IR_OP_ALLOCA, restemp, NULL, NULL);
 
     cmp0_br(t->cond, elsb, thb);
 
     bb_active(thb);
     bb_link(thb);
     astn thv = gen_rvalue(t->t_then, NULL);
-    emit(IR_OP_STORE, temp, thv, NULL);
-    uncond_branch(fin);
+    uncond_branch(thconv);
 
     bb_active(elsb);
     bb_link(elsb);
     astn elsv = gen_rvalue(t->t_else, NULL);
-    emit(IR_OP_STORE, temp, elsv, NULL);
-    uncond_branch(fin);
-
-    bb_active(fin);
-    bb_link(fin);
+    uncond_branch(elsconv);
 
     // check types
     bool th_is_arith = type_is_arithmetic(thv);
@@ -230,17 +254,32 @@ astn gen_ternary(astn tern, astn target) {
     bool els_is_ptr = ir_type_matches(thv, IR_ptr);
 
     if (th_is_arith && els_is_arith) {
-        type->Qtypecontainer.qtype = get_arithmetic_conversions_type(thv, elsv);
+        restype->Qtypecontainer.qtype = get_arithmetic_conversions_type(thv, elsv);
     } else if (th_is_ptr && els_is_ptr) {
         // we will allow mismatched pointed-to types,
         // this is a warning in clang/gcc.
-
-        type->Qtypecontainer.qtype = get_qtype(thv);
+        restype->Qtypecontainer.qtype = get_qtype(thv);
     } else {
         qunimpl(tern, "Unsupported types for ternary :(")
     }
 
-    return gen_load(temp, target);
+    // now do conversions if needed
+    bb_active(thconv);
+    bb_link(thconv);
+    astn thvconv = make_type_compat_with(thv, restype);
+    emit(IR_OP_STORE, restemp, thvconv, NULL);
+    uncond_branch(fin);
+
+    bb_active(elsconv);
+    bb_link(elsconv);
+    astn elsvconv = make_type_compat_with(elsv, restype);
+    emit(IR_OP_STORE, restemp, elsvconv, NULL);
+    uncond_branch(fin);
+
+    bb_active(fin);
+    bb_link(fin);
+
+    return gen_load(restemp, target);
 }
 
 void gen_switch(astn swnode) {
@@ -320,7 +359,7 @@ void gen_switch(astn swnode) {
 void gen_if(astn ifnode) {
     struct astn_ifelse *ifn = &ifnode->Ifelse;
 
-    BB thn = bb_named("if.then");
+    BB thn = bb_nolink("if.then");
     BB els = bb_nolink("if.else");
     BB next = bb_nolink("if.fin");
 

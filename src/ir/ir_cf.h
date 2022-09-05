@@ -14,6 +14,8 @@ void uncond_branch(BB bb);
 astn gen_equality_eq(astn a, astn b, astn target);
 astn gen_equality_ne(astn a, astn b, astn target);
 astn gen_relational(astn a, astn b, int op, astn target);
+astn gen_logical_and(astn a, astn target);
+astn gen_logical_or(astn a, astn target);
 
 astn gen_ternary(astn a, astn target);
 
