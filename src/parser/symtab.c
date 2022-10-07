@@ -166,13 +166,13 @@ sym st_define_struct(const char *ident, astn decl_list,
 }
 
 
-void st_make_union() {
+void st_make_union(void) {
 
 }
 
 
 // ret function scope if in function, else NULL
-symtab* st_parent_function() {
+symtab* st_parent_function(void) {
     symtab* cur = current_scope;
     while (cur->scope_type == SCOPE_BLOCK)
         cur = cur->parent;

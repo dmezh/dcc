@@ -72,7 +72,7 @@ BB bbl_push(void) {
     return first;
 }
 
-void bbl_pop_to_root() {
+void bbl_pop_to_root(void) {
     irst.bb = irst.root_bbl->me;
     irst.bb_head = irst.bb;
 }

@@ -37,7 +37,7 @@ static struct {
     bool is_darwin;
 } host_info;
 
-static void print_usage_additional() {
+static void print_usage_additional(void) {
     eprintf(
         "\n Pragmas:"
         "\n  Setting debug level:"
@@ -53,7 +53,7 @@ static void print_usage_additional() {
         "\n");
 }
 
-static void print_usage() {
+static void print_usage(void) {
     eprintf("Usage: ./dcc [OPTIONS] input_file"
         "\n Options:"
         "\n   -h              show extended usage"
@@ -137,7 +137,7 @@ static void get_options(int argc, char** argv) {
     opt.in_file = argv[optind];
 }
 
-static FILE* new_tmpfile() {
+static FILE* new_tmpfile(void) {
     FILE *f = tmpfile();
     if (!f)
         RED_ERROR("Error allocating temporary file: %s", strerror(errno));
@@ -145,7 +145,7 @@ static FILE* new_tmpfile() {
     return f;
 }
 
-static void preprocess() {
+static void preprocess(void) {
     FILE* f = new_tmpfile();
 
     switch (fork()) {
@@ -172,7 +172,7 @@ static void preprocess() {
     }
 }
 
-static void assemble() {
+static void assemble(void) {
     switch (fork()) {
         case -1:
             RED_ERROR("Error forking for assembly: %s", strerror(errno));
@@ -201,7 +201,7 @@ static void assemble() {
     }
 }
 
-static void llvm_convert() {
+static void llvm_convert(void) {
     tmp2 = new_tmpfile();
 
     switch(fork()) {
@@ -229,7 +229,7 @@ static void llvm_convert() {
     }
 }
 
-static void write_tmp_to_out() {
+static void write_tmp_to_out(void) {
     FILE* out = fopen(opt.out_file, "w");
     if (!out) {
         RED_ERROR("Error opening output file: %s", strerror(errno));

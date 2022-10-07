@@ -103,7 +103,7 @@ void st_new_scope(enum scope_types scope_type, YYLTYPE context) {
 /*
  *  Leave the current scope (return to parent)
  */
-void st_pop_scope() {
+void st_pop_scope(void) {
     if (!current_scope->parent) {
         if (current_scope == &root_symtab) {
             die("Attempted to pop root scope");

@@ -232,7 +232,7 @@ void print_ast(astn n) {
                                 print_ast(NULL);
                                 eprintf("> with param list:\n");
                                 tabs++;
-                                    const_astn a = n->Type.derived.param_list;
+                                    astn a = n->Type.derived.param_list;
                                     while (a) {
                                         print_ast(a->List.me);
                                         if (a->List.me->type != ASTN_ELLIPSIS) {
@@ -315,7 +315,7 @@ void print_ast(astn n) {
                 print_ast(NULL);
                 eprintf("> with param list:\n");
                 tabs++;
-                    const_astn a = n->Fndef.param_list;
+                    astn a = n->Fndef.param_list;
                     while (a) {
                         print_ast(a->List.me);
                         if (a->List.me->type != ASTN_ELLIPSIS) {

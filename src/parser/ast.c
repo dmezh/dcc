@@ -30,7 +30,7 @@ astn astn_alloc(enum astn_types type) {
 /*
  * Return string version of astn's kind (e.g. ASTN_DECL)
  */
-const char *astn_kind_str(const_astn a) {
+const char *astn_kind_str(astn a) {
     if (!a)
         die("Passed null astn to astn_kind_str!");
 
@@ -116,7 +116,7 @@ astn list_append(astn new, astn head) {
 /*
  *  get next node of list
  */
-astn list_next(const_astn cur) {
+astn list_next(astn cur) {
     ast_check(cur, ASTN_LIST, "Expected ASTN_LIST node.");
 
     return cur->List.next;
@@ -125,7 +125,7 @@ astn list_next(const_astn cur) {
 /*
  *  get current data element
  */
-astn list_data(const_astn n) {
+astn list_data(astn n) {
     ast_check(n, ASTN_LIST, "Expected ASTN_LIST node.");
 
     return n->List.me;
@@ -149,7 +149,7 @@ void list_reverse(astn *l) {
 /*
  * return length of AST list starting at head
  */
-unsigned list_measure(const_astn head) {
+unsigned list_measure(astn head) {
     ast_check(head, ASTN_LIST, "Expected ASTN_LIST node.");
 
     int c = 0;

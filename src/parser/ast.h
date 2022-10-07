@@ -311,7 +311,7 @@ typedef struct astn* astn;
 typedef const struct astn* const_astn;
 
 astn astn_alloc(enum astn_types type);
-const char *astn_kind_str(const_astn a);
+const char *astn_kind_str(astn a);
 
 astn simple_constant_alloc(int num);
 
@@ -323,10 +323,10 @@ astn list_alloc(astn me);
 astn list_append(astn new, astn head);
 
 astn list_alloc(astn me);
-astn list_next(const_astn cur);
-astn list_data(const_astn n);
+astn list_next(astn cur);
+astn list_data(astn n);
 void list_reverse(astn *l);
-unsigned list_measure(const_astn head);
+unsigned list_measure(astn head);
 
 astn typespec_alloc(enum typespec spec);
 astn typequal_alloc(enum typequal spec);
@@ -357,7 +357,7 @@ const char *get_dtypechain_ident(astn d);
 astn qtemp_alloc(int tempno, astn qtype);
 astn qtype_alloc(ir_type_E t);
 
-void print_ast(); // fwd-decl
+void print_ast(astn n);
 #define ast_check(node, asttype, msg)                                       \
     {                                                                       \
         if (node->type != asttype) {                                        \

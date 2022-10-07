@@ -23,7 +23,7 @@ sym st_lookup_ns(const char* ident, enum namespaces ns);
 sym st_lookup_fq(const char* ident, const symtab* s, enum namespaces ns);
 
 void st_new_scope(enum scope_types scope_type, YYLTYPE openbrace_context);
-void st_pop_scope();
+void st_pop_scope(void);
 void st_destroy(symtab* target);
 
 #endif

@@ -39,7 +39,7 @@ static const char* linkage_str[] = {
 /*
  *  Dump current scope's symbol table
  */
-void st_dump_current() {
+void st_dump_current(void) {
     st_dump_single_given(current_scope);
 }
 
@@ -74,7 +74,7 @@ void st_dump_entry(const_sym e) {
 }
 
 // kind of fake at the moment
-void st_dump_recursive() {
+void st_dump_recursive(void) {
     eprintf("_- symtab dump for translation unit: -_\n");
     const_sym e = current_scope->first;
     while (e) {

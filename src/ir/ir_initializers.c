@@ -9,6 +9,7 @@ astn gen_initializer(astn a, astn g) {
     // a = static array, g = strlit -> i = strlit + zero
     // a = auto array, g = strlit -> make anonymous zstrlit, emit memcpy
 
+    (void)g;
     switch (a->type) {
         case ASTN_QTEMP:
             break;
