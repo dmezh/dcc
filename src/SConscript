@@ -57,6 +57,7 @@ generated_parser_lib = env.Library([generated_parser_files[0], generated_lexer_f
 
 # dcc #
 dcc = env.Program('dcc', [dcc_sources, generated_parser_lib],
+                  CPPDEFINES=['_GNU_SOURCE'],
                   CPPPATH=dcc_include_paths,
                   CCFLAGS='-Wall -Wextra -fsanitize=undefined -Wpedantic -Wunused -O0 -g3',
                   LINKFLAGS='-fsanitize=undefined -rdynamic -g3 -O0'
