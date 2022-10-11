@@ -50,7 +50,7 @@ generated_lexer_files = env.CFile('gen/lexer.yy.c', 'lexer/lexer.l')
 
 Depends(generated_parser_files, generated_lexer_files)
 
-generated_parser_lib = env.Library([generated_parser_files, generated_lexer_files],
+generated_parser_lib = env.Library([generated_parser_files[0], generated_lexer_files],
                                    CPPPATH=dcc_include_paths,
                                    CCFLAGS='-Wall -Werror -fsanitize=undefined -O0'
 )
