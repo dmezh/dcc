@@ -14,7 +14,7 @@
 #include "parser.tab.h"
 #include "util.h"
 
-#define DCC_VERSION "1.0.0"
+#define DCC_VERSION "1.0.1"
 #define DCC_ARCHITECTURE "x86_64"
 
 FILE *tmp, *tmp2;
