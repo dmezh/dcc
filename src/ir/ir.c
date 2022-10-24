@@ -132,6 +132,12 @@ static astn _gen_rvalue(astn a, astn target) {
 
                     return do_negate(do_integer_promotions(gen_rvalue(a->Unop.target, NULL)));
 
+                case '!':
+                    if (target)
+                        die("Unexpected target for unary !");
+
+                    return gen_equality_eq(simple_constant_alloc(0), a->Unop.target, target);
+
                 default:
                     qunimpl(a, "Unhandled unop in gen_rvalue :(");
             }
