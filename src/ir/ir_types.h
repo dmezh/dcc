@@ -18,6 +18,7 @@ astn convert_to_ptr(astn a, astn kind);
 
 astn convert_integer_type(astn a, ir_type_E t);
 ir_type_E get_integer_conversions_type(astn a, astn b);
+astn get_active_fn_target(void);
 astn do_arithmetic_conversions(astn a, astn b, astn *a_new, astn *b_new);
 astn get_arithmetic_conversions_type(astn a, astn b);
 astn do_integer_conversions(astn a, astn b, astn *a_new, astn *b_new);

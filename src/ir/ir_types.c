@@ -394,6 +394,10 @@ ir_type_E get_integer_conversions_type(astn a, astn b) {
     return signed_one_rank - 1;
 }
 
+astn get_active_fn_target(void) {
+    return ir_dtype(symptr_alloc(irst.fn))->Type.derived.target;
+}
+
 // 6.3.1.8  Usual arithmetic conversions
 // Return resulting type.
 astn do_arithmetic_conversions(astn a, astn b, astn *a_new, astn *b_new) {

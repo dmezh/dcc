@@ -178,7 +178,23 @@ astn gen_rvalue(astn a, astn target) {
 void gen_quads(astn a) {
     switch (a->type) {
         case ASTN_RETURN:;
-            // TODO: check for void function type!
+            if (!irst.fn)
+                die("Not in function?");
+
+            const bool fn_is_void = ir_type_matches(get_active_fn_target(), IR_void);
+
+            if (fn_is_void) {
+                if (a->Return.ret) {
+                    qerrorl(a, "Void function should not return a value");
+                } else {
+                    break;
+                }
+            } else {
+                if (!a->Return.ret) {
+                    qerrorl(a, "Non-void function must return a value");
+                }
+            }
+
             astn retval = gen_rvalue(a->Return.ret, NULL);
 
             astn retval_conv = make_type_compat_with(retval, irst.fn->type->Type.derived.target);
@@ -466,7 +482,7 @@ void gen_fn(sym e) {
             emit(IR_OP_RETURN, NULL, gen_rvalue(simple_constant_alloc(0), NULL), NULL);
         }
 
-        if (ir_type_matches(ir_dtype(symptr_alloc(irst.fn))->Type.derived.target, IR_void)) {
+        if (ir_type_matches(get_active_fn_target(), IR_void)) {
             emit(IR_OP_RETURN, NULL, NULL, NULL);
         }
     }
