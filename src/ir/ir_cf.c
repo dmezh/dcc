@@ -111,15 +111,23 @@ static void prepare_equality(astn a, astn b, astn *a_conv, astn *b_conv) {
         return;
     }
 
-    if ((a_is_pointer && b_is_integer) || (a_is_integer && b_is_pointer)) {
-        // we will allow comparison of any integer to a pointer.
-        // this is a warning on clang/gcc.
+    // we will allow comparison of any integer to a pointer.
+    // this is a warning on clang/gcc.
 
+    if (a_is_pointer && b_is_integer) {
         *a_conv = ar;
+        *b_conv = convert_to_ptr(br, ar);
+
+        return;
+    }
+
+    if (a_is_integer && b_is_pointer) {
+        *a_conv = convert_to_ptr(ar, br);
         *b_conv = br;
 
         return;
     }
+
     qunimpl(a, "Unimplemented operands in prepare_equality.");
 }
 
