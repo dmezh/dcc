@@ -224,12 +224,17 @@ void gen_quads(astn a) {
 
         case ASTN_SELECT:
         case ASTN_BINOP:
-        case ASTN_UNOP:
         case ASTN_NUM:
         case ASTN_STRLIT:
         case ASTN_SYMPTR:
             qwarn("Warning: useless expression: ");
             print_ast(a);
+            gen_rvalue(a, NULL);
+            break;
+
+        // don't warn on ternary or unop
+        case ASTN_UNOP:
+        case ASTN_TERN:
             gen_rvalue(a, NULL);
             break;
 
