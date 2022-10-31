@@ -1,5 +1,6 @@
 .vscode
 *.out
+*.o
 prog
 build
 dcc
