@@ -105,7 +105,8 @@ translation_unit:
 ;
 
 external_decln:                             // kludge ish for structs/unions // NOTE: why is $1 invalid after begin_st_entry()?
-    decln                               {   if ($1->type == ASTN_DECL) {
+    decln                               {   if ($1) {
+                                                ast_check($1, ASTN_DECL, "Expected ASTN_DECL for decln");
                                                 if (DBGLVL_DEBUG()) print_ast($1);
                                                 $$=begin_st_entry($1, NS_MISC, $1->context);
                                                 gen_global($$);
@@ -136,8 +137,10 @@ block_item_list:
 ;
 
 block_item:
-    decln                       {   $$=do_decl($1);
-                                    if (DBGLVL_DEBUG()) print_ast($$);
+    decln                       {   if ($1) {
+                                        $$=do_decl($1);
+                                        if (DBGLVL_DEBUG()) print_ast($$);
+                                    }
                                 }
 |   statement                   {   if (DBGLVL_DEBUG()) print_ast($1); }
 |   internal                    {   $$=astn_alloc(ASTN_NOOP); }
@@ -168,7 +171,7 @@ iterat_stmt:
     WHILE '(' expr ')' statement                                            { $$=whileloop_alloc($3, $5, false); }
 |   DO statement WHILE '(' expr ')' ';'                                     { $$=whileloop_alloc($5, $2, true); }
 |   FOR '(' opt_expr ';' opt_expr ';' opt_expr ')' statement                { $$=forloop_alloc($3, $5, $7, $9); }
-|   FOR lparen { st_new_scope(SCOPE_BLOCK, @2); } decln { $4=do_decl($4); } opt_expr ';' opt_expr rparen statement
+|   FOR lparen { st_new_scope(SCOPE_BLOCK, @2); } decln { if ($4) $4=do_decl($4); } opt_expr ';' opt_expr rparen statement
                                                                             { st_pop_scope(); $$=forloop_alloc($4, $6, $8, $10); }
 ;
 
@@ -449,7 +452,7 @@ const_expr:
 // 6.7 Declarations
 // the below needs a little logic in the first case for proper struct fwd declaration behavior
 decln:
-    decln_spec ';'                  { /* check for idiot user not actually declaring anything */ }
+    decln_spec ';'                  {   eprintf("Warning: declaration near %s:%d does not declare anything\n", @1.filename, @1.lineno); $$=NULL;    }
 |   decln_spec init_decl_list ';'   {   $$=$2; $$->Decl.specs = $1;    }
 // no static_assert stuff
 ;

@@ -274,10 +274,11 @@ astn forloop_alloc(astn init, astn condition, astn oneach, astn body) {
 
 // this shouldn't be here >:(
 astn do_decl(astn decl) {
-    astn n = NULL;
-    if (decl->type == ASTN_DECL) {
-        n = declrec_alloc(begin_st_entry(decl, NS_MISC, decl->context), decl->Decl.init);
+    if (!decl) {
+        die("Don't call do_decl with a useless declaration, handle before calling.");
     }
+    ast_check(decl, ASTN_DECL, "Expected ASTN_DECL for do_decl");
+    astn n = declrec_alloc(begin_st_entry(decl, NS_MISC, decl->context), decl->Decl.init);
 
     symtab *p = st_parent_function();
 

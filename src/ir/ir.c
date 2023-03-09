@@ -182,6 +182,9 @@ astn gen_rvalue(astn a, astn target) {
 }
 
 void gen_quads(astn a) {
+    if (!a) {
+        die("Null astn passed to gen_quads.");
+    }
     switch (a->type) {
         case ASTN_RETURN:;
             if (!irst.fn)
@@ -453,6 +456,9 @@ void gen_fn(sym e) {
     // this includes variables from sub-scopes :)
     astn l = e->fn_scope->all_syms;
     while (l) {
+        if (!list_data(l))
+            die("Broken all_syms list in function.");
+
         sym n = list_data(l)->Declrec.e;
 
         gen_local(n);
